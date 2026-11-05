@@ -1,5 +1,7 @@
 # OpenGeoProt
 
+[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
 Applicazione web per la gestione integrata dei procedimenti amministrativi di un
 ente comunale: protocollo generale, edilizia, catasto, anagrafe, viario e
 moduli specializzati, con visualizzazione cartografica (PostGIS + Leaflet).
@@ -321,4 +323,27 @@ Tutte le variabili sono elencate in `.env.example`. Le più importanti:
 
 ## Licenza
 
-Progetto configurato come MIT (vedi `carrara/setting.cfg`).
+Questo progetto è rilasciato sotto **[CC BY-NC-SA 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/)**
+(testo integrale nel file [`LICENSE`](LICENSE)):
+
+- **Attribuzione (BY)** — ogni copia e ogni fork devono citare l'autore:
+  **cxc61cxc — https://github.com/cxc61cxc**.
+- **NonCommercial (NC)** — è **vietato l'uso commerciale**: nessuna vendita,
+  nessuna erogazione a fini di lucro, nessun riutilizzo in prodotti o servizi
+  a pagamento.
+- **ShareAlike (SA)** — chi modifica e **distribuisce** il codice derivato deve
+  pubblicarlo sotto la **stessa licenza** (CC BY-NC-SA 4.0), mantenendo
+  attribuzione e avvertenze.
+
+> **Nota sul tipo di licenza:** essendo una licenza con clausola
+> NonCommercial, non è approvata dalla OSI: tecnicamente il progetto è
+> *source-available* con obblighi di condivisione, non "open source" secondo
+> la definizione stretta. Lo ShareAlike scatta alla **distribuzione** del
+> codice (una modifica usata internamente o resa disponibile solo come servizio
+> senza diffondere i sorgenti non attiva l'obbligo di pubblicazione).
+
+### Componenti di terze parti
+
+Bootstrap, jQuery, Leaflet, Django e le altre librerie incluse in `static/`
+restano sotto le rispettive licenze originali (MIT/GPL/Apache ecc.): la
+licenza del progetto si applica al codice sorgente di OpenGeoProt.

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<h3>Elimina Marca</h3>
+<p>Sei sicuro di voler eliminare la marca "{{ marca.marca }}"?</p>
+<form method="post">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-danger">Elimina</button>
+  <a href="{% url 'prg:marca_list' marca.cdu.id %}" class="btn btn-secondary">Annulla</a>
+</form>
+{% endblock %}

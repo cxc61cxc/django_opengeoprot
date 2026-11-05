@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-2">
+        <div class="col-12">
+            <h4>Sostituisci soggetto nella pratica</h4>
+            <p>Stai per rimuovere il seguente soggetto dalla pratica <strong>{{ pratica.prot_gen }}</strong> del {{ pratica.data_prot_gen|date:"d/m/Y" }}.</p>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-warning">
+                <strong>Soggetto da sostituire:</strong><br>
+                {{ ex_soggetto_desc }}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <form method="POST">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <button type="submit" class="btn btn-warning">Conferma sostituzione</button>
+                <a href="{% url 'protocollo:pratica_detail_url' pratica.id %}" class="btn btn-secondary">Annulla</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% load static %}
+<div class="row">
+  <div class="col-6">
+    {% if pratica.stato != 'c' and pratica.stato != 'aa' and is_editor or user.is_staff %}
+        <a style="color:green;" class="nav-link " href="{% url 'protocollo:upload_url' pratica.id %}"><img class="img-fluid" 
+          src="{% static 'img/icons8-plus.svg' %}" 
+          width="25" height="25" >Aggiungi documento
+        </a>
+    {% endif %}
+  </div> 
+</div>
+  
+
+{% if documenti %} 
+
+      {% for p in documenti %}
+        <div class="list-group text-left">
+          <a  class="list-group-item list-group-item-action " title="{% if p.document %}{{ p.data_crea }} - {{ p.document.url }}{% endif %}" href="{% url 'protocollo:serve_documento' p.pk %}">
+            
+              {% if p.posta == 'e' %}
+              <b><span  style="color: rgb(25, 78, 25);">entrata</span></b>
+              {% elif p.posta == 'u' %}
+              <b><span style="color:crimson">uscita</span></b>
+              {% else %}
+              <b><span style="color:rgb(20, 100, 220)">caricato</span></b>
+              {% endif %}
+
+             
+              <b>- {{ p.data_prot|date:"d/m/Y"}} - prot. {{ p.prot }}</b>
+               
+
+                {{ p.name | lower}} <span class="small text-muted">({{ p.username }})</span></a>
+                <p> </p>
+        </div>         
+
+      {% endfor %}
+
+    
+    {% endif %} 
+

@@ -1,0 +1,67 @@
+{% load crispy_forms_tags %}
+
+
+{% if rate and accetta.rateo == True %}
+
+{% comment %} <a href="{% url  'coop:scadenze_create' id=accetta.convenzione_id %}">Aggiungi Nuova</a> {% endcomment %}
+<div class="container">
+    <div class="row  h5 text-center">
+        <div class="bg-info text-white col-12">
+            Lista delle Scadenze
+        </div>
+    </div>
+</div>
+<div class="container border " style="font-size:0.9em;">
+    <table class="table border-0 table-hover table-sm">
+    <thead>
+        <tr>
+            <th class="col-1"></th>
+            <th class="col-1">Scadenza</th>
+            <th class="col-1">Importo</th>
+            <th class="col-1"></th>
+            <th class="col-1">Pagamento</th>
+            <th class="col-1">Importo</th>
+            <th class="col-4">IUV</th>
+           
+            <th class="col-1"></th>
+
+        </tr>
+    </thead>
+    <tbody>
+        {% for scadenza in rate %}
+        <tr>
+            <td class="col-1">
+                {% if scadenza.pagata %}
+                    <input type="checkbox" checked disabled>
+                {% else %}
+                    <input type="checkbox" disabled>
+                {% endif %}
+                <a  title="MODIFICA scadenza " 
+                    href="{% url  'coop:scadenze_update' id=scadenza.id %}"
+                    style="width:20px;height:20px" class="btn btn-sm btn-outline-warning">
+                </a>
+                {% comment %} <a href="{% url  'coop:scadenze_update' id=scadenza.id %}">Modifica</a> | {% endcomment %}
+            
+            </td>
+            <td class="col-1">{{ scadenza.data_scadenza | date:'d/m/Y' }}</td>
+            <td class="col-1">{{ scadenza.importo_rata  }}</td>
+            <td class="col-1"></td>
+            <td class="col-1" style="color:green;">{{ scadenza.data_pagamento | date:'d/m/Y'}}</td>
+            <td class="col-1" style="color:green;">{{ scadenza.importo_pagamento }}</td>
+            <td class="col-4" style="color:green;">{{ scadenza.iuv }}</td>
+            
+            <td class="col-1">
+                 {% if can_write %}<a  title="ELIMINA scadenza " 
+                    href="{% url  'coop:scadenze_delete' id=scadenza.id %}"
+                    style="width:20px;height:20px" class="btn btn-sm btn-outline-danger">
+                </a>{% endif %}
+                {% comment %} <a href="{% url  'coop:scadenze_delete' id=scadenza.id %}">Elimina</a> {% endcomment %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">Nessuna scadenza trovata.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endif %}      

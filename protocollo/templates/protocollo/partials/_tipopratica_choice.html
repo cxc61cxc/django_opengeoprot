@@ -1,0 +1,38 @@
+
+<!-- 
+    RICHIAMA UNA PAGINA "partials"
+    SE è UNA LISTA DELLE PRATICHE CON ID = 30 ( osservatorio permanente !!!--- modificare per altre pratiche) 
+    PROPONE ALCUNI AFFINAMENTI DELLA QUERY
+  -->
+<!-- OSSERVATORIO PERMANENTE -->
+{% if tipo_pratica.id == 30 %}
+<div class="container">
+    <div class="row">
+      <div class="h6 font-weight-bolder">Filtra {{ tipo_pratica.description }}</div>
+    </div>
+
+    <div class="row">
+
+      <div class="col">
+        <div class="form">
+            <form method="POST" name="Choice" action="{% url 'protocollo:export_oss_perm_csv_poc_2022_url' id=tipo_pratica.id %}">
+            {% csrf_token %}
+            
+                <div class="col form-group">
+                    <input type="text" autofocus class="form-control" style="width: 350px;" name="classe" placeholder="classificazione...premi invio per tutte!" >
+                </div>
+                <div class="col form-group">
+                    <input class="btn btn-outline-info" type="submit" value="Esporta">
+                </div>
+
+            </form>
+        </div>
+      </div>
+      <div class="col">
+        
+      </div>
+    </div>
+    
+</div>
+
+  {% endif %}

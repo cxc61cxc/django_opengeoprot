@@ -1,0 +1,33 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+
+    <div class="row">
+        <h5>Elenco Tipo di pratica</h5>
+    </div>
+
+    <div class="container p-2 my-2 border" style="font-size:0.9em;">
+    <h5>Dettaglio pratica ( id={{data.id}} )</h5><div class="main">
+    <!-- Display attributes of instance -->
+    <h3>{{ data.name | upper }}</h3>
+    <h3>{{ data.description | title}}</h3>
+</div>
+
+<table class="table table-hover table-sm ">
+    <tr class="justify-content-center">
+        <td><a href="{% url 'protocollo:tipopratica_edit_url' id=data.pk %}"><img class="img-fluid" 
+            src="{% static 'img/icons8-edit.svg' %}" 
+            width="20" height="20" ></a>
+        </td>
+       
+        <td>
+        <a title="Elimina " href="{% url 'protocollo:tipopratica_delete_url' id=data.pk %}"><img class="img-fluid" 
+            src="{% static 'img/icons8-trash.svg' %}" 
+            width="20" height="20" ></a>
+        </td>
+    </tr>
+</table>
+{% endblock %}

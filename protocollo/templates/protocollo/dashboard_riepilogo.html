@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<!-- CDN for jQuery, jQuery UI, Chart.js -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+
+<div class="container mt-3">
+    <div class="row mb-3">
+        <div class="col-lg-6">
+            <h4 class="font-weight-bold text-dark mb-0"><i class="bi bi-speedometer2 text-primary mr-2"></i>Dashboard Riepilogo Pratiche</h4>
+            <p class="text-muted small">Analisi volumetrica per tipologia e stato.</p>
+        </div>
+        <div class="col-lg-3"style="text-align:left;">  
+            {% if user.is_staff %}        
+                <a  class="btn btn-outline-success" style="hover.background-color:red; color:black;" 
+                href="{% url 'protocollo:add_tipopratica_view_url' %}">Nuovo Tipo pratica</a>
+            {% endif %}
+        </div>
+       
+        <div class="col-lg-3 text-right align-self-center">
+            <span class="text-muted mr-2 small">Aggiornato al: {% now "d/m/Y H:i" %}</span>
+            <button class="btn btn-outline-primary btn-sm" onclick="window.print()"><i class="bi bi-printer"></i></button>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label for="tipo-pratica-select" class="small font-weight-bold">Filtra per tipo pratica:</label>
+            <select id="tipo-pratica-select" class="form-control form-control-sm">
+                <option value="">-- Seleziona tipo pratica --</option>
+                {% for tipo in tipi_pratica %}
+                <option value="{{ tipo.id }}">{{ tipo.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="anno" class="small font-weight-bold">Filtra per anno:</label>
+            <form method="get" id="anno-form" action="{% url 'protocollo:manager_dashboard' %}" style="display:inline;">
+                <select name="anno" id="anno" class="form-control form-control-sm" onchange="document.getElementById('anno-form').submit();">
+                    <option value="" {% if selected_anno == '' %}selected{% endif %}>Tutti gli anni</option>
+                    {% for a in anni_disponibili %}
+                    <option value="{{ a.year }}" {% if selected_anno == a.year|stringformat:'s' %}selected{% endif %}>{{ a.year }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <div class="row no-gutters" id="cards-container">
+        {% for tipo, data in summary %}
+        <div class="col-xl-3 col-md-4 col-sm-6 p-2 tipo-card" data-tipo-id="{{ data.id }}" style="display: none;">
+            <div class="card shadow-sm h-100 border-0 compact-card">
+                <div class="card-header bg-warning border-bottom-0 pb-1 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title font-weight-bold text-primary mb-0" style="font-size: 0.95rem;">{{ tipo|upper }}</h6>
+                    </div>
+                    <div class="text-right">
+                        <span class="badge text-warning badge-secondary p-2 h6 badge-pill">{{ data.total }}</span>
+                    </div>
+                </div>
+
+                <!-- <div class="card-body py-2">
+                    <div class="progress mb-2" style="height: 8px; border-radius: 5px;">
+                        {% for st in data.stats %}
+                        <div class="progress-bar {{ st.bg }}" role="progressbar"
+                             style="width: {{ st.percent }}%"
+                             title="{{ st.label }}: {{ st.count }}"
+                             data-toggle="tooltip"></div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="list-group list-group-flush small">
+                        {% for st in data.stats %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0 py-2">
+                            <span>
+                                <i class="bi bi-circle-fill {{ st.class|cut:'badge-'|add:' text-' }} mr-1"
+                                   style="font-size: 7px;"></i>
+                                {{ st.label }}
+                            </span>
+                            <span class="font-weight-bold">
+                                {{ st.count }} <small class="text-muted font-weight-normal ml-1"
+                                                    style="font-size: 0.75rem;">
+                                    ({{ st.percent }}%)
+                                </small>
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div> -->
+
+                <div class="row">
+                    <div class="col-4">
+                        <a href="{% url 'protocollo:search_pratica_tipo_url' data.id %}"
+                           class="btn btn-link btn-sm text-left p-0"
+                           style="font-size: 0.9rem;">
+                            {% if data.id %}
+                            Elenco
+                            {% else %}
+                            <span class="text-muted small">Nessun dettaglio</span>
+                            {% endif %}
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a title="Vedi distribuzione geografica"
+                           href="{% url 'protocollo:pratiche_chart_by_tipo' tipo_pratica_id=data.id %}"
+                           class="btn btn-link btn-sm text-center p-0"
+                           style="font-size: 0.8rem;">
+                            Andamento
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a title="Vedi distribuzione geografica"
+                           href="{% url 'protocollo:mappa_tipo_pratica_url' data.id %}"
+                           class="btn btn-link btn-sm text-right p-0"
+                           style="font-size: 0.8rem;">
+                            Mappa
+                        </a>
+                    </div>
+                </div>
+
+                {# Canvas for the chart #}
+                <div class="mt-2" style="height: 250px; text-align: left;">
+                    <canvas id="barChart{{ data.id }}-{{ forloop.counter }}"
+                            style="width: 100%; height: 150px;"></canvas>
+                </div>
+
+{# Script that creates the chart #}
+                 <script>
+                     (function () {
+                         if (typeof Chart === 'undefined') {
+                             console.error('Chart.js not loaded');
+                             return;
+                         }
+                         const ctx = document.getElementById('barChart{{ data.id }}-{{ forloop.counter }}').getContext('2d');
+
+                         const labels = [];
+                         const counts = [];
+                         const colors = [];
+                         {% for st in data.stats %}
+                         labels.push('{{ st.label }}');
+                         counts.push({{ st.count }});
+                         colors.push('{{ st.bg }}');
+                         {% endfor %}
+
+                         // Mappa classi Bootstrap ai colori Chart.js
+                         const bgToColor = {
+                             'bg-primary': '#0d6efd',
+                             'bg-secondary': '#6c757d',
+                             'bg-success': '#198754',
+                             'bg-danger': '#dc3545',
+                             'bg-warning': '#ffc107',
+                             'bg-info': '#0dcaf0',
+                             'bg-dark': '#212529',
+                             'bg-light': '#f8f9fa'
+                         };
+
+                         const backgroundColors = colors.map(c => bgToColor[c] || '#6c757d');
+
+                          window.chartInstances = window.chartInstances || {};
+                          window.chartInstances['barChart{{ data.id }}-{{ forloop.counter }}'] = new Chart(ctx, {
+                             type: 'doughnut',
+                             data: {
+                                 labels: labels,
+                                 datasets: [{
+                                     data: counts,
+                                     backgroundColor: backgroundColors
+                                 }]
+                             },
+                             options: {
+                                 responsive: true,
+                                 maintainAspectRatio: false
+                             }
+                         });
+                     })();
+                 </script>
+
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+(function () {
+    var select = document.getElementById('tipo-pratica-select');
+    if (!select) return;
+
+    select.addEventListener('change', function () {
+        var selectedId = this.value;
+        var cards = document.querySelectorAll('.tipo-card');
+
+        cards.forEach(function (card) {
+            if (!selectedId || card.getAttribute('data-tipo-id') == selectedId) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        if (window.chartInstances) {
+            Object.values(window.chartInstances).forEach(function (chart) {
+                chart.resize();
+            });
+        }
+    });
+})();
+</script>
+{% endblock %}

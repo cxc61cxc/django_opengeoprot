@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Il mio profilo{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-white px-0 py-2 mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home:index' %}">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Il mio profilo</li>
+    </ol>
+  </nav>
+
+  {% if is_consigliere %}
+    <div class="alert alert-info">
+      <i class="fa fa-info-circle me-2"></i>
+      <strong>Consigliere.</strong> Il tuo profilo è in sola lettura. Per modifiche contatta l'amministrazione.
+    </div>
+  {% endif %}
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-light d-flex align-items-center">
+      <div>
+        <h4 class="mb-0">{{ profile_user.get_full_name|default:profile_user.username }}</h4>
+        <small class="text-muted">@{{ profile_user.username }}</small>
+      </div>
+      {% if profile_user.is_superuser %}
+        <span class="badge bg-danger ms-auto">Superuser</span>
+      {% elif profile_user.is_staff %}
+        <span class="badge bg-warning text-dark ms-auto">Staff</span>
+      {% endif %}
+    </div>
+    <div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-sm-3">Username</dt>
+        <dd class="col-sm-9">{{ profile_user.username }}</dd>
+
+        <dt class="col-sm-3">Nome</dt>
+        <dd class="col-sm-9">{{ profile_user.first_name|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Cognome</dt>
+        <dd class="col-sm-9">{{ profile_user.last_name|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9">{{ profile_user.email|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Settore</dt>
+        <dd class="col-sm-9">
+          {% if profile.settore %}
+            <span class="badge bg-primary">{{ profile.settore.codice }}</span>
+            {{ profile.settore.nome }}
+          {% else %}
+            <span class="text-muted">Nessun settore assegnato</span>
+          {% endif %}
+        </dd>
+
+        <dt class="col-sm-3">Attività U.O.</dt>
+        <dd class="col-sm-9">
+          {% if profile.u_o %}
+            {{ profile.u_o }}
+          {% else %}
+            <span class="text-muted">Nessuna U.O. assegnata</span>
+          {% endif %}
+        </dd>
+
+        <dt class="col-sm-3">Commissioni</dt>
+        <dd class="col-sm-9">
+          {% for iscr in commissioni %}
+            <div class="mb-1">
+              <span class="badge bg-primary me-1">{{ iscr.tipo_commissione.codice }}</span>
+              <strong>{{ iscr.tipo_commissione.nome }}</strong>
+              {% if iscr.tipo_commissione.settori.all %}
+                <small class="text-muted">
+                  (Settori:
+                  {% for s in iscr.tipo_commissione.settori.all %}{{ s.codice }}{% if not forloop.last %}, {% endif %}{% endfor %})
+                </small>
+              {% endif %}
+              <br>
+              <small class="text-muted">
+                dal {{ iscr.data_inizio|date:"d/m/Y" }}
+                {% if iscr.data_fine %}al {{ iscr.data_fine|date:"d/m/Y" }}{% else %}— in corso{% endif %}
+              </small>
+            </div>
+          {% empty %}
+            <span class="text-muted">Nessuna commissione assegnata</span>
+          {% endfor %}
+        </dd>
+
+        <dt class="col-sm-3">Gruppi</dt>
+        <dd class="col-sm-9">
+          {% for g in profile_user.groups.all %}
+            <span class="badge bg-secondary me-1">{{ g.name }}</span>
+          {% empty %}
+            <span class="text-muted">Nessun gruppo</span>
+          {% endfor %}
+        </dd>
+
+        <dt class="col-sm-3">Ultimo accesso</dt>
+        <dd class="col-sm-9">{{ profile_user.last_login|date:"d/m/Y H:i"|default:'Mai' }}</dd>
+      </dl>
+    </div>
+    <div class="card-footer bg-white text-end">
+      {% if not is_consigliere %}
+        <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline-primary">
+          <i class="fa fa-edit me-1"></i> Modifica Profilo
+        </a>
+      {% endif %}
+      <a href="{% url 'accounts:password_change' %}" class="btn btn-outline-secondary ms-2">
+        <i class="fa fa-key me-1"></i> Cambia Password
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

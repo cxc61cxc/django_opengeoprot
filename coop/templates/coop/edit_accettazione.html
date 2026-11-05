@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="container">
+    <div class="row my-3">
+        <div class="form-group col-md-1 mb-0" >
+            <a class="btn btn-success text-white " href="{% url 'protocollo:pratica_detail_url' pk=pratica.id %}" target= "_self">Indietro</a>
+        </div>  
+        
+        <div class="form-group col-md-11 mb-0" >
+            <div class="row">
+                <div class="col-12 h5">
+                    <b>Modifica ACCETTAZIONE</b>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    {{ pratica.tipo_pratica | upper }}
+                </div>
+                <div class="col-3">
+                    prot.gen  {{pratica.prot_gen }}/{{ pratica.data_prot_gen|date:"Y" }}
+                </div>
+                <div class="col-3">
+                    {{pratica.oggetto | linebreaks }}
+                </div>
+                <div class="col-3">
+                   {% for r in richiedente %}
+                        {{ r.cognome | upper }}  {{ r.nome|title }}
+                   {% endfor %}
+                </div>
+            </div>
+            <div class="row">
+
+                <div class="col-3 h6">
+                    <b>Importo dovuto : {{ importo_convenzione }}</b>
+                    <input type=hidden name = 'convenzione_id' value = {{ id }}>
+                </div>
+
+                <div class="col-3 h6">
+                    <b>versato : euro {{tot_dovuto}} </b>
+                </div>
+
+                <div class="col-3 h6">
+                    <b> residuo: euro {{residuo}}</b>
+                </div>
+                
+                
+                <div class="col-3 h6">
+                    {% if stato == 'a debito!' %}
+                        <span style="color:red;"><b>{{ stato }}</b></span>
+                    {% else %}
+                        <span style="color:green;"><b>{{ stato }}</b></span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>  
+        
+    </div>
+</div>
+<div class="container border " style="font-size:0.9em;">
+    {% if is_editor %}
+        <form action="" method="POST">
+
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-1" ></div>
+                   
+                <div class="col-2" >
+                    {{ form.prot_gen | as_crispy_field  }}
+                </div>
+                <div class="col-2" >
+                    {{ form.data_accettazione | as_crispy_field  }}
+                </div>
+                <div class="col-3" >
+                    {{ form.importo | as_crispy_field  }}
+                </div>
+                <div class="col-3" >
+                    {{ form.iuv | as_crispy_field  }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-1" ></div>
+
+                <div class="col-8" >
+                    {{ form.annotazione | as_crispy_field  }}
+                </div>
+                <div class="col-3" >
+                    {{ form.rateo | as_crispy_field  }}
+                </div>
+            </div>
+
+        
+            
+            <div class="form-row">
+                {% if accetta.rateo == True %}
+                    <div class="col text-left ">
+                       <a class="btn btn-outline-info" href="{% url  'coop:scadenze_create' id=accetta.convenzione_id %}">Aggiungi scadenza</a>
+                    </div> 
+                {% endif %}
+                {% if pratica.stato == 'ic' or pratica.stato == 'a'  %}
+                <div class="col text-right ">
+                    
+                    {% if can_write %}<input type="submit" value="Salva" class="btn btn-outline-danger btn-sm">{% endif %}
+                </div> 
+                {% endif %}
+            </div>    
+        
+        </form>
+    {% endif %}
+</div>        
+{% block scadenze %}
+    {% include 'coop/scadenze_list.html' %}
+{% endblock scadenze %}
+{% endblock content %}

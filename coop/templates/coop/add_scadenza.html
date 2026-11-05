@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<br>
+<div class="container border " style="font-size:0.9em;">
+<a class="btn btn-sm btn-outline-success" href="{% url 'coop:edit_accettazione_view_url' id %}">Torna alla lista</a>
+<h3>{{ action }} Scadenza</h3>
+<br>
+    <form method="post">
+        {% csrf_token %}
+                
+            <div class="row ">
+                
+                <div class="col-2">
+                    {{ form.data_scadenza | as_crispy_field }}
+                </div>
+                <div class="col-2">
+                    {{ form.importo_rata | as_crispy_field }}
+                </div>
+                <div class="col-1">
+                </div>
+                <div class="col-2">
+                    {{ form.data_pagamento | as_crispy_field }}
+                </div>
+                <div class="col-2">
+                    {{ form.importo_pagamento | as_crispy_field }}
+                </div>
+                <div class="col-3">
+                    {{ form.iuv | as_crispy_field }}
+                </div>
+            </div>
+        {% comment %} {{ form.as_p }} {% endcomment %}
+         <div class="row ">
+                
+                <div class="col-2 offset-10 text-right">
+                    <button class = "btn btn-sm btn-outline-danger" type="submit">{{ action }}</button>
+                </div>
+            </div>
+        {% comment %} <a href="{% url 'coop:edit_accettazione_view_url' id %}">Torna alla lista</a> {% endcomment %}
+    </form>
+</div>
+{% endblock %}

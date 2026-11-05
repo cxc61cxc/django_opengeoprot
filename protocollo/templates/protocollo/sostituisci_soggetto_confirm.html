@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="container">
+  <div class="row">
+    <h5>Sostituisci soggetto nella pratica</h5>
+  </div>
+
+  <div class="container p-2 my-2 border" style="font-size:0.9em;">
+    <div class="alert alert-warning">
+      <strong>Attenzione:</strong> stai per sostituire il seguente soggetto nella pratica.
+    </div>
+
+    <div class="form-row mb-3">
+      <div class="form-group col-md-12">
+        <label>Soggetto da sostituire</label>
+        <input type="text" class="form-control" value="{{ ex_soggetto_desc }}" readonly>
+      </div>
+    </div>
+
+    <form method="POST">
+      {% csrf_token %}
+      <div class="form-row mb-3">
+        <div class="form-group col-md-12">
+          <label>Descrizione sostituzione</label>
+          <textarea name="descrizione" class="form-control" rows="3" placeholder="Motivo della sostituzione..."></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <a href="{% url 'protocollo:pratica_detail_url' pk=pratica.id %}" class="btn btn-secondary">Annulla</a>
+        </div>
+        <div class="form-group col-md-6 text-right">
+          <button type="submit" class="btn btn-warning">Conferma sostituzione</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock content %}

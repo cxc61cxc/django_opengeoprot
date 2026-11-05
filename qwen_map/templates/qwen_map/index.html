@@ -1,0 +1,493 @@
+{% load static %}
+<!-- pratiche_lista_area.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Qwen Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        .layout {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 300px;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        .map-container {
+            flex: 1;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <div class="sidebar">
+            <h1>Funzioni</h1>
+            <form id="osm-search-form" class="mb-3">
+                <div class="mb-2">
+                    <input type="text" id="osm-query" class="form-control form-control-sm" placeholder="Cerca su OpenStreetMap..." required>
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary w-100">Cerca</button>
+            </form>
+            <div id="osm-results" class="mt-3"></div>
+            <div class="mt-3">
+                <form id="particella-search-form" class="mb-2">
+                    <div class="mb-2">
+                        <input type="text" id="particella-foglio" class="form-control form-control-sm" placeholder="Foglio" required>
+                    </div>
+                    <div class="mb-2">
+                        <input type="text" id="particella-mappale" class="form-control form-control-sm" placeholder="Mappale" required>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary w-100">Cerca Particella</button>
+                </form>
+                <div id="particella-result" class="mt-2"></div>
+            </div>
+            <div class="mt-3">
+                <button type="button" id="loadGeoJSON" class="btn btn-sm btn-outline-secondary w-100">Carica GeoJSON</button>
+            </div>
+        </div>
+        <div class="map-container">
+            <div id="map"></div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // Vista approssimativa di fallback su Carrara
+                const fallbackBounds = L.latLngBounds([
+                    [44.04, 10.02],
+                    [44.10, 10.18]
+                ]);
+                const center = fallbackBounds.getCenter();
+
+                var map = L.map("map", {
+                    zoomControl: true
+                }).setView([center.lat, center.lng], 15);
+
+                var osm = L.tileLayer("{% static 'tiles/' %}{z}/{x}/{y}.png", {
+                    attribution: 'Comune di Carrara: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ',
+                    maxZoom: 19
+                }).addTo(map);
+
+                var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EBP, and the GIS User Community'
+                });
+
+                var baseMaps = {
+                    "OpenStreetMap": osm,
+                    "Satellite": satellite
+                };
+                var overlayMaps = {};
+                var layerControl;
+                var geojsonLayer = null;
+                var particellaLayer = null;
+
+                map.fitBounds(fallbackBounds, {
+                    padding: [20, 20]
+                });
+
+                layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+                var osmResultsLayer = L.featureGroup().addTo(map);
+
+                function buildPopupContent(item) {
+                    var html = '<div style="max-height:400px;overflow:auto;">';
+                    html += '<b>' + item.display_name + '</b><hr>';
+                    if (item.extratags) {
+                        Object.keys(item.extratags).forEach(function (key) {
+                            html += '<b>' + key + ':</b> ' + item.extratags[key] + '<br>';
+                        });
+                        html += '<hr>';
+                    }
+                    Object.keys(item).forEach(function (key) {
+                        if (key === 'geojson' || key === 'extratags') return;
+                        var value = item[key];
+                        if (value === null || value === undefined || value === '') return;
+                        if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
+                            value = JSON.stringify(value);
+                        }
+                        html += '<b>' + key + ':</b> ' + value + '<br>';
+                    });
+                    if (item.osm_user || item.osm_timestamp) {
+                        html += '<hr>';
+                        if (item.osm_user) {
+                            html += '<b>OSM User:</b> ' + item.osm_user + '<br>';
+                        }
+                        if (item.osm_timestamp) {
+                            html += '<b>Creato il:</b> ' + item.osm_timestamp + '<br>';
+                        }
+                    }
+                    html += '</div>';
+                    return html;
+                }
+
+                // Ricerca OpenStreetMap limitata al bbox della mappa
+                document.getElementById('osm-search-form').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    var query = document.getElementById('osm-query').value.trim();
+                    if (!query) return;
+
+                    var bounds = map.getBounds();
+                    var viewbox = bounds.getWest() + ',' + bounds.getSouth() + ',' + bounds.getEast() + ',' + bounds.getNorth();
+
+                    var url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&viewbox=' + viewbox + '&limit=50&polygon_geojson=1&countrycodes=it&accept-language=it&dedupe=1&extratags=1';
+
+                    fetch(url)
+                        .then(function (response) { return response.json(); })
+                        .then(function (data) {
+                            osmResultsLayer.clearLayers();
+                            var resultsDiv = document.getElementById('osm-results');
+                            resultsDiv.innerHTML = '';
+
+                            if (data.length === 0) {
+                                resultsDiv.innerHTML = '<p class="small text-muted">Nessun risultato nel bbox corrente.</p>';
+                                return;
+                            }
+
+                            if (data.length >= 50) {
+                                var warning = document.createElement('p');
+                                warning.className = 'small text-warning';
+                                warning.textContent = 'Mostrati i primi 50 risultati.';
+                                resultsDiv.appendChild(warning);
+                            }
+
+                            var osmPromises = data.map(function (item) {
+                                if (!item.osm_type || !item.osm_id) return Promise.resolve(item);
+                                var osmUrl = 'https://api.openstreetmap.org/api/0.6/' + item.osm_type + '/' + item.osm_id + '.json';
+                                return fetch(osmUrl)
+                                    .then(function (response) { return response.json(); })
+                                    .then(function (osmData) {
+                                        if (osmData.elements && osmData.elements.length > 0) {
+                                            var el = osmData.elements[0];
+                                            item.osm_user = el.user;
+                                            item.osm_timestamp = el.timestamp;
+                                        }
+                                        return item;
+                                    })
+                                    .catch(function () {
+                                        return item;
+                                    });
+                            });
+
+                            Promise.all(osmPromises).then(function (enrichedData) {
+                                enrichedData.forEach(function (item) {
+                                    var lat = parseFloat(item.lat);
+                                    var lon = parseFloat(item.lon);
+                                    var row = document.createElement('div');
+                                    row.className = 'small mb-1';
+
+                                    if (item.geojson) {
+                                        var geoJsonLayer = L.geoJSON(item.geojson, {
+                                            style: {
+                                                color: '#ff0000',
+                                                weight: 2,
+                                                fillColor: '#ff0000',
+                                                fillOpacity: 0.25
+                                            }
+                                        }).bindPopup(buildPopupContent(item)).addTo(osmResultsLayer);
+
+                                        row.setAttribute('data-index', osmResultsLayer.getLayers().length - 1);
+                                        row.innerHTML = '<a href="#">' + item.display_name + '</a>';
+                                    } else {
+                                        var marker = L.marker([lat, lon]).bindPopup(buildPopupContent(item)).addTo(osmResultsLayer);
+
+                                        row.setAttribute('data-index', osmResultsLayer.getLayers().length - 1);
+                                        row.innerHTML = '<a href="#" data-lat="' + lat + '" data-lon="' + lon + '">' + item.display_name + '</a>';
+                                    }
+
+                                    resultsDiv.appendChild(row);
+                                });
+
+                                var streetItems = enrichedData.filter(function (item) {
+                                    return item.type === 'way' || (item.class && item.class.indexOf('highway') !== -1);
+                                });
+
+                                function fitMap() {
+                                    try {
+                                        map.fitBounds(osmResultsLayer.getBounds().pad(0.2));
+                                    } catch (err) {
+                                        console.error('fitBounds error:', err);
+                                    }
+                                }
+
+                                if (streetItems.length > 0) {
+                                    var streetName = '';
+                                    for (var i = 0; i < streetItems.length; i++) {
+                                        var si = streetItems[i];
+                                        if (si.address && si.address.road) {
+                                            streetName = si.address.road;
+                                            break;
+                                        }
+                                    }
+                                    if (!streetName && streetItems[0]) {
+                                        streetName = streetItems[0].name || '';
+                                    }
+
+                                    if (streetName) {
+                                        var bbox = map.getBounds();
+                                        var bboxStr = bbox.getSouth() + ',' + bbox.getWest() + ',' + bbox.getNorth() + ',' + bbox.getEast();
+                                        var overpassQuery = '[out:json][bbox:' + bboxStr + '];('
+                                            + 'way[name~"' + streetName.replace(/"/g, '\\"') + '", "i"][highway];'
+                                            + 'node[addr:street~"' + streetName.replace(/"/g, '\\"') + '", "i"];'
+                                            + ');out body;';
+
+                                        fetch('https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(overpassQuery))
+                                            .then(function (response) { return response.json(); })
+                                            .then(function (overpassData) {
+                                                if (overpassData.elements) {
+                                                    var ways = [];
+                                                    var nodes = [];
+                                                    overpassData.elements.forEach(function (el) {
+                                                        if (el.type === 'way') {
+                                                            ways.push(el);
+                                                        } else if (el.type === 'node') {
+                                                            nodes.push(el);
+                                                        }
+                                                    });
+
+                                                    if (ways.length > 0) {
+                                                        var wayIds = ways.map(function (w) { return w.id; });
+                                                        var wayNodesQuery = '[out:json];('
+                                                            + wayIds.map(function (id) { return 'way(id:' + id + ');'; }).join('')
+                                                            + ');(._;>;);out body;';
+
+                                                        fetch('https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(wayNodesQuery))
+                                                            .then(function (response) { return response.json(); })
+                                                            .then(function (wayNodesData) {
+                                                                if (wayNodesData.elements) {
+                                                                    var nodeMap = {};
+                                                                    wayNodesData.elements.forEach(function (el) {
+                                                                        if (el.type === 'node') {
+                                                                            nodeMap[el.id] = [el.lat, el.lon];
+                                                                        }
+                                                                    });
+
+                                                                    ways.forEach(function (w) {
+                                                                        var coords = [];
+                                                                        if (w.nodes && w.nodes.length > 0) {
+                                                                            w.nodes.forEach(function (nid) {
+                                                                                if (nodeMap[nid]) {
+                                                                                    coords.push(nodeMap[nid]);
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                        if (coords.length > 0) {
+                                                                            L.polyline(coords, {
+                                                                                color: '#ff0000',
+                                                                                weight: 4,
+                                                                                opacity: 0.8
+                                                                            }).bindPopup(
+                                                                                '<b>Via:</b> ' + (w.tags.name || streetName) + '<br>' +
+                                                                                '<b>Highway:</b> ' + (w.tags.highway || '')
+                                                                            ).addTo(osmResultsLayer);
+                                                                        }
+                                                                    });
+                                                                }
+                                                                fitMap();
+                                                            })
+                                                            .catch(function (error) {
+                                                                console.error('Overpass way nodes error:', error);
+                                                                fitMap();
+                                                            });
+                                                    }
+
+                                                    nodes.forEach(function (el) {
+                                                        if (el.tags && el.tags['addr:street']) {
+                                                            L.circleMarker([el.lat, el.lon], {
+                                                                radius: 6,
+                                                                color: '#0000ff',
+                                                                fillColor: '#0000ff',
+                                                                fillOpacity: 0.8
+                                                            }).bindPopup(
+                                                                '<b>Civico:</b> ' + (el.tags['addr:housenumber'] || 'N/D') + '<br>' +
+                                                                '<b>Via:</b> ' + (el.tags['addr:street'] || streetName)
+                                                            ).addTo(osmResultsLayer);
+                                                        }
+                                                    });
+
+                                                    if (ways.length === 0 && nodes.length === 0) {
+                                                        fitMap();
+                                                    }
+                                                } else {
+                                                    fitMap();
+                                                }
+                                            })
+                                            .catch(function (error) {
+                                                console.error('Overpass error:', error);
+                                                fitMap();
+                                            });
+                                        return;
+                                    }
+                                }
+                                fitMap();
+                            });
+                        })
+                        .catch(function (error) {
+                            console.error('Errore ricerca OSM:', error);
+                            document.getElementById('osm-results').innerHTML = '<p class="small text-danger">Errore di connessione.</p>';
+                        });
+                });
+
+                document.getElementById('osm-results').addEventListener('click', function (e) {
+                    if (e.target.tagName === 'A') {
+                        e.preventDefault();
+                        var row = e.target.closest('div[data-index]');
+                        if (!row) return;
+                        var index = parseInt(row.getAttribute('data-index'), 10);
+                        var layers = osmResultsLayer.getLayers();
+                        var layer = layers[index];
+                        if (!layer) return;
+
+                        if (layer.getLatLng) {
+                            map.setView(layer.getLatLng(), 17);
+                        } else if (layer.getBounds) {
+                            map.fitBounds(layer.getBounds().pad(0.2));
+                        }
+                        layer.openPopup();
+                    }
+                });
+
+                document.getElementById('particella-search-form').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    var foglio = document.getElementById('particella-foglio').value.trim();
+                    var mappale = document.getElementById('particella-mappale').value.trim();
+                    if (!foglio || !mappale) return;
+
+                    var resultDiv = document.getElementById('particella-result');
+                    resultDiv.innerHTML = '<p class="small text-muted">Ricerca in corso...</p>';
+
+                    fetch('{% url "qwen_map:search-particella" %}?foglio=' + encodeURIComponent(foglio) + '&mappale=' + encodeURIComponent(mappale))
+                        .then(function (response) { return response.json(); })
+                        .then(function (data) {
+                            resultDiv.innerHTML = '';
+                            if (data.error) {
+                                resultDiv.innerHTML = '<p class="small text-danger">' + data.error + '</p>';
+                                return;
+                            }
+                            try {
+                                var geojsonData = JSON.parse(data.geojson);
+                                if (particellaLayer) {
+                                    map.removeLayer(particellaLayer);
+                                }
+                                particellaLayer = L.geoJSON(geojsonData, {
+                                    style: {
+                                        color: '#0000ff',
+                                        weight: 3,
+                                        fillColor: '#0000ff',
+                                        fillOpacity: 0.2
+                                    },
+                                    onEachFeature: function (feature, layer) {
+                                        var props = feature.properties || {};
+                                        var pk = props.id !== undefined ? props.id : props.pk;
+                                        var html = '<div style="max-height:400px;overflow:auto;">';
+                                        Object.keys(props).forEach(function (key) {
+                                            if (key === 'geojson') return;
+                                            var value = props[key];
+                                            if (value === null || value === undefined || value === '') return;
+                                            if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
+                                                value = JSON.stringify(value);
+                                            }
+                                            html += '<b>' + key + ':</b> ' + value + '<br>';
+                                        });
+                                        if (pk !== undefined && pk !== null && pk !== '') {
+                                            html += '<a href="https://gis.comune.carrara.ms.it/lizmap355/index.php/lizmap/service/?repository=001&project=piani_e_vincoli_pg_2023&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPrintAtlas&FORMAT=pdf&EXCEPTIONS=application/vnd.ogc.se_inimage&TRANSPARENT=true&DPI=100&TEMPLATE=informativa_&LAYER=vw_particelle_f&EXP_FILTER=$id%20IN%20(' + encodeURIComponent(pk) + ')" target="_blank">Informativa</a>';
+                                        }
+                                        var f = props.foglio;
+                                        var m = props.mappale;
+                                        if ((f !== undefined && f !== null && f !== '') && (m !== undefined && m !== null && m !== '')) {
+                                            html += '<br><a href="http://127.0.0.1:8000/protocollo/search/protocollo/?cognome=&nome=&prot_gen=&anno=&stato=*&tp=*&foglio=' + encodeURIComponent(f) + '&mappale=' + encodeURIComponent(m) + '&street_id=*&civico=&oggetto=&origine_id=&atto=&tecnico=" target="_blank">Precedenti edilizi</a>';
+                                            html += '<br><a href="http://127.0.0.1/ubucomu/catasto/nctr_results_ana.php?f=' + encodeURIComponent(f) + '&m=' + encodeURIComponent(m) + '" target="_blank">Visura</a>';
+                                        }
+                                        html += '</div>';
+                                        layer.bindPopup(html);
+                                    }
+                                }).addTo(map);
+
+                                map.fitBounds(particellaLayer.getBounds().pad(0.2));
+                                resultDiv.innerHTML = '<p class="small text-success">Particella trovata.</p>';
+                            } catch (err) {
+                                resultDiv.innerHTML = '<p class="small text-danger">Errore elaborazione dati.</p>';
+                            }
+                        })
+                        .catch(function (error) {
+                            resultDiv.innerHTML = '<p class="small text-danger">Errore di connessione.</p>';
+                        });
+                });
+
+                // Aggiungi evento per caricare il file GeoJSON locale
+                document.getElementById('loadGeoJSON').addEventListener('click', function () {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.geojson';
+
+                    input.onchange = function (event) {
+                        console.log("File selezionato:", event.target.files[0]);
+                        const file = event.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = function (e) {
+                                console.log("Contenuto del file GeoJSON:", e.target.result);
+                                try {
+                                    const geojsonData = JSON.parse(e.target.result);
+
+                                    if (geojsonLayer) {
+                                        map.removeLayer(geojsonLayer);
+                                    }
+
+                                    geojsonLayer = L.geoJSON(geojsonData, {
+                                        style: {
+                                            color: "#ff0000",
+                                            weight: 2,
+                                            fillColor: "#ff0000",
+                                            fillOpacity: 0.3
+                                        },
+                                        onEachFeature: function (feature, layer) {
+                                            var props = feature.properties;
+                                            var html = '<div style="max-height:400px;overflow:auto;">';
+                                            Object.keys(props).forEach(function (key) {
+                                                if (key === 'geojson') return;
+                                                var value = props[key];
+                                                if (value === null || value === undefined || value === '') return;
+                                                if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
+                                                    value = JSON.stringify(value);
+                                                }
+                                                html += '<b>' + key + ':</b> ' + value + '<br>';
+                                            });
+                                            html += '</div>';
+                                            layer.bindPopup(html);
+                                        }
+                                    }).addTo(map);
+
+                                    overlayMaps = {};
+                                    overlayMaps["Area caricata"] = geojsonLayer;
+
+                                    map.removeControl(layerControl);
+                                    layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+                                    map.fitBounds(geojsonLayer.getBounds().pad(0.2));
+                                } catch (error) {
+                                    console.error("Errore durante il parsing del GeoJSON:", error);
+                                }
+                            };
+                            reader.readAsText(file);
+                        }
+                    };
+
+                    input.click();
+                });
+            });
+        </script>
+        </div>
+    </div>
+</body>
+</html>

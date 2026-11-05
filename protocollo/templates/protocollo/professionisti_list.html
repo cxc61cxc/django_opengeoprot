@@ -1,0 +1,87 @@
+        {% extends 'base.html' %}
+
+{% block css %}
+<style>
+  .sticky-header thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #f8f9fa !important; /* Colore table-light di Bootstrap */
+  }
+</style>
+{% endblock css %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-7">
+            <h2>Elenco Soggetti</h2>
+            <p class="text-muted mb-md-0">Anagrafica completa dei soggetti censiti nel sistema e relative pratiche.</p>
+        </div>
+        <div class="col-md-5">
+            <form method="GET" action="" class="input-group">
+                <input type="text" name="q" class="form-control" placeholder="Cerca per cognome, nome o C.F. (es. de luca mario)" value="{{ request.GET.q|default:'' }}">
+                <button class="btn btn-primary" type="submit">
+                    Cerca
+                </button>
+                {% if request.GET.q %}
+                    <a href="{% url 'protocollo:professionisti_list_url' %}" class="btn btn-outline-secondary">Reset</a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        {% if has_query %}
+        <div class="table-responsive" style="height: 600px; overflow-y: auto;">
+            <table class="table table-hover align-middle mb-0 sticky-header">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nominativo / Denominazione</th>
+                        <th>Codice Fiscale / P.IVA</th>
+                        <th>Ruoli registrati</th>
+                        <th class="text-center">Pratiche Totali</th>
+                        <th class="text-end">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in professionisti %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.soggetto.cognome|upper }}</strong> {{ item.soggetto.nome|title }}
+                            {% if item.soggetto.comune_residenza %}
+                                <br><small class="text-muted">{{ item.soggetto.comune_residenza }}</small>
+                            {% endif %}
+                        </td>
+                        <td><code>{{ item.soggetto.codice_fiscale|upper }}</code></td>
+                        <td>
+                            {% for ruolo in item.ruoli %}
+                                <span class="text-dark">{{ ruolo }}</span>
+                            {% empty %}
+                                <span class="text-muted">—</span>
+                            {% endfor %}
+                        </td>
+                        <td class="text-center"><span class="h6">{{ item.pratiche_count }}</span></td>
+                        <td class="text-end">
+                             <a href="{% url 'protocollo:soggetto_detail_nopk_url' item.soggetto.id %}"
+                                title="Visualizza soggetto (sola lettura)"
+                                class="btn btn-sm btn-outline-secondary">
+                                Vedi
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center py-4">Nessun soggetto trovato con questi criteri.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="card-body text-center text-muted py-5">
+            <i class="bi bi-search mb-2" style="font-size: 1.5rem;"></i>
+            <p class="mb-0">Inserisci un criterio di ricerca per visualizzare i soggetti.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

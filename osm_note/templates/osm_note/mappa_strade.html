@@ -1,0 +1,406 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css %}
+<style>
+    html, body { height: 100%; }
+    .map-row { height: calc(100vh - 120px); }
+    #map { height: 100%; width: 100%; }
+    .sidebar {
+        height: calc(100vh - 120px);
+        background-color: #f8f9fa;
+        border-right: 1px solid #dee2e6;
+        padding: 15px;
+        overflow-y: auto;
+    }
+    .strada-item {
+        border-left: 3px solid #ffc107;
+        padding: 0.25rem 0.5rem;
+        margin-bottom: 0.4rem;
+        background: #fff;
+        border-radius: 0.25rem;
+        cursor: pointer;
+    }
+    .strada-item:hover { background: #fff3cd; }
+    .strada-item.processed { border-left-color: #28a745; opacity: 0.7; }
+    .strada-item.selected { border-left-color: #007bff; background: #e7f1ff; }
+    .strada-item .nome { font-weight: 600; font-size: 0.85rem; }
+    .strada-item .meta { font-size: 0.75rem; color: #6c757d; }
+    #form-edit .form-check-label { font-size: 0.9rem; }
+    .loading-overlay {
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(255,255,255,0.7); z-index: 1000;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .legend { font-size: 0.8rem; }
+    .legend .dot { display: inline-block; width: 12px; height: 3px; margin-right: 4px; vertical-align: middle; }
+</style>
+{% endblock css %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-2">
+        <div class="col-12">
+            <h4>Strade senza operator &ldquo;Comune di Carrara&rdquo;</h4>
+            <p class="text-muted small mb-1">
+                <span class="legend"><span class="dot" style="background:#ffc107;"></span>Da lavorare</span>
+                <span class="legend ml-2"><span class="dot" style="background:#28a745;"></span>Processate</span>
+                <span id="count-badge" class="badge badge-info ml-2">{{ total_strade }} in tabella / {{ pending }} da lavorare</span>
+            </p>
+        </div>
+    </div>
+    <div class="row map-row position-relative">
+        <div id="loading" class="loading-overlay" style="display: none;">
+            <div class="text-center">
+                <i class="fa fa-spinner fa-spin fa-2x"></i>
+                <p class="mt-2 small" id="loading-msg">Caricamento...</p>
+            </div>
+        </div>
+        <div class="col-3 sidebar d-flex flex-column">
+            <h6>Strada selezionata</h6>
+            <div id="form-edit">
+                <div id="no-selection" class="text-muted small">
+                    Clicca una strada sulla mappa o nell'elenco per selezionarla.
+                </div>
+                <div id="selection-detail" style="display:none;">
+                    <div class="form-group">
+                        <label class="small font-weight-bold mb-0">Nome</label>
+                        <div id="sel-nome" class="form-control form-control-sm bg-light"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="small font-weight-bold mb-0">Tipo</label>
+                        <div id="sel-tipo" class="form-control form-control-sm bg-light"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="small font-weight-bold mb-0">OSM ID</label>
+                        <div class="d-flex align-items-center">
+                            <div id="sel-osmid" class="form-control form-control-sm bg-light mr-2"></div>
+                            <a id="lnk-osm" href="#" target="_blank" class="btn btn-outline-secondary btn-sm" title="Apri su OpenStreetMap">
+                                <i class="fa fa-external-link"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="small font-weight-bold mb-0">Operator attuale</label>
+                        <div id="sel-operator" class="form-control form-control-sm bg-light text-muted">—</div>
+                    </div>
+                    <hr>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="chk-operator" name="operator">
+                        <label class="form-check-label" for="chk-operator">
+                            Inserisci <strong>operator = Comune di Carrara</strong>
+                        </label>
+                    </div>
+                    <button type="button" id="btn-salva" class="btn btn-primary btn-sm btn-block mt-2" disabled>
+                        <i class="fa fa-save"></i> Salva ed escludi
+                    </button>
+                    <div id="salva-msg" class="mt-2 small"></div>
+                </div>
+            </div>
+            <hr class="w-100">
+            <button id="btn-importa" class="btn btn-warning btn-sm btn-block mb-2">
+                <i class="fa fa-download"></i> Importa da OSM (aggiorna tabella)
+            </button>
+            <button id="btn-carica" class="btn btn-success btn-sm btn-block mb-2">
+                <i class="fa fa-refresh"></i> Ricarica mappa
+            </button>
+            <h6>Elenco (<span id="lista-count">0</span>)</h6>
+            <div id="strade-lista" class="small"></div>
+        </div>
+        <div class="col-9">
+            <div id="map"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var map = L.map('map').setView([44.077, 10.096], 14);
+
+    L.tileLayer("{% static 'tiles/' %}{z}/{x}/{y}.png", {
+        attribution: 'Comune di Carrara: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    var stradeLayer = L.featureGroup().addTo(map);
+    var stradeData = {};
+    var selectedId = null;
+    var selectedLayer = null;
+    var isLoading = false;
+
+    var csrfToken = '{{ csrf_token }}';
+
+    function showLoading(msg) {
+        document.getElementById('loading-msg').textContent = msg || 'Caricamento...';
+        document.getElementById('loading').style.display = 'flex';
+    }
+
+    function hideLoading() {
+        document.getElementById('loading').style.display = 'none';
+    }
+
+    function caricaStrade() {
+        if (isLoading) return;
+        isLoading = true;
+        showLoading('Caricamento strade dal database...');
+
+        fetch("{% url 'osm_note:strade_json' %}")
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                isLoading = false;
+                hideLoading();
+                if (data.error) {
+                    document.getElementById('count-badge').className = 'badge badge-danger ml-2';
+                    document.getElementById('count-badge').textContent = 'Errore: ' + data.error;
+                    return;
+                }
+                disegnaStrade(data.features || []);
+            })
+            .catch(function(err) {
+                isLoading = false;
+                hideLoading();
+                document.getElementById('count-badge').className = 'badge badge-danger ml-2';
+                document.getElementById('count-badge').textContent = 'Errore di rete';
+            });
+    }
+
+    function importaStrade() {
+        if (isLoading) return;
+        isLoading = true;
+        showLoading('Query Overpass in corso... (può richiedere 1-2 minuti)');
+
+        fetch("{% url 'osm_note:importa_strade' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: ''
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(d) {
+            isLoading = false;
+            hideLoading();
+            if (d.ok) {
+                document.getElementById('count-badge').className = 'badge badge-success ml-2';
+                document.getElementById('count-badge').textContent = 'Importate ' + d.count + ' strade';
+                caricaStrade();
+            } else {
+                document.getElementById('count-badge').className = 'badge badge-danger ml-2';
+                document.getElementById('count-badge').textContent = 'Errore: ' + (d.error || 'sconosciuto');
+            }
+        })
+        .catch(function() {
+            isLoading = false;
+            hideLoading();
+            document.getElementById('count-badge').className = 'badge badge-danger ml-2';
+            document.getElementById('count-badge').textContent = 'Errore di rete';
+        });
+    }
+
+    function disegnaStrade(features) {
+        stradeLayer.clearLayers();
+        stradeData = {};
+
+        var bounds = null;
+
+        features.forEach(function(f) {
+            var osmId = f.id;
+            stradeData[osmId] = f;
+
+            var isProcessed = f.properties.processed;
+            var color = isProcessed ? '#28a745' : '#ffc107';
+            var weight = isProcessed ? 2 : 4;
+            var opacity = isProcessed ? 0.5 : 0.8;
+
+            var layer = L.geoJSON(f, {
+                style: { color: color, weight: weight, opacity: opacity }
+            });
+
+            layer.eachLayer(function(l) {
+                l.on('click', function() { selezionaStrada(osmId); });
+                l.bindTooltip(f.properties.name || '#' + osmId, { sticky: true });
+                if (!bounds) {
+                    bounds = l.getBounds();
+                } else {
+                    bounds.extend(l.getBounds());
+                }
+            });
+
+            layer.addTo(stradeLayer);
+        });
+
+        var pending = features.filter(function(f) { return !f.properties.processed; }).length;
+        document.getElementById('count-badge').textContent = pending + ' da lavorare / ' + features.length + ' totali';
+
+        if (bounds) {
+            map.fitBounds(bounds, { padding: [30, 30] });
+        }
+
+        renderLista();
+    }
+
+    function renderLista() {
+        var ids = Object.keys(stradeData);
+        var mapBounds = map.getBounds();
+
+        function isInBounds(coords) {
+            for (var i = 0; i < coords.length; i++) {
+                if (mapBounds.contains([coords[i][1], coords[i][0]])) return true;
+            }
+            return false;
+        }
+
+        var visibili = ids.filter(function(id) {
+            return isInBounds(stradeData[id].geometry.coordinates);
+        });
+
+        var pending = visibili.filter(function(id) { return !stradeData[id].properties.processed; });
+        var processed = visibili.filter(function(id) { return stradeData[id].properties.processed; });
+
+        document.getElementById('lista-count').textContent = pending.length + '+' + processed.length + ' (tot ' + ids.length + ')';
+
+        var html = '';
+        pending.forEach(function(id) { html += stradaItemHtml(id); });
+        processed.forEach(function(id) { html += stradaItemHtml(id); });
+
+        document.getElementById('strade-lista').innerHTML = html;
+
+        document.querySelectorAll('#strade-lista .strada-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+                selezionaStrada(parseInt(this.getAttribute('data-id'), 10));
+            });
+        });
+    }
+
+    function stradaItemHtml(id) {
+        var f = stradeData[id];
+        var sel = id === selectedId ? ' selected' : '';
+        var processed = f.properties.processed ? ' processed' : '';
+        return '<div class="strada-item' + processed + sel + '" data-id="' + id + '">' +
+            '<div class="nome">' + escapeHtml(f.properties.name || '—') + '</div>' +
+            '<div class="meta">' + escapeHtml(f.properties.highway || '') + ' · #' + id +
+            (f.properties.processed ? ' <span class="badge badge-success badge-xs">OK</span>' : '') +
+            '</div></div>';
+    }
+
+    function selezionaStrada(osmId) {
+        selectedId = osmId;
+        var f = stradeData[osmId];
+        if (!f) return;
+
+        document.getElementById('no-selection').style.display = 'none';
+        document.getElementById('selection-detail').style.display = 'block';
+
+        document.getElementById('sel-nome').textContent = f.properties.name || '—';
+        document.getElementById('sel-tipo').textContent = f.properties.highway || '—';
+        document.getElementById('sel-osmid').textContent = f.properties.osm_id;
+        document.getElementById('lnk-osm').href = 'https://www.openstreetmap.org/way/' + f.properties.osm_id;
+        document.getElementById('sel-operator').textContent = f.properties.operator || '—';
+
+        document.getElementById('chk-operator').checked = false;
+        document.getElementById('btn-salva').disabled = true;
+        document.getElementById('salva-msg').innerHTML = '';
+
+        var featureLayer = null;
+        stradeLayer.eachLayer(function(l) {
+            var isSelected = false;
+            l.eachLayer(function(sub) {
+                if (sub.feature && sub.feature.id === osmId) {
+                    isSelected = true;
+                    featureLayer = sub;
+                }
+            });
+            if (isSelected) {
+                l.setStyle({ color: '#007bff', weight: 6, opacity: 1 });
+                selectedLayer = l;
+            } else {
+                var origColor = l.feature && l.feature.properties.processed ? '#28a745' : '#ffc107';
+                var origWeight = l.feature && l.feature.properties.processed ? 2 : 4;
+                var origOpacity = l.feature && l.feature.properties.processed ? 0.5 : 0.8;
+                l.setStyle({ color: origColor, weight: origWeight, opacity: origOpacity });
+            }
+        });
+
+        if (featureLayer) {
+            map.fitBounds(featureLayer.getBounds(), { padding: [50, 50], maxZoom: 18 });
+        }
+
+        renderLista();
+    }
+
+    document.getElementById('chk-operator').addEventListener('change', function() {
+        document.getElementById('btn-salva').disabled = !this.checked;
+    });
+
+    document.getElementById('btn-salva').addEventListener('click', function() {
+        if (!selectedId) return;
+        var f = stradeData[selectedId];
+        var btn = this;
+        btn.disabled = true;
+
+        var body = 'osm_id=' + encodeURIComponent(f.properties.osm_id) +
+                   '&nome=' + encodeURIComponent(f.properties.name || '') +
+                   '&operator=1';
+
+        fetch("{% url 'osm_note:segna_processata' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: body
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(d) {
+            if (d.ok) {
+                document.getElementById('salva-msg').innerHTML =
+                    '<span class="text-success"><i class="fa fa-check"></i> Salvata ed esclusa</span>';
+                stradeData[selectedId].properties.processed = true;
+                if (selectedLayer) {
+                    selectedLayer.setStyle({ color: '#28a745', weight: 2, opacity: 0.5 });
+                }
+                selectedId = null;
+                selectedLayer = null;
+                document.getElementById('no-selection').style.display = 'block';
+                document.getElementById('selection-detail').style.display = 'none';
+                renderLista();
+            } else {
+                document.getElementById('salva-msg').innerHTML =
+                    '<span class="text-danger">' + escapeHtml(d.error || 'Errore') + '</span>';
+                btn.disabled = false;
+            }
+        })
+        .catch(function() {
+            document.getElementById('salva-msg').innerHTML =
+                '<span class="text-warning">Errore di rete</span>';
+            btn.disabled = false;
+        });
+    });
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, function(c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    document.getElementById('btn-carica').addEventListener('click', function() {
+        caricaStrade();
+    });
+
+    document.getElementById('btn-importa').addEventListener('click', function() {
+        if (confirm('Questo aggiornerà la tabella locale con i dati da OSM. Continuare?')) {
+            importaStrade();
+        }
+    });
+
+    var moveTimeout;
+    map.on('moveend', function() {
+        clearTimeout(moveTimeout);
+        moveTimeout = setTimeout(renderLista, 200);
+    });
+});
+</script>
+{% endblock js %}

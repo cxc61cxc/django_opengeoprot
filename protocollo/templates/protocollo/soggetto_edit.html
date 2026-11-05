@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Modifica soggetto{% endblock %}
+
+{% block content %}
+{% load static %}  <!-- load static -->
+  <div class="container p-3 my-3 border" style="background-color: #F5FFFA; "">
+    <div class="alert alert-info" role="alert">
+      <div class="row"> 
+        <div class="col-3">
+          <a href="{% url 'protocollo:pratica_detail_url' pk %}" 
+                style="color:white;" class="btn btn-sm btn-info" >
+                Indietro
+          </a>
+        </div> 
+        <div class="col-6">
+          <h4 class="font-weight-bold">Modifica soggetto {{form.id}}</h4>
+        </div>
+        {% comment %} <div class="col-6">
+          <p class="nav justify-content-end">Pratica in lavorazione : {{ pk }}</p>
+          <p class="nav justify-content-end">Id soggetto : {{ soggetto.id }}</p>
+        </div> {% endcomment %}
+      </div>
+    </div>  
+    <form action=""  method = "POST" >
+      {% csrf_token %}
+    <hr>
+
+    <div class="row">
+      <div class="col-6 mt-2">
+        <label for="id_tipo" class="form-label">Tipo di Soggetto</label>
+        <select name="tipo" id="id_tipo" class="form-select form-control">
+          <option value="">Seleziona tipo...</option>
+          {% for tipo in tipi_soggetto %}
+            <option value="{{ tipo.id }}" {% if tipo.id == tipo_selezionato %}selected{% endif %}>
+              {{ tipo.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="row">  
+      <div class="col-6">
+        {{ form.cognome  | as_crispy_field  }}
+        <!-- <label>Cognome/Ditta</label>
+        <input class="form-control" type=text name="cognome" value="{{ soggetto.cognome | upper}}"> -->
+        {% comment %} {{ form.cognome  | as_crispy_field  }}      {% endcomment %}
+      </div>
+      <div class="col-1">
+      </div>
+      <div class="col-5">
+        {{ form.nome  | as_crispy_field  }}
+      </div>
+    </div>
+    
+          
+  
+        
+        
+ 
+    <div class="row">  
+      
+      <div class="col-4">
+        {{ form.comune_nascita  | as_crispy_field  }}          
+      </div>
+      <div class="col-2">
+        {{ form.data_nascita  | as_crispy_field  }}          
+      </div>
+      <div class="col-1">
+      </div>
+      
+      <div class="col-3 ">
+        {{ form.codice_fiscale | as_crispy_field}}
+        <!-- <label class="small">codice fiscale/P.Iva</label>
+        <input class="form-control" type=text name="codice_fiscale" value="{{ soggetto.codice_fiscale | upper}}">
+        {% comment %} <span class="text-uppercase">{{ form.codice_fiscale  | as_crispy_field  }}  </span> {% endcomment %}
+        -->
+      </div>
+      
+      
+    </div>
+        {% comment %} 
+                        terza riga form  
+        {% endcomment %}
+
+    <div class="row">  
+      
+
+      <div class="col-4">
+        {{ form.comune_residenza  | as_crispy_field  }}           
+      </div>
+      {% comment %} <div class="col-1">
+      </div> {% endcomment %}
+      <div class="col-4">
+        {{ form.addr  | as_crispy_field  }}         
+      </div>
+      <div class="col-4">
+        {{ form.addr_sede  | as_crispy_field  }}          
+      </div>
+      
+      
+    </div>
+
+      {% comment %} 
+                    quarta riga form  
+    {% endcomment %}
+
+    <div class="row">  
+      
+
+      
+      
+      <div class="col-4">
+        {{ form.email  | as_crispy_field  }}        
+      </div>
+      <div class="col-4">
+        {{ form.pec  | as_crispy_field  }}           
+      </div>
+      <div class="col-1">
+      </div>
+      
+    </div>
+    <div class="row">  
+     
+
+      <div class="col-3">
+        {{ form.cellulare  | as_crispy_field  }}          
+      </div>
+      
+      <div class="col-3">
+        {{ form.telefono  | as_crispy_field  }}        
+      </div>
+      
+      <div class="col-3">
+        {{ form.fax  | as_crispy_field  }}           
+      </div>
+     
+      
+       {% if user.is_superuser or is_editor %}
+         <div class="col-3 text-right ">
+           <br>
+           <input type="submit" class=" btn btn-outline-danger btn-sm" value="SALVA" title = 'STAI MODFIFICANDO I DATI DEL SOGGETTO!!!!... '>
+         </div>
+       {% endif %}
+        
+    </div>
+    </form>
+    
+    
+  </div>
+  {% block pratiche_list %}
+    <div class="container p-3 my-3 border shadow-sm" style="background-color: #ffffff;">
+      <h5 class="text-info border-bottom pb-2">Pratiche collegate a questo soggetto</h5>
+      <div class="table-responsive">
+        <table class="table table-hover table-sm font-size-sm">
+          <thead class="thead-light">
+            <tr>
+              <th>Protocollo</th>
+              <th>Data</th>
+              <th>Oggetto</th>
+              <th>Ubicazione</th>
+              <th>Relazione</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in pratiche %}
+              <tr {% if p.id_pratica == pk %}class="table-primary" title="Pratica corrente"{% endif %}>
+                <td>
+                  <a href="{% url 'protocollo:pratica_detail_url' p.id_pratica %}" class="font-weight-bold">
+                    {{ p.prot_gen }} / {{ p.data_prot_gen|date:"Y" }}
+                  </a>
+                </td>
+                <td>{{ p.data_prot_gen|date:"d/m/Y" }}</td>
+                <td><small>{{ p.oggetto|truncatechars:100 }}</small></td>
+                <td><small>{{ p.ubicazione }}</small></td>
+                <td><span class="badge badge-info-outline">{{ p.tipo_pratica }}</span></td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted">Nessuna pratica trovata per questo soggetto.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endblock pratiche_list %}
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container mt-3">
+    <div class="row mb-3">
+        <div class="col-lg-6">
+            <h4 class="font-weight-bold text-dark mb-0"><i class="bi bi-chart-line text-primary mr-2"></i>Andamento Pratiche</h4>
+            {% if tipo_pratica_id %}
+                <p class="text-muted small">Tipo: {{ datasets.0.label|default:'' }}</p>
+            {% else %}
+                <p class="text-muted small">Andamento annuo delle pratiche per tipo.</p>
+            {% endif %}
+        </div>
+        <div class="col-lg-6 text-right align-self-center">
+            <button class="btn btn-outline-primary btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Stampa</button>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% if not has_data %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-chart-line" style="font-size: 2rem;"></i>
+                <p class="mt-2">Nessun dato disponibile per il periodo selezionato.</p>
+            </div>
+            {% else %}
+            <canvas id="praticheChart" style="height: 400px;"></canvas>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var ctx = document.getElementById('praticheChart').getContext('2d');
+                
+                // Data from Django view
+                var labels = {{ labels|safe }};
+                var datasets = [
+                    {% for dataset in datasets %}
+                    {
+                        label: '{{ dataset.label }}',
+                        data: {{ dataset.data|safe }},
+                        borderColor: '{{ dataset.borderColor }}',
+                        backgroundColor: '{{ dataset.backgroundColor }}',
+                        fill: false,
+                        tension: 0.1
+                    }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ];
+                
+                var chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top'
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Anno'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Numero Pratiche'
+                                },
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+            </script>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

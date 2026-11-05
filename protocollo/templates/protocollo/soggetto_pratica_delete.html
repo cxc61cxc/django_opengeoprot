@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container">
+    
+    <h5 style="color:red;"><b>ELIMINA soggetto ( id={{soggetto.id}}</b> )</h5>
+    <br>
+      <div class="row align-items-start" >
+        <div class="col">
+          <h6>Tipo soggetto :{{ soggetto.tipo | upper}} </h6>
+        </div>
+        <div class="col">
+          <h6><b>  {{ nominativo.cognome|upper }} {{nominativo.nome|title }}</b></h6>
+        </div>
+       
+      </div>
+     
+<br><br><hr>   
+<p>Sei sicuro di volere elimare il soggetto da questa pratica?: </p>
+  <div class="row">
+    <div class="col-11">
+      <form action="" method="post">
+        {% csrf_token %}
+        <input class="btn btn-outline-danger btn-sm" type="submit" value="Elimina">
+      </form>
+    </div>
+    <div class="col-1">
+      <input type=button class="btn btn-success btn-sm" value="Indietro" onClick="javascript:history.go(-1);">
+    </div>
+  </div>
+
+  <div class="text-right">
+    <!-- <form action="" method="post">
+      {% csrf_token %}
+      <p>Sei sicuro di volere elimare la particella?: </p>
+      <input class="btn btn-outline-danger" type="submit" value="Elimina">
+    </form> -->
+  </div>
+</div>
+{% endblock %}
+		

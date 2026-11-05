@@ -1,0 +1,520 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+<style>
+    html, body { height: 100%; }
+    .highway-layout { min-height: calc(100vh - 122px); }
+    .map-row { height: calc(100vh - 145px); min-height: 560px; }
+    #map { height: 100%; width: 100%; background: #eef2f3; }
+    .highway-sidebar {
+        height: 100%;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+        border-right: 1px solid #dee2e6;
+        padding: 15px;
+    }
+    .highway-item {
+        border-left: 3px solid #d62828;
+        padding: 0.35rem 0.5rem;
+        margin-bottom: 0.4rem;
+        background: #fff;
+        border-radius: 0.25rem;
+        cursor: pointer;
+    }
+    .highway-item:hover { background: #fff3f3; }
+    .highway-item.selected { border-left-color: #007bff; background: #e7f1ff; }
+    .highway-item .nome { font-weight: 600; font-size: 0.85rem; }
+    .highway-item .meta { font-size: 0.75rem; color: #6c757d; }
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.78);
+        z-index: 1040;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .attribute-box {
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 0.75rem;
+        max-height: 220px;
+        overflow-y: auto;
+    }
+    .leaflet-container { font: inherit; }
+</style>
+{% endblock css %}
+
+{% block content %}
+<div class="container-fluid highway-layout">
+    <div class="row mb-2">
+        <div class="col-12">
+            <h4>Highway OpenStreetMap</h4>
+            <p class="text-muted small mb-0">
+                Visualizza e ricerca le highway del comune di Carrara. Gli utenti abilitati alla cartografia possono modificarne geometria e attributi.
+            </p>
+        </div>
+    </div>
+    <div class="row map-row position-relative">
+        <div id="loading" class="loading-overlay" style="display: none;">
+            <div class="text-center">
+                <i class="fa fa-spinner fa-spin fa-2x"></i>
+                <p class="mt-2 small" id="loading-msg">Caricamento...</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-4 highway-sidebar">
+            <h6>Ricerca</h6>
+            <form id="form-ricerca" class="mb-2">
+                <div class="form-group">
+                    <input type="text" class="form-control form-control-sm" id="campo-ricerca" name="q" placeholder="Nome strada o tipo highway" autocomplete="off">
+                </div>
+            <button type="submit" class="btn btn-primary btn-sm btn-block">
+                <i class="fa fa-search"></i> Cerca
+            </button>
+            <button type="button" id="btn-reset-filtro" class="btn btn-outline-secondary btn-sm btn-block">
+                <i class="fa fa-eraser"></i> Reset filtro
+            </button>
+            </form>
+            {% if user.is_superuser %}
+            <button id="btn-importa" class="btn btn-warning btn-sm btn-block mb-2">
+                <i class="fa fa-download"></i> Importa da OSM
+            </button>
+            {% endif %}
+            <button id="btn-carica" class="btn btn-success btn-sm btn-block mb-2">
+                <i class="fa fa-refresh"></i> Ricarica mappa
+            </button>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="chk-mostra-modificati">
+                <label class="form-check-label small" for="chk-mostra-modificati">
+                    Mostra solo modificati (operator = Comune di Carrara)
+                </label>
+            </div>
+            <hr>
+            <div id="nessun-selezionato" class="text-muted small">
+                Clicca una highway sulla mappa o nell'elenco per visualizzarne gli attributi.
+            </div>
+            <div id="dettaglio-selezione" style="display: none;">
+                <h6>Attributi selezionati</h6>
+                <div class="form-group">
+                    <label class="small font-weight-bold mb-0" for="sel-nome">Nome</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control form-control-sm" id="sel-nome" {% if not can_edit %}disabled{% endif %}>
+                        <span class="input-group-append" style="height: auto;">
+                            <span class="btn btn-outline-secondary btn-sm" id="sel-tipo" style="pointer-events: none;"></span>
+                        </span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="small font-weight-bold mb-0" for="sel-highway">Tipo highway</label>
+                    <input type="text" class="form-control form-control-sm" id="sel-highway" {% if not can_edit %}disabled{% endif %}>
+                </div>
+                {% if can_edit %}
+                <div class="form-group">
+                    <label class="small font-weight-bold mb-0" for="chk-operatore">
+                        <i class="fa fa-tag"></i> operator = Comune di Carrara
+                    </label>
+                    <div class="form-control form-control-sm bg-light py-1">
+                        <input type="checkbox" id="chk-operatore" class="ml-2">
+                        <label class="mb-0 small" for="chk-operatore" style="cursor: pointer;">Attiva / disattiva operatore</label>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="form-group">
+                    <label class="small font-weight-bold mb-0">OSM Way ID</label>
+                    <div class="form-control form-control-sm bg-light" id="sel-osmid"></div>
+                </div>
+                <div class="form-group">
+                    <label class="small font-weight-bold mb-0">Importazione</label>
+                    <div class="form-control form-control-sm bg-light" id="sel-importato"></div>
+                </div>
+                <div class="form-group">
+                    <label class="small font-weight-bold mb-0" for="sel-attributi">Attributi OSM</label>
+                    <textarea class="form-control form-control-sm attribute-box" id="sel-attributi" rows="7" {% if not can_edit %}disabled{% endif %}></textarea>
+                </div>
+                <div class="form-group" id="sel-immagine-container" style="display: none;">
+                    <label class="small font-weight-bold mb-0">Immagine OSM</label>
+                    <div class="text-center mt-1">
+                        <img id="sel-immagine" src="" alt="Immagine OSM" class="img-thumbnail" style="max-width: 100%; max-height: 150px; object-fit: cover;">
+                    </div>
+                </div>
+                {% if can_edit %}
+                <button id="btn-salva" class="btn btn-primary btn-sm btn-block">
+                    <i class="fa fa-save"></i> Salva modifiche
+                </button>
+                {% endif %}
+                <div id="salva-msg" class="mt-2 small"></div>
+            </div>
+            <hr>
+            <h6>Elenco (<span id="lista-count">0</span>)</h6>
+            <div id="highway-lista" class="small"></div>
+        </div>
+        <div class="col-lg-9 col-md-8 p-0">
+            <div id="map"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+{% if can_edit %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+{% endif %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var canEdit = {{ can_edit|lower }};
+    var map = L.map('map').setView([44.077, 10.096], 13);
+    var csrfToken = '{{ csrf_token }}';
+    var highwaysLayer = L.featureGroup().addTo(map);
+    var highwayData = {};
+    var selectedId = null;
+    var selectedLayer = null;
+    var isLoading = false;
+
+    L.tileLayer("{% static 'tiles/' %}{z}/{x}/{y}.png", {
+        attribution: 'Comune di Carrara: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    if (canEdit && typeof L.Control.Draw !== 'undefined') {
+        var drawControl = new L.Control.Draw({
+            position: 'topright',
+            draw: {
+                polyline: false,
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                polygon: false,
+                rectangle: false
+            },
+            edit: {
+                featureGroup: highwaysLayer,
+                edit: true,
+                remove: false
+            }
+        });
+        map.addControl(drawControl);
+    }
+
+    function showLoading(msg) {
+        document.getElementById('loading-msg').textContent = msg || 'Caricamento...';
+        document.getElementById('loading').style.display = 'flex';
+    }
+
+    function hideLoading() {
+        document.getElementById('loading').style.display = 'none';
+    }
+
+    function showMessage(elementId, text, className) {
+        var element = document.getElementById(elementId);
+        element.className = 'mt-2 small ' + (className || '');
+        element.textContent = text || '';
+    }
+
+    function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[character];
+        });
+    }
+
+function styleFor(feature) {
+          var isModificato = feature.properties.modificato === true;
+          var isSelected = String(feature.id) === String(selectedId);
+          if (isSelected) {
+              return { color: '#007bff', weight: 6, opacity: 1 };
+          }
+          if (isModificato) {
+              return { color: '#8e44ad', weight: 4, opacity: 0.9 };
+          }
+          return { color: '#d62828', weight: 3, opacity: 0.8 };
+      }
+
+function caricaHighways(query) {
+          if (isLoading) return;
+          isLoading = true;
+          showLoading('Caricamento highway dal database...');
+          var url = "{% url 'highway:highway_json' %}";
+          var params = [];
+          if (query) params.push('q=' + encodeURIComponent(query));
+          if (document.getElementById('chk-mostra-modificati').checked) {
+              params.push('mostra_modificati=1');
+          }
+          if (params.length) url += '?' + params.join('&');
+          fetch(url)
+             .then(function(response) { return response.json(); })
+             .then(function(data) {
+                 isLoading = false;
+                 hideLoading();
+                 if (data.error) {
+                     showMessage('salva-msg', 'Errore: ' + data.error, 'text-danger');
+                     return;
+                 }
+                 disegnaHighways(data.features || []);
+             })
+             .catch(function() {
+                 isLoading = false;
+                 hideLoading();
+                 showMessage('salva-msg', 'Errore di rete durante il caricamento.', 'text-danger');
+             });
+     }
+
+     function disegnaHighways(features) {
+        highwayData = {};
+        selectedId = null;
+        selectedLayer = null;
+        var bounds = null;
+
+        features.forEach(function(feature) {
+            var osmId = feature.id;
+            highwayData[osmId] = feature;
+            var layerGroup = L.geoJSON(feature, {
+                style: styleFor(feature)
+            });
+            layerGroup.eachLayer(function(layer) {
+                layer.feature = feature;
+                layer.on('click', function() { selezionaHighway(osmId); });
+                if (typeof layer.bindTooltip === 'function') {
+                    layer.bindTooltip(feature.properties.name || '#' + osmId, { sticky: true });
+                }
+                highwaysLayer.addLayer(layer);
+                if (!bounds) {
+                    bounds = layer.getBounds();
+                } else {
+                    bounds.extend(layer.getBounds());
+                }
+            });
+        });
+
+        document.getElementById('lista-count').textContent = features.length;
+        if (bounds && bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [30, 30], maxZoom: 18 });
+        }
+        resetSelection();
+        renderLista();
+    }
+
+    function renderLista() {
+        var html = '';
+        Object.keys(highwayData).sort(function(a, b) {
+            var nameA = (highwayData[a].properties.name || '').toLowerCase();
+            var nameB = (highwayData[b].properties.name || '').toLowerCase();
+            if (nameA < nameB) return -1;
+            if (nameA > nameB) return 1;
+            return Number(a) - Number(b);
+        }).forEach(function(id) {
+            var feature = highwayData[id];
+            var nome = feature.properties.name || 'Senza nome';
+            var tipoHighway = feature.properties.highway || '—';
+            var tipoOsm = feature.properties.tipo || '';
+            var tipoBadge = tipoOsm ? ' · <span class="badge badge-light badge-pill">' + escapeHtml(tipoOsm) + '</span>' : '';
+            html += '<div class="highway-item' + (String(id) === String(selectedId) ? ' selected' : '') + '" data-id="' + id + '">' +
+                '<div class="nome">' + escapeHtml(nome) + tipoBadge + '</div>' +
+                '<div class="meta">' + escapeHtml(tipoHighway) + ' · #' + escapeHtml(id) + '</div>' +
+            '</div>';
+        });
+        document.getElementById('highway-lista').innerHTML = html || '<div class="text-muted">Nessuna highway trovata.</div>';
+        document.querySelectorAll('#highway-lista .highway-item').forEach(function(element) {
+            element.addEventListener('click', function() {
+                selezionaHighway(this.getAttribute('data-id'));
+            });
+        });
+    }
+
+    function resetSelection() {
+        selectedId = null;
+        selectedLayer = null;
+        document.getElementById('nessun-selezionato').style.display = 'block';
+        document.getElementById('dettaglio-selezione').style.display = 'none';
+        showMessage('salva-msg', '', '');
+        renderLista();
+    }
+
+    function selezionaHighway(id) {
+        var feature = highwayData[id];
+        if (!feature) return;
+        selectedId = id;
+        selectedLayer = null;
+        highwaysLayer.eachLayer(function(layer) {
+            if (layer.feature && String(layer.feature.id) === String(id)) {
+                selectedLayer = layer;
+            }
+            if (layer.feature) {
+                layer.setStyle(styleFor(layer.feature));
+            }
+        });
+        document.getElementById('nessun-selezionato').style.display = 'none';
+        document.getElementById('dettaglio-selezione').style.display = 'block';
+        document.getElementById('sel-nome').value = feature.properties.name || '';
+        document.getElementById('sel-highway').value = feature.properties.highway || '';
+        var tipoEl = document.getElementById('sel-tipo');
+        if (tipoEl) tipoEl.textContent = feature.properties.tipo || '';
+        var chkOperatore = document.getElementById('chk-operatore');
+        if (chkOperatore) {
+            var attrs = feature.properties.attributes || {};
+            chkOperatore.checked = (attrs.operator === 'Comune di Carrara');
+        }
+        document.getElementById('sel-osmid').textContent = feature.properties.osm_id;
+        document.getElementById('sel-importato').textContent = feature.properties.imported_at || '';
+        document.getElementById('sel-attributi').value = JSON.stringify(feature.properties.attributes || {}, null, 2);
+        var imgContainer = document.getElementById('sel-immagine-container');
+        var imgEl = document.getElementById('sel-immagine');
+        var attrs = feature.properties.attributes || {};
+        var imageUrl = attrs.image || attrs['image:url'] || '';
+        if (imageUrl) {
+            imgEl.src = imageUrl;
+            imgContainer.style.display = 'block';
+        } else {
+            imgEl.src = '';
+            imgContainer.style.display = 'none';
+        }
+        showMessage('salva-msg', '', '');
+        if (selectedLayer) {
+            map.fitBounds(selectedLayer.getBounds(), { padding: [50, 50], maxZoom: 18 });
+        }
+        renderLista();
+    }
+
+    function salvaHighway(id, layer, includeAttributes) {
+        if (!canEdit || !id || !layer) return;
+        var geometry = layer.toGeoJSON().geometry || layer.toGeoJSON();
+        var body = 'geometry=' + encodeURIComponent(JSON.stringify(geometry));
+        if (includeAttributes) {
+            var nome = document.getElementById('sel-nome').value.trim();
+            var tipo = document.getElementById('sel-highway').value.trim();
+            var attributiRaw = document.getElementById('sel-attributi').value.trim();
+            var attributi = {};
+            if (attributiRaw) {
+                try {
+                    attributi = JSON.parse(attributiRaw);
+                } catch (error) {
+                    showMessage('salva-msg', 'Gli attributi devono contenere JSON valido.', 'text-danger');
+                    return;
+                }
+            }
+            var chkOperatore = document.getElementById('chk-operatore');
+            if (chkOperatore && chkOperatore.checked) {
+                attributi.operator = 'Comune di Carrara';
+            } else if (attributi.operator === 'Comune di Carrara') {
+                delete attributi.operator;
+            }
+            body += '&nome=' + encodeURIComponent(nome) +
+                '&highway=' + encodeURIComponent(tipo) +
+                '&attributi=' + encodeURIComponent(JSON.stringify(attributi));
+        }
+        showMessage('salva-msg', 'Salvataggio in corso...', 'text-muted');
+        var url = "{% url 'highway:salva_geometria' osm_id=0 %}".replace('/0/', '/' + encodeURIComponent(id) + '/');
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: body
+        })
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                var feature = highwayData[id];
+                if (feature) {
+                    feature.geometry = data.geometry;
+                    if (includeAttributes) {
+                        feature.properties.name = document.getElementById('sel-nome').value.trim();
+                        feature.properties.highway = document.getElementById('sel-highway').value.trim();
+                        feature.properties.attributes = JSON.parse(document.getElementById('sel-attributi').value || '{}');
+                    }
+                    if (layer.feature) layer.feature = feature;
+                    layer.bindTooltip(feature.properties.name || '#' + id, { sticky: true });
+                }
+                showMessage('salva-msg', 'Modifiche salvate.', 'text-success');
+                renderLista();
+            } else {
+                showMessage('salva-msg', 'Errore: ' + (data.error || 'salvataggio non riuscito'), 'text-danger');
+            }
+        })
+        .catch(function() {
+            showMessage('salva-msg', 'Errore di rete durante il salvataggio.', 'text-danger');
+        });
+    }
+
+    document.getElementById('form-ricerca').addEventListener('submit', function(event) {
+        event.preventDefault();
+        caricaHighways(document.getElementById('campo-ricerca').value.trim());
+    });
+    document.getElementById('btn-carica').addEventListener('click', function() {
+        caricaHighways(document.getElementById('campo-ricerca').value.trim());
+    });
+document.getElementById('btn-reset-filtro').addEventListener('click', function() {
+                document.getElementById('campo-ricerca').value = '';
+                document.getElementById('chk-mostra-modificati').checked = false;
+                highwaysLayer.clearLayers();
+                highwayData = {};
+                selectedId = null;
+                selectedLayer = null;
+                document.getElementById('lista-count').textContent = '0';
+                document.getElementById('highway-lista').innerHTML = '<div class="text-muted">Nessuna highway trovata.</div>';
+                showMessage('salva-msg', 'Ricerca reimpostata. Effettua una nuova ricerca per visualizzare highway.', 'text-muted');
+            });
+    var btnSave = document.getElementById('btn-salva');
+    if (btnSave) {
+        btnSave.addEventListener('click', function() {
+            salvaHighway(selectedId, selectedLayer, true);
+        });
+    }
+    var btnImporta = document.getElementById('btn-importa');
+    if (btnImporta) {
+        btnImporta.addEventListener('click', function() {
+            if (!confirm('Aggiornare le highway dalla fonte OpenStreetMap?')) return;
+            if (isLoading) return;
+            isLoading = true;
+            showLoading('Query Overpass in corso...');
+            fetch("{% url 'highway:import_highway' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: ''
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                isLoading = false;
+                hideLoading();
+                if (data.ok) {
+                    showMessage('salva-msg', 'Importate o aggiornate ' + data.count + ' highway.', 'text-success');
+                    caricaHighways(document.getElementById('campo-ricerca').value.trim());
+                } else {
+                    showMessage('salva-msg', 'Errore: ' + (data.error || 'importazione non riuscita'), 'text-danger');
+                }
+            })
+            .catch(function() {
+                isLoading = false;
+                hideLoading();
+                showMessage('salva-msg', 'Errore di rete durante l\'importazione.', 'text-danger');
+            });
+        });
+    }
+
+    if (typeof L.Draw !== 'undefined') {
+        map.on(L.Draw.Event.EDITED, function(event) {
+            if (!canEdit) return;
+            event.layers.eachLayer(function(layer) {
+                if (layer.feature) {
+                    salvaHighway(layer.feature.id, layer, false);
+                }
+            });
+        });
+    }
+
+ });
+ </script>
+{% endblock js %}

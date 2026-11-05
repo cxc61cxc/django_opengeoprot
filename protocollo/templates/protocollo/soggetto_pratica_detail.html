@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Dettagli Soggetto{% endblock %}
+
+{% block content %}
+{% load static %}  <!-- load static -->
+  <div class="container-fluid col-10 p-3 my-3 border">
+    <div class="alert alert-info" role="alert">
+      <div class="row">     
+        <div class="col-8">
+          <h5 class="font-weight-bold">Dettaglio soggetto nella pratica <span class="small">inserisci il tipo di soggetto! ...Richiedente, Tecnico istruttore...etc</span></h5>
+        </div>
+        <div class="col-4">
+          <p class="nav justify-content-end">Pratica in lavorazione : {{ pk }}</p>
+          <p class="nav justify-content-end">Id soggetto : {{ soggetto.id }}</p>
+        </div>
+    </div>
+  </div>  
+  <div class="container-fluid col-10 p-3 my-3 border">
+    <form action="{% url 'protocollo:add_soggetto_pratica_url' pk %}" method = "POST" >
+      {% csrf_token %}
+      <div class="row m-4">  
+        <div class="col-2">
+          <input type="hidden" name="soggetto" value="{{ soggetto.id }}" readonly>
+        </div>
+        <div class="col-1">
+          <input type="hidden" name="pratica" value="{{ pk }}" readonly>
+        </div>
+        <div class="col-6 nav justify-content-end">
+          <!-- tipo soggetto: {{ tipo_soggetto }} -->
+          <select autofocus placeholder="Inserisci la tipologia del soggetto" required class="form-control" " name="tipo" >
+            <option     selected disabled="true"></option>
+            {% for p in tipo_soggetto %}
+                <option value="{{ p.id}}">{{p.name}}</option>
+            {% endfor %}
+          </select>
+            
+          
+        </div>
+      </div>
+      
+
+      <div class="row">  
+        <div class="col-6">
+          <p>Nominativo</p>
+          <h4>{{ soggetto.cognome|upper  }} {{ soggetto.nome|title }}</h4>
+        </div>
+        <div class="col-2">
+          <p>Data di nascita</p>
+          <h5>{{ soggetto.data_nascita|date:"d/m/Y" }}</h5>
+        </div>
+        <div class="col-4">
+          <p>Comune di nascita</p>
+          <h5>{{ soggetto.comune_nascita|title }}</h5>
+        </div>
+      </div>
+
+      <div class="row">     
+        <div class="col-4">
+          <p>Comune di residenza</p>
+          <p>{{ soggetto.comune_residenza|upper }}</p>
+        </div>
+        <div class="col-4">
+          <p>Indirizzo</p>
+          <p> {{ soggetto.addr|upper }} </p>
+        </div>
+        <div class="col-4">
+          <p>Indirizzo Sede</p>
+          <p> {{ soggetto.addr_sede|upper }} </p>
+        </div>
+      </div>
+        <div class="row">
+          <div class="col-10">
+          </div>
+          <div class="col-1 text-center">
+            <input class=" btn btn-outline-success" type="submit" value="aggiungi">
+          </div>
+        </div>
+    </form>
+  </div>
+      
+    
+    
+{% endblock %}

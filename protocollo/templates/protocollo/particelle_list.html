@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+{% load static %}  <!-- load static -->
+{% comment %} {% include 'protocollo/protocollo_base.html' %} {% endcomment %}
+<div class="container p-3 my-3 border">
+  
+  <form method="POST">
+    {% csrf_token %}
+    {% if  trovati == 0 %}
+      <div class="alert alert-info" role="alert">
+        <div class="row">
+          
+          
+          <div class="col-md-2">
+            
+            <a class="btn btn-outline-info" href="{% url 'catasto:home_particelle_url'  %}">Cerca in Catasto</a>
+          </div>
+        </div>
+        
+      </div>   
+    
+    
+    {% else %}
+      <h6>Ricerca particella protocollo</h6>
+      <h6 class="nav justify-content-end">id pratica in lavorazione : <b>{{ pk }}</b></h6>
+      <div class="row">
+        <div class="col-md-2">
+                  <input type="text" class="form-control" required autofocus name="foglio"  placeholder="Foglio ..."> 
+        </div>
+        <div class="col-md-2">
+                  <input type="text" class="form-control" required name="mappale"  placeholder="mappale ...)"> 
+        </div>
+        <div class="col-md-2">
+        </div>
+     
+        <div class="col-md-2 offset-2 mt-1  justify-content-end">
+        <input type="submit" class="btn btn-success btn-sm" value=" Cerca ">
+        </div>
+      </div>
+  </form>
+    {% endif %}
+
+  {% if tot_particelle  %}      
+          <div class="row">
+            <div class="col-3 offeset-2">
+              <table class="table table-hover" style="font-size: 1.2em;">
+                <thead>
+                  <tr>
+                    <th scope="col"></th>
+                    
+                    <th scope="col">Foglio</th>
+                    <th scope="col">Mappale</th>
+                  
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for s in residents %}
+                  <tr>
+                    
+                      <td >
+                          <a href="{% url 'protocollo:particella_pratica_detail_url' s.pk pk %}">
+                          <img class="img-fluid" src="{% static 'img/upc-scan.svg' %}" ></a>
+                      </td>
+
+                    
+                      <td>{{ s.foglio }}</td>
+                      <td>{{ s.mappale }}</td>
+                      
+                  </tr>
+                  {% endfor %}
+              
+              </table>
+            </div>
+          </div>
+  {% else %}
+   <h4 class="font-weight-bold mt-4">Nessun riscontro!</h4>
+
+  {% endif %}
+
+        
+</div>
+
+{% endblock %}

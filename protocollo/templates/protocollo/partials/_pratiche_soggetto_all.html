@@ -1,0 +1,46 @@
+{% load static %}  <!-- load static -->
+
+
+<div class="container p-1 my-3 border">
+  <p class="h6 text-center" style="background-color: beige;">Elenco pratiche soggetto</p>
+    <table class="table table-sm" >
+        <thead>
+          <tr class="small align-top">
+            <th scope="col"></th>
+            
+            <th scope="col">code_p</th>
+            <th scope="col">Ubicazione</th>
+            <th scope="col">Oggetto</th>
+            <th scope="col">Tipo Soggetto</th>
+            <th scope="col">Tipo Pratica</th>
+            <th scope="col">Prot.Gen.</th>
+            <th scope="col">Data Prot.Gen.</th>
+           
+          </tr>
+        </thead>
+        <tbody>
+          {% for anaprat in soggetto.soggetti.all %}
+          <tr class="small align-top">
+            
+              <td >
+                <a style="color:green;" class="nav-link " title="Vai alla pratica...{{ anaprat.pratica_id }}" href="{% url 'protocollo:pratica_detail_url' pk=anaprat.pratica_id %}"><img class="img-fluid" 
+                  src="{% static 'img/icon-eye-11.jpg' %}" 
+                  width="25" height="25" ></a>
+               
+                
+              </td>
+
+             
+              <td>{{ anaprat.pratica.code_p }}{% if anaprat.pratica.sub_code %}-{{anaprat.pratica.sub_code}}{% endif %}</td>
+              <td>{{ anaprat.pratica.street }}</td>
+              <td>{{ anaprat.pratica.oggetto | truncatechars:50 }}</td>
+              <td>{{ anaprat.tipo }}</td>
+              <td>{{ anaprat.pratica.tipo_pratica }}</td>
+              <td>{{ anaprat.pratica.prot_gen }}</td>
+              <td>{{ anaprat.pratica.data_prot_gen|date:"d/m/Y" }}</td>
+              
+          </tr>
+          {% endfor %}
+      
+      </table>
+</div>

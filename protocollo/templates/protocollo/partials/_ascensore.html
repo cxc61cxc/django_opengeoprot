@@ -1,0 +1,57 @@
+<div class="container-fluid  m-1 rounded border" style="background-color: aliceblue;" style="font-size: 0.8rem;">
+
+    <div class="row m-2 align-bottom">
+        <div class="col-4 text-center">
+            {% if tot_impianto == 0 %}
+            <a title="NUOVO Impianto" 
+                href="{% url 'ascensori:impianto_add_url' pk=pratica.pk %}" class="btn btn-sm btn-outline-primary"  >Nuovo Impianto
+            </a>
+            {% endif %}
+
+            {% if tot_impianto == 1 %}
+            <a title="EDITA Impianto     Attenzione!" 
+                href="{% url 'ascensori:impianto_edit_url' id=impianto.id %}" class="btn btn-sm btn-outline-danger"  >Impianto
+            </a>
+            {% endif %}
+        </div>
+        
+        <div class="col-4 text-center">
+            
+                {% if pratica.stato != 'c' and pratica.stato != 'aa' or user.is_superuser  %}
+
+                    {% if   tot_impianto == 1 and tot_matr == 0 and is_editor == True %}
+                    <a title="ASSEGNA Matricola" 
+                        href="{% url 'ascensori:matricola_add_url' pk=pratica.pk %}" class="btn btn-sm btn-outline-primary"  >MATRICOLA
+                    </a>
+                    {% endif %}
+
+                    {% if tot_impianto == 1 and tot_matr == 1 and user.is_superuser %}
+                    <a title="EDITA Matricola     Attenzione!" 
+                        href="{% url 'ascensori:matricola_edit_url' id=matricola.id %}" class="btn btn-sm btn-outline-danger"  >Matricola
+                    </a>
+                    {% endif %}
+                    
+                {% else %}
+                    <div class="h6">
+                    {% if matricola.id and is_editor == True %}
+                        <a title="VISUALIZZA Matricola  !" 
+                            href="{% url 'ascensori:matricola_detail_url' id=matricola.id %}" class="btn btn-sm btn-outline-info"  >Matricola
+                        </a>
+                    {% endif %}
+                    </div>
+                {% endif %}
+               
+        </div>
+    </div>
+    <div class="row m-2 align-bottom">
+        <div class="col-12 text-center">
+            <b> <p class="small">
+                {% if tot_impianto == 1 and tot_matr == 1 and matricola.numero != 0 or matricola.matricola_assegnata is not null%}
+                    Matricola {{ matricola.matricola_assegnata }}
+                {% else %}
+                    Matricola da assegnare
+                {% endif %}
+              </p></b>
+        </div>
+    </div>
+</div>

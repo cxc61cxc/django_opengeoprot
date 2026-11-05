@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Dirigenti{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+    <h2>Riepilogo Pratiche Anno Corrente: {{ current_year }}</h2>
+
+    <div class="row">
+        {% for type_data in dashboard_summary %} {# Changed loop variable from sector_data to type_data #}
+            <div class="col-md-2 mb-4"> {# col-md-2 ensures 6 cards per row on medium and larger screens #}
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="card-title mb-0">{{ type_data.type_name }}</h6> {# Changed from sector_data.sector to type_data.type_name #}
+                        <small>Totale: {{ type_data.total_practices }} pratiche</small>
+                    </div>
+                    <ul class="list-group list-group-flush"> {# Corrected loop variable from sector_data.statuses to type_data.statuses #}
+                        {% for status in type_data.statuses %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ status.display }}
+                                <span class="badge badge-secondary badge-pill">{{ status.count }} ({{ status.percentage }}%)</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {# Existing dashboard content would go here #}
+    <h3>Tempi medi di istruttoria per tipologia</h3>
+    <div class="row">
+        {% for stat in processing_stats %}
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ stat.tipo }}</h5>
+                        <p class="card-text">Tempo medio: {{ stat.days }} giorni</p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <h3>Volume di pratiche per settore</h3>
+    <div class="row">
+        {% for sector in practices_by_sector %}
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ sector.tipo_pratica__settore__codice }}</h5>
+                        <p class="card-text">Numero pratiche: {{ sector.count }}</p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <h3>Entrate previste dai ratei non pagati</h3>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Totale non pagato</h5>
+                    <p class="card-text">{{ total_unpaid_revenue|floatformat:2 }} €</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3>Carichi di lavoro per istruttore (pratiche attive/in corso)</h3>
+    <div class="row">
+        {% for user_workload in workload_by_user %}
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ user_workload.user__username }}</h5>
+                        <p class="card-text">Pratiche attive: {{ user_workload.active_practices_count }}</p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Potresti aggiungere qui script per grafici interattivi (es. Chart.js, D3.js) -->
+{% endblock %}

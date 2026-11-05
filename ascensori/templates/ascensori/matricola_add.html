@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="container">
+  <div class="row my-3">
+    <div class="form-group col-md-1 mb-0" >
+        <input type=button class="btn btn-outline-success btn-sm" value="Indietro" onClick="javascript:history.go(-1);">
+    </div>  
+    <div class="form-group col-md-11 mb-0" >
+        <h5>Crea Matricola impianto </h5>
+        <h5>{{pratica.tipo_pratica | upper }} - prot.gen  {{pratica.prot_gen }}/{{ pratica.data_prot_gen|date:"Y" }}</h5>
+        <p class="h6"><span style="color: blue;">Il numero proposto per la NUOVA Matricola nell'anno corrente è : </span><span class="h3"><b> {{numero_proposto}} </b></span></p>
+    </div>  
+    
+  </div>
+
+<div class="container p-2 my-2 border" style="font-size:0.9em;">
+    <form action="" method="POST">
+    
+        {% csrf_token %}
+
+                <div class="form-row">
+                    <div class="form-group col-md-3 mb-0" >
+                         {{ form.numero  | as_crispy_field  }}
+                    </div>         
+                    
+                        
+                    <div class="form-group col-md-3 mb-0" >
+                        <label>data di rilascio</label>
+                        <input class="form-control" type="date" name="matricola_date" value="{{form.matricola_date| date:"d-m-Y" }}">
+                    
+                    </div>  
+                    
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6 mb-0" >
+                        {{ form.description  | as_crispy_field  }}
+                    </div>      
+                </div>
+
+               
+
+                <div class="form-row">    
+                    <div class="form-group col-md-10 mb-0" >
+                    </div>         
+                    <div class="form-group col-md-1 mb-0" >
+                        <input type="submit" value="Salva" class="btn btn-outline-danger btn-sm">
+                    </div> 
+                </div>
+                
+        
+    </form>
+</div>
+{% endblock content %}

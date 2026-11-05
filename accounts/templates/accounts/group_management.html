@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestione Gruppi{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-white px-0 py-2 mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home:index' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'accounts:user_management_url' %}">Gestione Utenti</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Gestione Gruppi</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-end mb-3">
+    <a class="btn btn-outline-primary" href="{% url 'accounts:commissioni_list_url' %}">
+      <i class="fa fa-gavel me-1"></i> Gestione Commissioni
+    </a>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-4 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Crea Nuovo Gruppo</h5>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="group_name" class="form-label">Nome Gruppo</label>
+              <input type="text" name="name" id="group_name" class="form-control" placeholder="es. editor_settore_3" required>
+            </div>
+            <button type="submit" class="btn btn-success w-100">
+              <i class="fa fa-plus me-1"></i> Crea Gruppo
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Gruppi Esistenti</h5>
+          <span class="badge bg-secondary">{{ groups|length }}</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Nome Gruppo</th>
+                  <th class="text-center">Permessi</th>
+                  <th class="text-end">Azioni</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for g in groups %}
+                  <tr>
+                    <td><strong>{{ g.name }}</strong></td>
+                    <td class="text-center">
+                      <span class="badge bg-secondary">{{ g.permissions.count }}</span>
+                    </td>
+                    <td class="text-end">
+                      <a href="{% url 'accounts:edit_group_permissions_url' g.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fa fa-key me-1"></i> Gestisci Permessi
+                      </a>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="3" class="text-center text-muted p-4">Nessun gruppo presente.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

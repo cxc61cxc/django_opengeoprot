@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Ambiente virtuale
+venv/
+.venv/
+myvenv/
+
+# Segreti e configurazione locale (usa .env.example e carrara/settings.example.py)
+.env
+carrara/settings.py
+
+# Database e dump
+db.sqlite3
+*.sqlite3
+*.bak
+*.dump
+
+# Log
+*.log
+deploy_logs/
+
+# File raccolti da collectstatic, documenti caricati dagli utenti
+# e archivi PDF scansionati (dati, non sorgente: superano i limiti GitHub)
+/staticfiles/
+/media/
+/static/tiles/
+pdf/
+
+# IDE / tooling
+.vscode/
+.history/
+*.code-workspace
+.ruff_cache/
+.continue/
+.kilo/
+node_modules/
+
+# Sistema
+.DS_Store
+Thumbs.db*
+._*
+
+# File di servizio / junk locali
+cookies.txt
+elenco.txt
+protocollo/diff.txt
+whole.json
+carrara/whole.json
+installed_requirements.txt
+requirements.org.txt
+mailer.apps.MailerConfig/
+
+# App opzionali dell'archivio storico (recupero dati storici non
+# normalizzati): non pubblicate nel repository, caricate solo in locale
+# se le cartelle esistono (carrara/settings.example.py le rileva).
+edilizia/
+gest_edilizia/
+archivi/

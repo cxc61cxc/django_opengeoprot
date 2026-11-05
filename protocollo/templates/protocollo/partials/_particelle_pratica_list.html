@@ -1,0 +1,59 @@
+{% load static %}
+<div style="font-size: x-small;">
+  <div class="hero-section shadow-sm border-start border-primary border-5">
+    <div class="row">
+      <div class="col-3">
+        {% if pratica.stato != 'c' and pratica.stato != 'aa'  or user.is_staff %}
+          <a style="color:green;" class="nav-link" 
+            title="Aggiungi particella" 
+            href="{% url 'protocollo:particelle_list_url' pk %}">
+            <img class="img" src="{% static 'img/icons8-plus.svg' %}" width="25" height="25" />
+          </a>
+        {% endif %}
+      </div>
+      <div class="col-9">
+        <h5 class="card-title">Particelle <span class="small">({{ cataprat|length }})</span></h5>
+      </div>
+    </div> 
+ 
+  {% if cataprat %}
+    <div style="max-height: 200px; overflow-y: auto; margin-bottom: 20px;"> <!-- Limite altezza e scroll -->
+      <table class="table table-hover table-sm text-center" >
+        <thead>
+          <tr class="text-muted small">
+            <th scope="col"></th>
+            <th scope="col">Foglio</th>
+            <th scope="col">Mappale</th>
+            <th scope="col">Subalterno</th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        {% for p in cataprat|dictsort:"foglio" %}
+        <tbody>
+          <tr style="text-align:center">
+            <td scope="row">
+              <a href="http://appsrvgis/ubucomu/catasto/nctr_results_ana.php?f={{p.foglio}}&m={{p.mappale}}"
+                target="_blank" style="width:20px;height:20px" class="btn btn-sm btn-outline-warning" title=" visura ..."></a>
+            </td>
+            <td><b>{{ p.foglio }}</b></td>
+            <td><b>{{ p.mappale }}</b></td>
+            <td>
+              {% if p.subalterno %} 
+                {{ p.subalterno }}
+              {% endif %}
+            </td>
+            <td>
+              {% if pratica.stato != 'c' and pratica.stato != 'aa' and is_editor or user.is_staff %}
+              <a title="Elimina particella dalla pratica" 
+                 href="{% url 'protocollo:particella_pratica_delete_url' p.id pk %}"
+                style="width:20px;height:20px" class="btn btn-sm btn-outline-danger"></a>
+              {% endif %}
+            </td>
+          </tr>
+        </tbody>
+        {% endfor %}
+      </table>
+    </div> <!-- fine contenitore scrollabile -->
+  {% endif %}
+  </div>
+</div>

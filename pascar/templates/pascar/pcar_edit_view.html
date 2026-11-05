@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+    <div class="container">
+        <div class="row">
+            <div class="form-group col-md-1 mb-0" >
+                <input type=button class="btn btn-outline-success btn-sm" value="Indietro" onClick="javascript:history.go(-1);">
+            </div>  
+            <div class="form-group col-md-11 mb-0" >
+                <h5>Modifica il Passo carraio</h5>
+                
+            </div>  
+            
+        </div>
+            {% if submitted%}
+        <h4>
+            Il Certificato è stato registrato!
+        </h4>
+        {% else %}
+        <div class="container p-2 my-2 border " style="font-size:0.9em;">
+            <form action="" method="POST">
+        
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group col-md-6 mb-0" >
+                        {{ form.tipo  | as_crispy_field  }}
+                    </div>   
+                
+                    <div class="form-group col-md-6 mb-0" >
+                        {{ form.uso  | as_crispy_field  }}
+                    </div>   
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-3 mb-0" >
+                        {{ form.largh  | as_crispy_field  }}
+                    </div>   
+                
+                    <div class="form-group col-md-3 mb-0" >
+                        {{ form.prof  | as_crispy_field  }}
+                    </div> 
+                    <div class="form-group col-md-3 mb-0" >
+                        
+                    </div> 
+                    
+                    <div class="form-group col-md-3 mb-0" >
+                        {{ form.area  | as_crispy_field  }}
+                    </div> 
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-8  mb-0" >
+                        {{ form.description  | as_crispy_field  }}
+                    </div> 
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-3 mb-0" >
+                        {{ form.pc_number  | as_crispy_field  }}
+                    </div>         
+                        
+                            
+                    <div class="form-group col-md-3 mb-0" >
+                        {{form.pc_date|as_crispy_field}}
+                    </div>   
+                        
+                        
+                </div>
+                <div class="form-row">
+                    
+                    <div class="form-group col-md-10 mb-0" >
+                    </div>         
+                    {% if is_editor == True %}
+                    <div class="form-group col-md-1 mb-0" >
+                        {% if can_write %}<input type="submit" value="Salva" class="btn btn-outline-danger btn-sm">{% endif %}
+                    </div> 
+                    {% endif %}
+                </div>
+                    
+            
+            </form>
+            {% endif %}
+        </div>
+    </div>
+{% endblock content %}

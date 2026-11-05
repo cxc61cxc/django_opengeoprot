@@ -1,0 +1,220 @@
+{% load static %}
+<div class="hero-section shadow-sm border-start border-info border-5 mb-3">
+  <div class="card">
+    <ul class="nav nav-tabs card-header" id="istruttoriaPocTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <a class="nav-link {% if tab_poc_attiva == 'istruttoria' %}active{% endif %}" id="istruttoria-tab" data-toggle="tab" href="#istruttoria" role="tab" aria-controls="istruttoria" aria-selected="{% if tab_poc_attiva == 'istruttoria' %}true{% else %}false{% endif %}">
+          Istruttoria{% if istruttoria_poc.testo %} <span class="badge badge-success">✓</span>{% endif %}
+        </a>
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link {% if tab_poc_attiva == 'istrcomm' %}active{% endif %}" id="istrcomm-tab" data-toggle="tab" href="#istrcomm" role="tab" aria-controls="istrcomm" aria-selected="{% if tab_poc_attiva == 'istrcomm' %}true{% else %}false{% endif %}">
+          Commissione{% if istrcomm_poc.testo %} <span class="badge badge-success">✓</span>{% endif %}
+        </a>
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link {% if tab_poc_attiva == 'istrcons' %}active{% endif %}" id="istrcons-tab" data-toggle="tab" href="#istrcons" role="tab" aria-controls="istrcons" aria-selected="{% if tab_poc_attiva == 'istrcons' %}true{% else %}false{% endif %}">
+          Consiglio{% if istrcons_poc.testo %} <span class="badge badge-success">✓</span>{% endif %}
+        </a>
+      </li>
+    </ul>
+    <div class="tab-content p-3 border border-top-0" id="istruttoriaPocTabContent">
+
+      <div class="tab-pane fade {% if tab_poc_attiva == 'istruttoria' %}show active{% endif %}" id="istruttoria" role="tabpanel">
+        {% if istruttoria_poc.testo and not edit_istruttoria %}
+          <p class="mb-1">{{ istruttoria_poc.testo|linebreaksbr }}</p>
+          <hr>
+          <small class="text-muted">
+            Data: {{ istruttoria_poc.data_istr_poc|date:"d/m/Y"|default:"-" }}<br>
+            Redatto da {{ istruttoria_poc.user|default:"sconosciuto" }}
+            il {{ istruttoria_poc.data_crea|date:"d/m/Y H:i" }}<br>
+            Ultima modifica: {{ istruttoria_poc.data_mod|date:"d/m/Y H:i" }}
+          </small>
+          <div class="mt-2">
+            <a href="?edit_istruttoria=1#istruttoria" class="btn btn-sm btn-outline-primary">Modifica</a>
+            {% if user.is_staff or user.is_superuser or istruttoria_poc.user_id == user.id %}
+            <form method="post" action="{% url 'istruttoria_poc:istruttoria_delete' pratica_id=pratica.pk %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('Eliminare istruttoria della pratica {{ pratica.prot_gen|escapejs }}?');">
+                Elimina
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        {% elif edit_istruttoria %}
+          <form method="post" action="{% url 'istruttoria_poc:istruttoria_detail' pratica_id=pratica.pk %}" novalidate>
+            {% csrf_token %}
+            {% if istruttoria_form.non_field_errors %}
+              <div class="alert alert-danger">{{ istruttoria_form.non_field_errors }}</div>
+            {% endif %}
+            <div class="row">
+              <div class="col-8">
+                <div class="form-group">
+                  <label for="{{ istruttoria_form.testo.id_for_label }}">Testo istruttoria</label>
+                  {{ istruttoria_form.testo }}
+                  {% for errore in istruttoria_form.testo.errors %}
+                    <div class="invalid-feedback d-block">{{ errore }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="{{ istruttoria_form.data_val_field.id_for_label }}">{{ istruttoria_form.data_val_field.label }}</label>
+                  {{ istruttoria_form.data_val_field }}
+                  {% for errore in istruttoria_form.data_val_field.errors %}
+                    <div class="invalid-feedback d-block">{{ errore }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            <div class="mt-3">
+              <button type="submit" class="btn btn-primary">Salva</button>
+              <a href="{% url 'protocollo:pratica_detail_url' pk=pratica.pk %}#istruttoria" class="btn btn-secondary">Annulla</a>
+            </div>
+          </form>
+        {% else %}
+          <a href="?edit_istruttoria=1#istruttoria" class="btn btn-sm btn-outline-success">
+            <i class="fa fa-plus"></i> Aggiungi
+          </a>
+        {% endif %}
+      </div>
+
+      <div class="tab-pane fade {% if tab_poc_attiva == 'istrcomm' %}show active{% endif %}" id="istrcomm" role="tabpanel">
+        {% if istrcomm_poc.testo and not edit_istrcomm %}
+          <p class="mb-1">{{ istrcomm_poc.testo|linebreaksbr }}</p>
+          <hr>
+          <small class="text-muted">
+            Data: {{ istrcomm_poc.data_commissione|date:"d/m/Y"|default:"-" }}<br>
+            Redatto da {{ istrcomm_poc.user|default:"sconosciuto" }}
+            il {{ istrcomm_poc.data_crea|date:"d/m/Y H:i" }}<br>
+            Ultima modifica: {{ istrcomm_poc.data_mod|date:"d/m/Y H:i" }}
+          </small>
+          <div class="mt-2">
+            <a href="?edit_istrcomm=1#istrcomm" class="btn btn-sm btn-outline-primary">Modifica</a>
+            {% if user.is_staff or user.is_superuser or istrcomm_poc.user_id == user.id %}
+            <form method="post" action="{% url 'istruttoria_poc:istrcomm_delete' pratica_id=pratica.pk %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('Eliminare commissione della pratica {{ pratica.prot_gen|escapejs }}?');">
+                Elimina
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        {% elif edit_istrcomm %}
+          <form method="post" action="{% url 'istruttoria_poc:istrcomm_detail' pratica_id=pratica.pk %}" novalidate>
+            {% csrf_token %}
+            {% if istrcomm_form.non_field_errors %}
+              <div class="alert alert-danger">{{ istrcomm_form.non_field_errors }}</div>
+            {% endif %}
+            <div class="row">
+              <div class="col-8">
+                <div class="form-group">
+                  <label for="{{ istrcomm_form.testo.id_for_label }}">Testo commissione</label>
+                  {{ istrcomm_form.testo }}
+                  {% for errore in istrcomm_form.testo.errors %}
+                    <div class="invalid-feedback d-block">{{ errore }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="{{ istrcomm_form.data_val_field.id_for_label }}">{{ istrcomm_form.data_val_field.label }}</label>
+                  {{ istrcomm_form.data_val_field }}
+                  {% for errore in istrcomm_form.data_val_field.errors %}
+                    <div class="invalid-feedback d-block">{{ errore }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            <div class="mt-3">
+              <button type="submit" class="btn btn-primary">Salva</button>
+              <a href="{% url 'protocollo:pratica_detail_url' pk=pratica.pk %}#istrcomm" class="btn btn-secondary">Annulla</a>
+            </div>
+          </form>
+        {% else %}
+          <a href="?edit_istrcomm=1#istrcomm" class="btn btn-sm btn-outline-success">
+            <i class="fa fa-plus"></i> Aggiungi
+          </a>
+        {% endif %}
+      </div>
+
+      <div class="tab-pane fade {% if tab_poc_attiva == 'istrcons' %}show active{% endif %}" id="istrcons" role="tabpanel">
+        {% if istrcons_poc.testo and not edit_istrcons %}
+          <p class="mb-1">{{ istrcons_poc.testo|linebreaksbr }}</p>
+          <hr>
+          <small class="text-muted">
+            Data: {{ istrcons_poc.data_consiglio|date:"d/m/Y"|default:"-" }}<br>
+            Redatto da {{ istrcons_poc.user|default:"sconosciuto" }}
+            il {{ istrcons_poc.data_crea|date:"d/m/Y H:i" }}<br>
+            Ultima modifica: {{ istrcons_poc.data_mod|date:"d/m/Y H:i" }}
+          </small>
+          <div class="mt-2">
+            <a href="?edit_istrcons=1#istrcons" class="btn btn-sm btn-outline-primary">Modifica</a>
+            {% if user.is_staff or user.is_superuser or istrcons_poc.user_id == user.id %}
+            <form method="post" action="{% url 'istruttoria_poc:istrcons_delete' pratica_id=pratica.pk %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('Eliminare consiglio della pratica {{ pratica.prot_gen|escapejs }}?');">
+                Elimina
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        {% elif edit_istrcons %}
+          <form method="post" action="{% url 'istruttoria_poc:istrcons_detail' pratica_id=pratica.pk %}" novalidate>
+            {% csrf_token %}
+            {% if istrcons_form.non_field_errors %}
+              <div class="alert alert-danger">{{ istrcons_form.non_field_errors }}</div>
+            {% endif %}
+            <div class="row">
+              <div class="col-8">
+                <div class="form-group">
+                  <label for="{{ istrcons_form.testo.id_for_label }}">Testo consiglio</label>
+                  {{ istrcons_form.testo }}
+                  {% for errore in istrcons_form.testo.errors %}
+                    <div class="invalid-feedback d-block">{{ errore }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="{{ istrcons_form.data_val_field.id_for_label }}">{{ istrcons_form.data_val_field.label }}</label>
+                  {{ istrcons_form.data_val_field }}
+                  {% for errore in istrcons_form.data_val_field.errors %}
+                    <div class="invalid-feedback d-block">{{ errore }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            <div class="mt-3">
+              <button type="submit" class="btn btn-primary">Salva</button>
+              <a href="{% url 'protocollo:pratica_detail_url' pk=pratica.pk %}#istrcons" class="btn btn-secondary">Annulla</a>
+            </div>
+          </form>
+        {% else %}
+          <a href="?edit_istrcons=1#istrcons" class="btn btn-sm btn-outline-success">
+            <i class="fa fa-plus"></i> Aggiungi
+          </a>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Attiva la tab indicata dall'anchor (#istruttoria / #istrcomm / #istrcons),
+  // cosi' il form si apre direttamente anche se la tab attiva non coincide.
+  (function () {
+    var tabPoc = ['istruttoria', 'istrcomm', 'istrcons'];
+    var richiesta = (window.location.hash || '').replace('#', '');
+    if (tabPoc.indexOf(richiesta) === -1) {
+      return;
+    }
+    $(function () {
+      $('#istruttoriaPocTab a[href="#' + richiesta + '"]').tab('show');
+    });
+  })();
+</script>

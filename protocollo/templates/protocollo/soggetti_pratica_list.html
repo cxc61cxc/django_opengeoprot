@@ -1,0 +1,41 @@
+# pratiche_list.html
+  {% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container p-2 my-2 border" style="font-size:0.9em;">
+
+{% if anaprat %} 
+<table class="table table-hover">
+  
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Tipo</th>
+      <th scope="col">Cognome</th>
+      <th scope="col">Nome</th>
+      <th scope="col"></th>
+      <th scope="col"></th>
+    </tr>
+  </thead>
+  {% for p in anaprat %}
+  <tbody>
+    <tr>
+      <th scope="row">{{ forloop.counter }}</th>
+      <td>{{ p.tipo | upper}}</td>
+      <td>{{ p.cognome | upper }}</td>
+      <td>{{ p.nome }}</td>
+      <td><a href="#">Dettaglio</a></td>
+      <td><a href="#">Modifica</a></td>
+    </tr>
+  </tbody>
+  {% endfor %}
+
+</table>
+{% endif %} 
+
+</div>
+  
+
+{% endblock %}

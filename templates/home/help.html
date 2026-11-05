@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container col-10 mt-4" style="font-size:1.1em;">
+
+  <h2 class="mb-3"><i class="fa fa-book"></i> Manuale Utente &mdash; OpenGeoProt</h2>
+
+  <div class="alert alert-primary">
+    <p>Questa guida spiega passo passo come accedere al portale e usare la
+    <b>Ricerca Integrata</b> tra le pratiche del protocollo (OPENGEOPROT) e
+    quelle dell'archivio edilizio (ARCHIVIO).</p>
+    <a class="h6" href ="https://cxc-next.duckdns.org/s/MpfXEN5wcRBEmy9" target=_blank >A questo link un breve video esplicativo, per quanto possibile!</a>
+  </div>
+
+  <hr>
+  <h4 id="registrazione">1. Registrazione</h4>
+  <p>
+    Per ottenere un account vai alla pagina di registrazione (link
+    <i>Registrati</i> in alto a destra, oppure <code>/accounts/signup/</code>).
+    Compila il modulo con:
+  </p>
+  <ul>
+    <li><b>Nome</b> e <b>Cognome</b> (obbligatori);</li>
+    <li><b>Username</b> scelto;</li>
+    <li><b>Email istituzionale</b>: &egrave; accettata <u>solo</u> un'email
+        <code>@comune.carrara.ms.it</code> (le altre vengono rifiutate);</li>
+    <li><b>Settore</b> di appartenenza (obbligatorio, dall'elenco);</li>
+    <li><b>Password</b> e conferma password.</li>
+  </ul>
+  <p>
+    Al primo accesso l'utente viene inserito automaticamente nel gruppo
+    <code>user_settore_*</code> corrispondente al <b>settore</b> indicato
+    (es. <code>user_settore_6</code> per <i>Governo del territorio</i>):
+    ha permessi di <b>sola lettura</b> su quel settore, quindi pu&ograve;
+    cercare e consultare le pratiche, ma non modificarle.
+    Per i permessi di scrittura rivolgersi all'amministratore.
+  </p>
+
+  <p>
+    Se in seguito modifichi il settore dal menu utente
+    (<i>Modifica profilo</i>), il gruppo viene aggiornato automaticamente:
+    le viste della <b>Home</b> e della <b>Ricerca Integrata</b> si adattano
+    subito al nuovo settore, mostrando prima le pratiche del settore
+    precedente e poi quelle del nuovo.
+  </p>
+
+  <hr>
+  <h4 id="login">2. Accesso (login)</h4>
+  <p>
+    Usa <i>Accedi</i> in alto a destra con username e password. Una volta
+    dentro, atterri sulla <b>Home</b> del portale con i riepiloghi delle
+    pratiche per tipo e stato.
+  </p>
+
+  <hr>
+  <h4 id="profilo">3. Menu utente e Modifica profilo</h4>
+  <p>
+    In alto a destra, sotto il tuo username, trovi il menu ad
+    <i>albero a discesa</i>:
+  </p>
+  <ul>
+    <li><b>Modifica profilo</b> &mdash; per cambiare nome, cognome, email e
+        soprattutto il <b>settore</b> di appartenenza;</li>
+    <li><b>Le mie pratiche</b> &mdash; per vedere rapidamente le pratiche a te
+        associate;</li>
+    <li>per gli amministratori: <b>Gestione Utenti</b> e <b>Gestione Gruppi</b>;</li>
+    <li><b>Log Out</b> per chiudere la sessione.</li>
+  </ul>
+  <p>
+    Quando salvi una modifica al <b>settore</b> (es. da
+    <i>settore 1</i> a <i>settore 6</i>), il sistema aggiorna
+    automaticamente il tuo gruppo di accesso e adatta le viste:
+    la <b>Home</b> e la <b>Ricerca Integrata</b> inizieranno a mostrarti
+    prima le pratiche del settore precedente e poi quelle del nuovo
+    settore, in base ai nuovi permessi.
+  </p>
+
+  <hr>
+  <h4 id="ricerca">4. Ricerca Integrata</h4>
+  <p>
+    Dalla barra superiore apri <b>Ricerca Integrata Pratiche</b>
+    (URL <code>/protocollo/search/protocollo/</code>). Il modulo permette di
+    incrociare pi&ugrave; filtri contemporaneamente:
+  </p>
+  <ul>
+    <li><b>Cognome / Nome</b> del soggetto;</li>
+    <li><b>Protocollo Generale</b> e <b>Anno</b>;</li>
+    <li><b>Stato Pratica</b> e <b>Tipo Pratica</b>;</li>
+    <li><b>Foglio</b> e <b>Mappale</b> catastali;</li>
+    <li><b>Strada</b> (autocomplete) e <b>Civico</b>;</li>
+    <li><b>Oggetto</b> (parole chiave);</li>
+    <li><b>Atto / Istruttoria / Tecnico</b> (campi propri dell'archivio edilizio).</li>
+  </ul>
+  <p>
+    Premi <b>RICERCA INTEGRATA</b> per i risultati in elenco, oppure
+    <b>RISULTATI SU MAPPA</b> per vederli sulla mappa interattiva.
+  </p>
+
+  <hr>
+  <h4 id="tab">5. I due blocchi di risultati: OPENGEOPROT e ARCHIVIO</h4>
+  <p>I risultati sono divisi in due schede (TAB):</p>
+  <ul>
+    <li>
+      <b>OPENGEOPROT</b> &mdash; le pratiche del <b>protocollo</b> (ufficio
+      istruttorie, pratiche correnti e storiche del Comune).
+    </li>
+    <li>
+      <b>ARCHIVIO</b> &mdash; le pratiche dell'<b>archivio edilizio</b>
+      (edilizia, ricercabili per particella catastale foglio/mappale).
+    </li>
+  </ul>
+  <p>
+    All'apertura dei risultati viene mostrata automaticamente la TAB con il
+    <b>maggiore numero di pratiche</b> trovate. Clicca sull'altra TAB per
+    vedere l'altro blocco.
+  </p>
+  <div class="alert alert-info">
+    Suggerimento: il modo pi&ugrave; diretto per cercare per
+    <b>particella catastale</b> (es. Foglio <code>51</code>, Mappale
+    <code>826</code>) &egrave; compilare i campi <i>Foglio</i> e <i>Mappale</i>
+    e lasciare gli altri vuoti: i risultati appariranno nella TAB
+    <b>ARCHIVIO</b>. Se necessario, puoi comunque combinare
+    foglio/mappale con altri filtri, come <i>Cognome</i> o <i>Oggetto</i>:
+    il sistema restringe l'insieme senza annullare la ricerca per particella.
+  </div>
+
+  <hr>
+  <h4 id="paginazione">6. Paginazione e TAB</h4>
+  <p>
+    Ogni TAB ha la propria paginazione (10 pratiche per pagina). Cliccando
+    <b>Avanti</b> / <b>Indietro</b> resti sulla <b>stessa TAB</b> su cui stavi
+    lavorando: la selezione della TAB viene mantenuta durante la navigazione
+    tra le pagine.
+  </p>
+
+  <hr>
+  <h4 id="dettaglio">7. Aprire una pratica</h4>
+  <p>
+    In corrispondenza di ogni pratica c'&egrave; il pulsante a forma di
+    <i>quadrato</i> (a sinistra dell'ID): apre il <b>dettaglio della pratica</b>
+    (<code>/protocollo/pratica_detail/&lt;id&gt;/</code>), dove trovi soggetti,
+    particelle, diario, documenti e, se hai i permessi, i pulsanti di modifica
+    ed eliminazione.
+  </p>
+
+  <hr>
+  <h4 id="mappa">8. Risultati su mappa</h4>
+  <p>
+    Con il pulsante <b>RISULTATI SU MAPPA</b> le pratiche con geometria
+    (particelle) vengono mostrate su una mappa interattiva; il pulsante
+    <i>Vedi in Mappa</i> (presente nei risultati OPENGEOPROT) apre direttamente
+    le pratiche selezionate sulla mappa.
+  </p>
+
+   <hr>
+   <h4 id="permessi">9. Permessi e sola lettura</h4>
+   <p>
+     Gli utenti di sola lettura (gruppi <code>user_settore_*</code>) possono
+     consultare tutto ma non salvare modifiche: ogni tentativo di scrittura
+     (POST/PUT/DELETE) viene bloccato con un errore <b>403 &ndash; Accesso non
+     consentito</b>. Per le modifiche occorre un account di tipo
+     <i>editor</i>.
+   </p>
+
+   <hr>
+   <h4 id="segnala">10. Segnala problemi</h4>
+   <p>
+     Il pulsante <b>Segnala</b> nella barra di navigazione consente di
+     inviare una comunicazione diretta agli <b>amministratori</b> e ai
+     <b>manutentori</b> del portale.
+   </p>
+   <p>
+     Usalo per riportare eventuali <b>problematiche</b> riscontrate durante
+     l'uso del sistema: <b>bug</b>, <b>malfunzionamenti</b>, <b>errori</b>
+     nei dati o nella ricerca, <b>lentezza</b> o qualsiasi altra
+     difficolt&agrave; operativa.
+   </p>
+   <p>
+     La segnalazione viene instradata automaticamente allo staff tecnico,
+     che la prender&agrave; in carico per la risoluzione.
+   </p>
+
+   <a href="{% url 'home:index' %}" class="btn btn-outline-secondary mt-3 mb-5">
+    <i class="fa fa-arrow-left"></i> Torna alla Home
+  </a>
+
+</div>
+{% endblock %}

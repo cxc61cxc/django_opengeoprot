@@ -1,0 +1,144 @@
+{% load static %}
+<div class="container-fluid border" style="background-color: rgba(230, 243, 252, 1); ">
+  <div class="row ">
+    <div class="col-12 h6 text-center">ISTRUTTORIA</div>
+  </div>
+  <div class="row small bg-white m-0" >
+      <div class="col-5 text-left">
+         
+       
+          {% if istruttoria and istruttoria.id %}
+                      {% if pratica.stato != 'c' and pratica.stato != 'aa' or user.is_staff %}
+                      <a title="Modifica Istruttoria" 
+                        href="{% url 'idonall:istruttoria_edit_url' istruttoria.id %}" class="btn btn-sm btn-outline-primary" >Edita Istruttoria ({{tot_istr}})
+                      </a>
+                      {% endif %}
+                      {% if tot_idonall == 0 and pratica.stato != 'c' and pratica.stato != 'aa' or user.is_superuser or user.is_staff %}
+                        <a title="Crea certificato" 
+                          href="{% url 'idonall:certificato_add_url' pratica.pk %}" class="btn btn-sm btn-outline-primary" >Crea certificato ({{tot_idonall}})
+                        </a>
+                        {% endif %}
+                      {% if tot_idonall == 1 and idonall and idonall.id %}
+                        {% if pratica.stato != 'c' and pratica.stato != 'aa' or user.is_superuser or user.is_staff %}
+                        <a title="Edit certificato" 
+                          href="{% url 'idonall:certificato_edit_url' id=idonall.id%}" class="btn btn-sm btn-outline-primary" >Edita certificato ({{tot_idonall}})
+                        </a>
+                        {% endif %}
+                      {% endif %}
+                      {% if tot_idonall == 1 and idonall and idonall.id  %}
+                         <a title="Stampa certificato" 
+                          href="{% url 'idonall:certificato_print_url' id=idonall.id%}" class="success btn btn-sm btn-outline-success" >Stampa certificato 
+                        </a>
+                      {% endif %}
+          {% else %}
+           {% if tot_istr == 0 and pratica.stato != 'c' or user.is_staff  %}
+            <a title="Istruttoria" 
+              href="{% url 'idonall:istruttoria_add_url' pratica.pk %}" class="btn btn-sm btn-outline-success"  >Inserisci Istruttoria
+            </a>
+          {% endif %}
+          {% endif %}
+      </div>
+  </div>
+  <div class="row small bg-light m-0" >
+    <div  class="col-12 mb-3 ">
+      {% if tot_idonall == 1 %}
+      <br>
+      <p class="h6 ">Idoneita' alloggiativa certificato n. <b>{{ idonall.idonall_number}}/{{ idonall.idonall_date | date:"Y" }}</b> del {{ idonall.idonall_date }}</p>
+      {% endif %}
+    </div>
+  </div>
+{% if tot_istr == 1 %}
+  <div class="row small">
+    <div  class="col-2 text-center">
+      
+    </div>
+    <div  class="col-4 text-center">
+      <label class="small">Tipo richiedente</label>
+      <p class="h6">{{istruttoria.tipo_richiedente_idonall}}</p>
+    </div>
+    <div  class="col-4 text-center">
+      <label class="small">Tipo richiesta</label>
+      <p class="h6">{{istruttoria.tipo_richiesta}}</p>
+    </div>
+    
+  </div>
+  
+  <div class="row small bg-light m-0" >
+    <div  class="col-3 text-center">
+      <p class="h5">Allegati</p>
+    </div>
+  </div>
+  <div class="row small">
+    <div  class="col-2 text-center">
+      <label class="small">Edificio ante 1975</label><br>
+      <input type="checkbox" style="width: 20px; height: 20px;" {% if istruttoria.ante1975 %}checked{% endif %} disabled>
+    </div>
+    <div  class="col-2 text-center">
+      <label class="small">Conformita' impianto</label><br>
+      <input type="checkbox" style="width: 20px; height: 20px;" {% if istruttoria.conf_imp %}checked{% endif %} disabled>
+    </div>
+    <div  class="col-3 text-center">
+      <label class="small">Documento proprietario</label><br>
+      <input type="checkbox" style="width: 20px; height: 20px;" {% if istruttoria.doc_prop %}checked{% endif %} disabled>
+    </div>
+    <div  class="col-2 text-center">
+      <label class="small">Revisione caldaia</label><br>
+      <input type="checkbox" style="width: 20px; height: 20px;" {% if istruttoria.caldaia %}checked{% endif %} disabled>
+    </div>
+    <div  class="col-2 text-center">
+      <label class="small">Planimetria catastale</label><br>
+      <input type="checkbox" style="width: 20px; height: 20px;" {% if istruttoria.catasto %}checked{% endif %} disabled>
+    </div>
+    
+    
+  </div>
+
+  
+  <hr>
+  <div class="row small">
+    <div  class="form-group col-md-4 mb-0 small" >
+      <label class="small">descrizione Abitabilita'</label><br>
+      {{istruttoria.nota_abitabilita}}
+    </div>
+    <div  class="form-group col-md-4 mb-0 small" >
+        <label class="small">descrizione Relazione tecnica</label><br>
+        {{istruttoria.nota_relazione}}      
+    </div>
+    <div  class="form-group col-md-4 mb-0 small" >
+        <label class="small">descrizione contratto locazione</label><br>
+        {{istruttoria.nota_prop}}
+    </div>
+  </div>
+  <hr>
+  <div class="row small">
+    
+    <div  class="form-group col-md-3 mb-0 small" >
+        <label class="small">vani</label><br>
+        {{istruttoria.vani}}      
+    </div>
+    <div  class="form-group col-md-3 mb-0 small" >
+        <label class="small">mq</label><br>
+        {{istruttoria.mq}}      
+    </div>
+    <div  class="form-group col-md-3 mb-0 small" >
+        <label class="small">num. adulti</label><br>
+        {{istruttoria.num_adulti}}      
+    </div>
+    <div  class="form-group col-md-3 mb-0 small" >
+        <label class="small">num. minori</label><br>
+        {{istruttoria.num_minori}}      
+    </div>
+  </div>
+  <div class="row">
+    
+  </div>
+    
+  <div class="row">
+    <div  class="col-12 text-center">
+          <br>    
+
+    </div>
+  </div>
+{% endif %}
+
+</div>

@@ -1,0 +1,175 @@
+{% load static %}
+<style>
+  label {font-size: 0.75em;}
+</style>
+<div class="container-fluid m-1 rounded border" style="background-color: aliceblue; font-size: 0.8rem;">
+  {% if pratica.tipo_pratica_id == 35 or pratica.tipo_pratica_id == 36 %}
+    <div class="row m-2">
+      {% if is_editor == True or user.is_staff %}
+        <div class="col-5 text-left">
+          {% if tot_conv == 0 %}
+            <a title="Convenzione" href="{% url 'coop:add_view_url' pratica.id %}" class="btn btn-sm btn-outline-secondary">Inserisci Convenzione</a>
+          {% else %}
+            {% for c in conv %}
+              {% if pratica.stato != 'c' and pratica.stato != 'ai' or user.is_staff %}
+                <a title="Modifica Convenzione" href="{% url 'coop:edit_view_url' c.id %}" class="btn btn-sm btn-outline-primary">Edita Convenzione ({{tot_conv}})</a>
+              {% else %}
+                <p>Convenzione</p>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        </div>
+      {% endif %}
+      <div class="col-3 text-center">
+        <p>Dati Convenzione</p>
+      </div>
+      <div class="col-4 text-right">
+        {% if anni_data_atto %}
+          <p>Sono trascorsi <span>{{ anni_data_atto | floatformat:0 }}</span> anni</p>
+        {% else %}
+          <p>Definire gli estremi dell'atto di convenzione</p>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if conv %}
+    {% for c in conv %}
+      <div class="row m-2 border" style="background-color: rgb(232, 232, 231);">
+        <div class="col-4 text-left">
+          <span style="font-weight: bolder"><b>DIRITTO DI {{ c.tipo_diritto | upper }}</b></span>
+        </div>
+        <div class="col-8 text-right">
+          <p><b>Atto {{ c.notaio }} del {{c.data_atto|date:"d/m/Y"}} {{ c.atto }}</b></p>
+        </div>
+      </div>
+
+      <div class="row m-2">
+        <div class="col-2">
+          <label>Sup. convenzione</label>
+          <p class="h6"><b> mq {{ c.area }}</b></p>
+        </div>
+        <div class="col-2">
+          <label>Volume</label>
+          <p>{{ c.volume }}</p>
+        </div>
+        <div class="col-1">
+          <label>Edifici</label>
+          <p><span>{{ c.edifici }}</span></p>
+        </div>
+        <div class="col-1">
+          {% if c.ref_millesimi == True %}
+            <label style="color: red;" title="Se impostato a VERO divide la superficie complessiva assegnata alla coop per il numero di edifici"><b>Dividi</b></label>
+          {% else %}
+            <label>Dividi</label>
+          {% endif %}
+          <p><span>{{ c.ref_millesimi }}</span></p>
+        </div>
+        <div class="col-2">
+          <label>Alloggi</label>
+          <p>{{ c.alloggi }}</p>
+        </div>
+        <div class="col-2">
+          <label>Importo convenzione ( £ )</label>
+          <p><b>{{ c.conv_lire | floatformat:0 }}</b></p>
+        </div>
+        <div class="col-2">
+          <label>Importo conguaglio ( £ )</label>
+          <p>{{ c.cong_lire }}</p>
+        </div>
+      </div>
+
+      <div class="row m-2">
+        <div class="col-3">
+          <label>Data riv. ISTAT</label>
+          <p>{{data_istat | date:"M Y"}}</p>
+        </div>
+        <div class="col-3 text-right">
+          <label><a href="https://rivaluta.istat.it/#" target="_blank">coeff. ISTAT</a></label>
+          <p><b>{{c.coeff_istat}}</b></p>
+        </div>
+        <div class="col-3 text-right">
+          <label>Importo unit. perizia</label>
+          <p><b>{{ c.valore_perizia }} <small>€/mq</small></b></p>
+        </div>
+        <div class="col-3 text-right">
+          <label>Millesimi</label>
+          <p><b>{{ c.millesimi | floatformat:4 }}</b></p>
+        </div>
+      </div>
+
+      {% if pratica.stato != 'c' and pratica.stato != 'aa' %}
+        <div class="row m-2">
+          <div class="col-2">
+            <label>Importo rivalutato</label>
+            <p>€ {{ c.conv_rival | floatformat:2 }}</p>
+          </div>
+          <div class="col-2">
+            <label>Cong. rivalutato</label>
+            <p>€ {{ c.cong_rival | floatformat:2 }}</p>
+          </div>
+          <div class="col-2">
+            <label>Valore perizia <br><small>({{ c.valore_perizia }} * {{ c.area }} * 0.60 )</small></label>
+            <p>€ {{ c.valore_venale | floatformat:2 }}</p>
+          </div>
+          <div class="col-3">
+            <label>Residuo <br><small>({{ c.valore_venale | floatformat:2 }} - ({{ c.conv_rival | floatformat:2 }} + {{ c.cong_rival | floatformat:2 }}))</small></label>
+            <p style="font-weight: bolder;">€ {{ c.valore_residuo }}</p>
+          </div>
+          <div class="col-3 text-right">
+            <label><b>Importo UIU</b><small> -</small></label>
+            {% if c.prop_acquisita == False %}
+              <p class="h6" style="color: red;"><b>€ {{ c.valore_dirsup }}</b></p>
+            {% else %}
+              <p class="h6" style="color: red;"><b>vedi atto precedente</b></p>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if c.tipo_diritto == 'Superficie' %}
+          <div class="row m-2">
+            <div class="col-2">
+              {% if c.prop_acquisita == True %}
+                <label style="color: red;" title="Se impostato a VERO indica la presenza di precedente atto ( trasformazione diritto di superficie in proprietà )"><b>Atti precedenti </b></label>
+              {% else %}
+                <label>Atti precedenti </label>
+              {% endif %}
+              <p><br>
+                {% if c.prop_acquisita %}
+                  <input type="checkbox" checked disabled>
+                {% else %}
+                  <input type="checkbox" disabled>
+                {% endif %}
+              </p>
+            </div>
+            <div class="col-2">
+              <label>Durata convenzione</label>
+              <p><br>{{ c.durata }} anni</p>
+            </div>
+            <div class="col-2">
+              <label>coeff. temporale</label>
+              <p><br>{{ c.coeff_temp }}</p>
+            </div>
+            <div class="col-3">
+              <label>Importo rimozione vincolo<br><small>({{ c.valore_residuo | floatformat:2 }} * 0.50 * {{c.coeff_temp }} * 0.50 )</small></label>
+              <p><b>€ {{ c.crv }}</b></p>
+            </div>
+            <div class="col-3 text-right">
+              <label><b>Importo rimozione vincolo</b><br><small> -</small></label>
+              <p class="h6" style="color: brown;"><b>€ {{ c.crv_uiu }}</b></p>
+            </div>
+          </div>
+        {% endif %}
+      {% endif %}
+
+      <div class="row bg-light m-2">
+        <div class="col-9 text-right">
+          <span class="text-left">TOTALE DOVUTO : {{c.millesimi|floatformat:4}}/1000 -></span>
+        </div>
+        <div class="col-3 text-right">
+          <span class="h5"><b> € {{ tot_dovuto }}</b></span>
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>

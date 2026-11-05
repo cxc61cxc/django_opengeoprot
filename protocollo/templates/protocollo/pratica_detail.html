@@ -1,0 +1,738 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static%}
+{% load l10n %}
+{% load geojson_tags %}
+{% load leaflet_tags %}
+{% load protocollo_tags %}
+{% block content %}
+
+  <div class="container-fluid border">
+      {% if pratica %}
+        <div id="dynamic-message" class="alert alert-warning mb-2" style="display: none;"></div>
+        <div class="row no-gutters flex-nowrap">
+          <!-- COLONNA SINISTRA: Dati testuali pratica -->
+          <div class="col-4 shadow-sm border-start border-primary border-5">
+            <div class="container-fluid shadow-sm border-start border-primary border-5">
+
+              <!-- Card principale: titolo, stato, azioni -->
+              <div class="card" style="background-color: rgb(245, 243, 239);">
+                <!-- <div class="card-body mb-0" style="color:rgb(39, 38, 38)"> -->
+                  <div class="card-body">
+                    <div class="row">
+                       <div class="h4 col-8">
+                        <p>
+                              <b style="color: blue;">{{ pratica.tipo_pratica | upper }} {% if tot_stessa_matricola > 0 %}({{ tot_stessa_matricola }}){% endif %} </b>
+                              <small>
+                              {% for c in cdu %}
+                                {{ c.cdu_number }} - {{ c.cdu_date | date:"Y"}}
+                              {% endfor %}
+                              </small>
+                        </p>
+                        
+                      </div> 
+                       <div class="col-4 text-right">
+                            {% if giorni_caricamento is not None %}
+                              <div style="font-size: 0.9em; font-weight: bold; text-transform: uppercase; text-align: right; white-space: nowrap;">
+                                {% if pratica.stato == 'c' %}DEFINITA IN <span style="color: red; font-size: 1.2em;">{{ giorni_caricamento }}</span> GIORNO/I{% else %}IN LAVORAZIONE DA <span style="color: green; font-size: 1.2em;">{{ giorni_caricamento }}</span> GIORNO/I{% endif %}
+                              </div>
+                            {% endif %}
+                            {% if is_editor and pratica.stato != 'c' and pratica.stato != 'aa' or user.is_superuser %}
+                            <a title="Modifica " 
+                              href="{% url 'protocollo:pratica_edit_url' pk=pratica.pk %}" 
+                              class="btn btn-sm btn-outline-warning" >Edita
+                            </a>
+                          {% endif %}
+                      </div>
+                    </div>  
+
+                    <div class="row">
+                      <div class="col-12 text-right" style="color: brown;">
+                        {{pratica.code_p }}/{{ pratica.data_prot_gen|date:"Y"}} {% if pratica.sub_code %}- {{pratica.sub_code}}{% endif %}{% if pratica.classe %} classe-{{pratica.classe}}{% endif %}
+                   </div>
+               </div>
+               <!-- Azioni rapide: idoneità alloggiativa, passo carraio -->
+               <div class="row">
+                      <div class="col-6 ">
+                        <p> creata da {{ pratica.user }} il {{ pratica.data_crea|date:"d-m-Y" }}</p>
+                        <p> modificata il {{ pratica.data_mod|date:"d-m-Y" }}</p>
+
+
+                      </div>
+
+                      <div class="col-6 text-right" >
+                        
+                            {% if pratica.stato == 'i' %}
+                              <p class="text-success"><b>IN CORSO</b></p>
+                            {% endif %}
+                            {% if pratica.stato == 'c' %}
+                              <p class="text-danger"><b>CHIUSA</b></p>
+                            {% endif %}
+                            {% if pratica.stato == 'aa' %}
+                              <p class="text-warning"><b>ARCHIVIATA</b></p>
+                            {% endif %}
+                            {% if pratica.stato == 'a' %}
+                              <p style="color: darkblue;"><b>ATTIVA</b></p>
+                            {% endif %}
+                            {% if pratica.stato == 's' %}
+                              <p style="color: blueviolet;"><b>SOSPESA</b></p>
+                            {% endif %}
+                            {% if pratica.stato == 'ic' %}
+                              <p class="text-success"><b>INVIATA COMUNICAZIONE</b></p>
+                            {% endif %}
+                            {% if pratica.stato == 'ai' %}
+                              <p style="color: rgb(16, 232, 174);"><b>IMPORTO ACCETTATO</b></p>
+                            {% endif %}
+                            {% if pratica.stato == 'bd' %}
+                              <p style="color: rgb(29, 107, 86);"><b>BOZZA DETERMINA</b></p>
+                            {% endif %}
+                            {% if pratica.stato == 'df' %}
+                              <p style="color: rgb(11, 72, 239);"><b>DETERMINA FIRMATA</b></p>
+                            {% endif %}
+                            {% if pratica.stato == 'ri' %}
+                              <p style="color: rgb(235, 13, 187);"><b>RICHIESTA INTEGRAZIONE</b></p>
+                            {% endif %}
+                            {% if pratica.stato == 'ia' %}
+                              <p style="color: rgb(21, 151, 238);"><b>INVIATA AD AMMINISTRATIVI</b></p>
+                            {% endif %}
+                            {% if pratica.stato == 'af' %}
+                              <p style="font-weight:bold; color: rgb(26, 115, 199);"><b>ALLA FIRMA</b></p>
+                            {% endif %}
+                            {% if pratica.stato == 'np' %}
+                              <p style="font-weight:bold; color: rgb(106, 13, 235);"><b>IMPROCEDIBILE</b></p>
+                            {% endif %}
+                            {% if pratica.stato == 'dn' %}
+                              <p style="font-weight:bold; color: rgb(16, 226, 156);"><b>DETERMINA INVIATA A NOTAIO</b></p>
+                            {% endif %}
+                            {% if pratica.stato == 'eo' %}
+                              <p style="font-weight:bold; color: rgb(226, 16, 16);"><b>EMESSA ORDINANZA</b></p>
+                            {% endif %}
+                            <!-- Mostra il pulsante DUPLICA se la pratica è Osservazione oppure COOPERATIVA -->
+                            {% if pratica.stato != 'c' and pratica.stato != 'aa' and pratica.tipo_pratica_id == 35 and is_editor == True and pratica.sub_code is None  %}
+                              <a title="Duplica la pratica {{ pratica.id }}" 
+                                href="{% url 'protocollo:duplica_pratica_url' id=pratica.id %}" 
+                                class="btn btn-sm btn-outline-info" >
+                                Duplica
+                              </a>
+                            
+                            {% elif pratica.stato == 'c' and pratica.tipo_pratica_id == 26 and is_editor == True  %}
+                                <a title="Duplica la pratica {{ pratica.id }} " 
+                                  href="{% url 'protocollo:duplica_idonall_url' id=pratica.id %}" 
+                                  class="btn btn-sm btn-outline-info" >
+                                  Duplica 
+                                </a>
+                            {% elif pratica.stato == 'aa' and pratica.tipo_pratica_id == 26 and is_editor == True  %}
+                                <a title="Duplica la pratica {{ pratica.id }} " 
+                                  href="{% url 'protocollo:duplica_idonall_url' id=pratica.id %}" 
+                                  class="btn btn-sm btn-outline-info" >
+                                  Duplica 
+                                </a> 
+                            {% elif pratica.stato == 'c' and pratica.tipo_pratica_id == 38 and is_editor == True  and pratica.sub_code is None  %}
+                            
+                                <a title="Duplica la pratica {{ pratica.id }} " 
+                                  href="{% url 'protocollo:duplica_ascensore_url' id=pratica.id %}" 
+                                  class="btn btn-sm btn-outline-info" >
+                                  Duplica 
+                                </a>
+                            {% elif pratica.stato == 'aa' and pratica.tipo_pratica_id == 38 and is_editor == True  and pratica.sub_code is None  %}
+                            
+                                <a title="Duplica la pratica {{ pratica.id }} " 
+                                  href="{% url 'protocollo:duplica_ascensore_url' id=pratica.id %}" 
+                                  class="btn btn-sm btn-outline-info" >
+                                  Duplica 
+                                </a>
+                            {% endif %}
+                      </div>
+                    </div>
+                    
+                    <div class="row">
+                            
+                            <div class="col-8 h6" >
+                                Prot.Gen.
+                                <b style="color: blue;">{{ pratica.prot_gen }}</b>
+
+                                <small> del </small>
+                                <b style="color: blue;">{{ pratica.data_prot_gen | date:"d/m/Y" }}</b>
+                            </div>
+                            
+                          <div class="col-4 text-right">
+                            {% if pratica.tipo_pratica_id == 36 %}
+                            <a title="Vedi le pratiche collegate! " 
+                              href="{% url 'coop:all_coop_print_url' pratica.code_p %}" 
+                              class="btn btn-sm btn-outline-info" >stampa elenco
+                            </a>
+                            {% endif %}
+                          </div>
+                          
+                    </div>
+                  </div>
+               </div>
+               <div class="row">
+                 <!-- PASSO CARRAIO -->
+                  {% if pratica.tipo_pratica_id == 21  %}
+                    {% if tot_pcar == 0 %}
+                  
+                    <a title="Passo carraio" 
+                      href="{% url 'pascar:pcar_add_url' %}" class="btn btn-sm btn-outline-info" >Passo carraio
+                    </a>
+                    {% else %}
+                      {% for c in pcar %}
+                      <a title="Modifica Passo carraio" 
+                        href="{% url 'pascar:pcar_edit_url' c.id %}" class="btn btn-sm btn-outline-info" >Vedi Passo carraio ({{tot_pcar}})
+                      </a>
+                      {% endfor %}
+                    {% endif %}
+                  {%  endif %}
+                  
+              </div>  
+
+              <!-- Dettagli pratica: oggetto, ubicazione, annotazioni -->
+              <div class="card-body card-bg mb-0 " style="color:rgb(39, 38, 38)">
+                
+                <div class="row" >
+                  
+                  <div class="col-5 text-left" >
+                    <!-- Button trigger modal -->
+                    {% if pratica.tipo_pratica_id != 21 %} 
+                    
+                    <div class="my-1">
+                      <button type="button" class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#exampleModalLong">
+                        Urbanistica (<span class="text-muted">{{ tot_cdu }}</span>)
+                      </button>
+                    </div>
+                    
+                    
+                    {% endif%}
+                  
+                    <!-- Modal -->
+                    <div class="modal fade " id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLongTitle">CDU-INFORMATIVA</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                            </button>
+                          </div>
+                          <div class="modal-body">
+                            <p class="card-text">
+                            
+                                {% block provvedimenti %}
+                                  {% include 'protocollo/partials/_cdu_pratica_list.html' %}  
+                                {% endblock %}
+                              
+                              
+                            
+                            </p>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  
+                  <div class="col-1"></div>
+                  <div class="col-6">
+                    <!-- Button trigger modal -->
+                    
+                    <div class="my-1 text-right">
+                      <button type="button" class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#doc_modal_long">
+                        Documenti (<span class="text-muted">{{ tot_doc }}</span>)
+                      </button>
+                    </div>
+                    <!-- Modal -->
+                    <div class="modal fade" id="doc_modal_long" tabindex="-1" role="dialog" aria-labelledby="doc_modal_longTitle" aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title" id="doc_modal_longTitle">Documenti</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                            </button>
+                          </div>
+                          <div class="modal-body">
+                            <p class="card-text">
+                        
+                          {% block media %}
+                            {% include 'protocollo/partials/_pratiche_upload_all.html' %}   
+                          {% endblock %}
+                            </p>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                
+                  
+                </div>
+              </div>
+              <!-- Card secondaria: oggetto, ubicazione, annotazioni -->
+              <div class="card">
+                <div class="card-body card-bg mb-0 sm" >
+                <div class="row" style="text-align: left">
+                  <div class="col-3">
+                    Oggetto : 
+                  </div>
+                  <div class="col-9">
+                    {{ pratica.oggetto|linebreaks }} 
+                  </div>
+                </div>
+                <div class="row" style="text-align: left;font-size: 1rem;">
+                  <div class="col-3">
+                    <a href = "{% url 'protocollo:ubica_url' pratica.id %}" target='_SELF' title='posiziona su civico...se esiste'>Ubicazione </a>: 
+                  </div>
+                  <div class="col-7" style="font-weight: bold;">
+                    <a style="color: blue;" href="https://www.openstreetmap.org/search?query= {{ pratica.street }} {{ pratica.housenumber }} carrara" target="_BLANK">
+                      {{ pratica.street|title }} {{ pratica.housenumber|lower}}
+                    </a>
+                    
+                  </div>
+                  <div class="col-2">
+                  </div>
+                </div>
+                <div class="row" style="text-align: left;font-size: 0.95rem; font-weight: bold;">
+                  <div class="col-3">
+                    Annotazioni : 
+                  </div>
+                  <div class="col-9">
+                    {{ pratica.annotazioni|linebreaks }} 
+                    <input type="hidden" name="posizione" value="{{pratica.posizione.y }}, {{ pratica.posizione.x }}">
+                  </div>
+                </div>  
+              </div>
+              </div>
+              <!-- <p style="text-align: left;font-size: .7em;">
+                Coordinate WGS84: lat. {{pratica_posizione.x}}, lng. {{ pratica_posizione.y }}
+              </p> -->
+            
+            <!-- Mappa interattiva (solo se posizione disponibile) -->
+            {% if pratica_posizione %}
+            <div id="map" style="height: 220px;"></div>
+
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+              <script>
+                  // GeoDjango Point(x, y) = (lng, lat)
+                  // Usiamo unlocalize per garantire il punto decimale corretto per JS
+                  var lat = {{ pratica_posizione.y|unlocalize }};
+                  var lng = {{ pratica_posizione.x|unlocalize }};
+                  var map = L.map('map').setView([lat, lng], 17);
+                  
+                var osm = L.tileLayer("{% static 'tiles/' %}{z}/{x}/{y}.png", {
+                    attribution: 'Comune di Carrara: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ',
+                    maxZoom: 19
+                    }).addTo(map);
+
+                  var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EBP, and the GIS User Community'
+                  });
+
+                  var baseMaps = {
+                      "OpenStreetMap": osm,
+                      "Satellite": satellite
+                  };
+
+                  var particleLayer = L.featureGroup().addTo(map);
+                  {% if pratica.particella_pratica.all and not is_consigliere %}
+                      {% for p in pratica.particella_pratica.all %}
+                          {% if p.mpoly %}
+                              {% with id_catasto=id_catasto_map|dict_get:p.id %}
+                                  {% if id_catasto %}
+                                      L.geoJSON({{ p.mpoly.json|safe }}, {
+                                          style: {color: "#ff3333", weight: 2, fillOpacity: 0.2}
+                                      }).bindPopup(function (layer) {
+                                          // Posizione della particella (centroide) per Google Earth
+                                          var c = layer.getBounds().getCenter();
+                                          var earth = "https://earth.google.com/web/search/" + c.lat.toFixed(6) + "," + c.lng.toFixed(6);
+                                          return "Fg {{ p.foglio }} map {{ p.mappale }}<br> <a href='http://appsrvgis/ubucomu/catasto/nctr_results_ana.php?f={{ p.foglio }}&m={{ p.mappale }}' target='_blank'>visura catastale</a><br><a href='https://gis.comune.carrara.ms.it/lizmap355/index.php/lizmap/service/?repository=001&project=piani_e_vincoli_pg_2023&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPrintAtlas&FORMAT=pdf&EXCEPTIONS=application/vnd.ogc.se_inimage&TRANSPARENT=true&DPI=100&TEMPLATE=informativa_%20urbanistica&LAYER=vw_particelle_f&EXP_FILTER=$id%20IN%20({{ id_catasto }})' target='_blank'>informativa POC</a><br><a href='" + earth + "' target='_blank' title='Apri in Google Earth la posizione della particella'>Google Earth</a>";
+                                      })
+                                      .addTo(particleLayer);
+                                  {% else %}
+                                      L.geoJSON({{ p.mpoly.json|safe }}, {
+                                          style: {color: "#ff3333", weight: 2, fillOpacity: 0.2}
+                                      }).bindPopup(function (layer) {
+                                          // Posizione della particella (centroide) per Google Earth
+                                          var c = layer.getBounds().getCenter();
+                                          var earth = "https://earth.google.com/web/search/" + c.lat.toFixed(6) + "," + c.lng.toFixed(6);
+                                          return "Fg {{ p.foglio }} map {{ p.mappale }}<br> <a href='http://appsrvgis/ubucomu/catasto/nctr_results_ana.php?f={{ p.foglio }}&m={{ p.mappale }}' target='_blank'>visura catastale</a><br><a href='" + earth + "' target='_blank' title='Apri in Google Earth la posizione della particella'>Google Earth</a>";
+                                      })
+                                      .addTo(particleLayer);
+                                  {% endif %}
+                              {% endwith %}
+                          {% endif %}
+                      {% endfor %}
+                      
+                      // Verifica se il civico è definito (contiene almeno un numero)
+                      var civico = "{{ pratica.housenumber|default:'' }}";
+                      var hasNumericCivico = /\d/.test(civico);
+                      
+                      if (!hasNumericCivico && particleLayer.getLayers().length > 0) {
+                          var center = particleLayer.getBounds().getCenter();
+                          lat = center.lat;
+                          lng = center.lng;
+                          map.setView([lat, lng], 17);
+                      }
+                      
+                      var isDefaultPos = (lat == 44.07721 && lng == 10.09636);
+                      var streetName = "{{ pratica.street|default:'' }}";
+                      var isStreetUndefined = (streetName == "" || streetName == "----" || streetName == "0" || streetName == "None");
+
+                      if ((isDefaultPos || isStreetUndefined || !hasNumericCivico) && particleLayer.getLayers().length > 0) {
+                          map.fitBounds(particleLayer.getBounds());
+                      }
+                  {% endif %}
+
+                  // Marker della pratica a goccia, molto piccolo (blu)
+                  var practiceIcon = L.divIcon({
+                      className: 'custom-div-icon',
+                      html: "<div style='background-color:#007bff; width:12px; height:12px; border-radius:50% 50% 50% 0; transform: rotate(-45deg); border: 1px solid white;'></div>",
+                      iconSize: [12, 12],
+                      iconAnchor: [6, 12],
+                      popupAnchor: [0, -12]
+                  });
+
+                  var marker = L.marker([lat, lng], {icon: practiceIcon}).addTo(map)
+                      .bindPopup('<b>Pratica {{ pratica.prot_gen }}/{{ pratica.data_prot_gen.year }}</b>');
+
+                  // Layer WMS Catasto Agenzia Entrate
+                  //                var catastoWMS = L.tileLayer.wms("https://wms.cartografia.agenziaentrate.gov.it/inspire/wms/ows01.php", {
+                  //                    layers: 'province,comuni,fogli,particelle',
+                  //                    format: 'image/png',
+                  //                    transparent: true,
+                  //                    attribution: "Sogei / Agenzia delle Entrate"
+                  //                });
+
+                  // Layer per le particelle del catasto generale (database)
+                  var catastoVettoriale = L.geoJSON(null, {
+                      style: { color: "#666", weight: 1, fillOpacity: 0.05, dashArray: '3' },
+                      onEachFeature: function (feature, layer) {
+                          var fg = (feature.properties && feature.properties.foglio) ? feature.properties.foglio : "N/D";
+                          var mapPart = (feature.properties && feature.properties.mappale) ? feature.properties.mappale : "N/D";
+                          layer.bindPopup("<b>Catasto Generale</b><br>Foglio: " + fg + "<br>Mappale: " + mapPart);
+                      }
+                  });
+
+
+
+                  // ===============================================
+                  // Bounding box INIZIALE della mappa: usato per la query
+                  // delle particelle ai dintorni.
+                  // ===============================================
+                  var INITIAL_BBOX = {
+                      north: map.getBounds().getNorth(),
+                      south: map.getBounds().getSouth(),
+                      east: map.getBounds().getEast(),
+                      west: map.getBounds().getWest()
+                  };
+
+                  // Carica particelle limitrofe
+                  var nearbyUrl = "{% url 'protocollo:catasto_geojson_bbox_url' %}?north=" + INITIAL_BBOX.north + "&south=" + INITIAL_BBOX.south + "&east=" + INITIAL_BBOX.east + "&west=" + INITIAL_BBOX.west;
+                  fetch(nearbyUrl)
+                      .then(response => response.json())
+                      .then(data => {
+                          catastoVettoriale.addData(data);
+                      });
+
+                  // Carica pratiche limitrofe
+                  var praticheVicineLayer = L.featureGroup().addTo(map);
+                  var nearbyPraticheUrl = "{% url 'protocollo:pratiche_geojson_bbox_url' %}?lat=" + lat + "&lng=" + lng + "&pk={{ pratica.pk }}";
+                  fetch(nearbyPraticheUrl)
+                      .then(response => response.json())
+                      .then(data => {
+                          L.geoJSON(data, {
+                              pointToLayer: function (feature, latlng) {
+                                  return L.circleMarker(latlng, {
+                                      radius: 6,
+                                      fillColor: "#ff9800",
+                                      color: "#fff",
+                                      weight: 1,
+                                      opacity: 1,
+                                      fillOpacity: 0.8
+                                  });
+                              },
+                              onEachFeature: function (feature, layer) {
+                                  var props = feature.properties || {};
+                                  var id = props.id || '';
+                                  var prot = props.prot_gen || '';
+                                  var data = props.data_prot_gen || '';
+                                  var tipo = props.tipo_pratica || 'N/D';
+                                  var popup = '<b>' + prot + '/' + data + '</b><br>' + tipo + '<br><a href=\"/protocollo/pratica_detail/' + id + '/\" target=\"_blank\">Apri pratica</a>';
+                                  layer.bindPopup(popup);
+                              }
+                          }).addTo(praticheVicineLayer);
+                      });
+
+                  var overlayMaps = {
+                      "Confini Catastali": particleLayer,
+                      "Ubicazione Pratica": marker,
+                      "Catasto Adiacente": catastoVettoriale,
+                      "Pratiche Vicine": praticheVicineLayer,
+                      // "Catasto (WMS)": catastoWMS
+                  };
+
+                  L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+              </script>
+            </div>
+            {% endif %}
+            
+            
+            
+          </div>
+           <!-- COLONNA CENTRALE: Soggetti e impianti specifici -->
+           <div class="col-6">
+             <!-- Sezione soggetti (nascosta per i consiglieri POC 2022) -->
+             {% if not is_consigliere %}
+             <div class="hero-section shadow-sm border-start border-primary border-5">
+               <div class="card ">
+                 <div class="card-body">
+                   <div class="row ">
+                       {% block lista_soggetti %}
+                           {% include 'protocollo/partials/_soggetti_pratica_list.html' %}
+                       {% endblock %}
+                   </div>
+                 </div>
+               </div>
+              </div>
+              {% endif %}
+
+              {% if pratica.tipo_pratica_id == 30 %}
+                {% include 'protocollo/partials/_istruttoria_poc.html' %}
+              {% endif %}
+
+              <!-- Sezione impianti e convenzioni specifiche per tipo pratica -->
+             <div class="hero-section shadow-sm border-start border-primary border-5">
+               <div class="card ">
+                 <div class="card-body">
+                   <div class="row ">
+                      <!-- impianti FOTOVOLTAICO-->
+                      <!-- FOTOVOLTAICO -->
+                      {% if pratica.tipo_pratica_id == 14  %}
+                        {% block fotovoltaico %}
+                          {% include 'protocollo/partials/_fotovoltaico.html' %}
+                        {% endblock %}
+                      {%  endif %}
+
+                      <!-- ASCENSORI matricola-->
+                      <!-- MATRICOLA lo propone solo se i dati relativi all'impianto sono corretti -->
+                      {% if pratica.tipo_pratica_id == 38  %}
+                        {% block ascensori %}
+                          {% include 'protocollo/partials/_ascensore.html' %}
+                        {% endblock %}
+                      {%  endif %}
+                          <!-- CONVENZIONE COMMISSIONI PAESAGGIO -->
+                          {% if pratica.tipo_pratica_id == 13 %}
+                              {% block commissioni0 %}
+                                {% include 'paesaggio/commissioni_list_view.html' %}
+                              {% endblock %}
+                          {% endif %}
+
+                        <!-- ACCETTAZIONE CONVENZIONE COOP -->
+                        {% if pratica.tipo_pratica_id == 36 %}
+                            {% block accettazione %}
+                              {% include 'protocollo/partials/_accettazione.html' %}
+                            {% endblock %}
+                        {% endif %}
+
+
+
+
+                        <!-- CONVENZIONE COOP -->
+                        {% if pratica.tipo_pratica_id == 35 or pratica.tipo_pratica_id == 36 %}
+                            {% block convenzione %}
+                              {% include 'protocollo/partials/_convenzione.html' %}
+                            {% endblock %}
+                        {% endif %}
+
+                        <!-- IDONEITA -->
+                        {% if pratica.tipo_pratica_id == 26 %}
+                            {% block idonall %}
+                              {% include 'protocollo/partials/_idoneita_all.html' %}
+                            {% endblock %}
+                        {% endif %}
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- COLONNA DESTRA: Particelle, modelli e diario -->
+          <div class="col-2">
+            <div class="hero-section shadow-sm border-start border-primary border-5">
+              <div class="card">
+                <div class="card-body p-2">
+                  <!-- Particelle catastali (nascoste per i consiglieri POC 2022) -->
+                  {% if not is_consigliere %}
+                  {% block lista_particelle %}
+                    {% include 'protocollo/partials/_particelle_pratica_list.html' %}
+                  {% endblock %}
+                  {% endif %}
+                  <!-- Commissioni paesaggistiche -->
+                  {% block commissioni %}
+                    {% if pratica.tipo_pratica_id == 13 %}
+                      {% include 'paesaggio/commissioni_list_view.html' %}
+                    {% endif %}
+                  {% endblock %}
+                  <!-- Modelli di stampa -->
+                    {% if pratica.stato != 'c' and pratica.stato != 'aa' %}
+                    {% block lista_modelli %}
+                      {% if anaprat %}
+                        {% include 'comunicazioni/modello_list.html' with pratica=pratica %}
+                      {% endif %}
+                    {% endblock %}
+                  {% endif %}
+                  <!-- Diario -->
+                  {% block lista_diario %}
+                    {% include 'protocollo/partials/_list_diario.html' %}
+                  {% endblock %}
+                </div>
+              </div>
+            </div>
+          </div>
+        
+      </div>
+      {% endif %}
+   
+  </div>
+
+  <!-- Modal per la visualizzazione dei messaggi -->
+  <div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="messageModalLabel">Dettaglio Messaggio</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="messageModalBody">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Chiudi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal Pratiche Vicine -->
+  <div class="modal fade" id="praticheVicineModal" tabindex="-1" role="dialog" aria-labelledby="praticheVicineModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="praticheVicineModalLabel">Pratiche Vicine</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div id="pratiche-vicine-loading" class="text-center py-3" style="display:none;">
+            <div class="spinner-border text-primary" role="status">
+              <span class="sr-only">Caricamento...</span>
+            </div>
+          </div>
+          <div id="pratiche-vicine-content">
+            <p class="text-muted">Clicca sul pulsante per caricare le pratiche vicine.</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Chiudi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
+{% block js %}
+
+  <script>
+$(document).ready(function() {
+
+    // Chiudi i messaggi dinamici (#dynamic-message: showDynamicMessage vive nello script della mappa)
+    $(document).on('click', '#dynamic-message .close', function(){
+        $('#dynamic-message').hide();
+    });
+
+    // Visualizza il messaggio in un modal di Bootstrap al click sul testo
+    $('.message-content').on('click', function() {
+        var content = $(this).html();
+        $('#messageModalBody').html(content);
+        $('#messageModal').modal('show');
+    });
+
+    // ===============================================
+    // PRATICHE VICINE (LISTA)
+    // ===============================================
+    {% if pratica_posizione %}
+    $('#praticheVicineModal').on('show.bs.modal', function() {
+        var contentDiv = $('#pratiche-vicine-content');
+        var loadingDiv = $('#pratiche-vicine-loading');
+
+        // Se gi caricati, non ricaricare
+        if (contentDiv.data('loaded')) {
+            return;
+        }
+
+        contentDiv.html('<p class="text-muted">Caricamento...</p>');
+        loadingDiv.show();
+
+        var lat = {{ pratica_posizione.y|unlocalize }};
+        var lng = {{ pratica_posizione.x|unlocalize }};
+        var url = "{% url 'protocollo:pratiche_vicine_list_url' %}?lat=" + lat + "&lng=" + lng + "&pk={{ pratica.pk }}";
+
+        fetch(url)
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                loadingDiv.hide();
+                var results = data.results || [];
+
+                if (results.length === 0) {
+                    contentDiv.html('<p class="text-muted">Nessuna pratica vicina trovata.</p>');
+                } else {
+                    var html = '<div class="table-responsive"><table class="table table-sm table-striped">' +
+                        '<thead><tr>' +
+                        '<th>Prot.</th>' +
+                        '<th>Data</th>' +
+                        '<th>Tipo</th>' +
+                        '<th>Stato</th>' +
+                        '<th>Oggetto</th>' +
+                        '</tr></thead><tbody>';
+
+                    results.forEach(function(p) {
+                        html += '<tr>' +
+                            '<td><a href="' + p.url + '" target="_blank">' + p.prot_gen + '</a></td>' +
+                            '<td>' + p.data_prot_gen + '</td>' +
+                            '<td>' + p.tipo_pratica + '</td>' +
+                            '<td>' + p.stato + '</td>' +
+                            '<td>' + p.oggetto + '</td>' +
+                            '</tr>';
+                    });
+
+                    html += '</tbody></table></div>';
+                    contentDiv.html(html);
+                }
+
+                contentDiv.data('loaded', true);
+            })
+            .catch(function(error) {
+                loadingDiv.hide();
+                contentDiv.html('<p class="text-danger">Errore nel caricamento delle pratiche vicine.</p>');
+                console.error("Errore caricamento pratiche vicine:", error);
+            });
+    });
+    {% endif %}
+
+});
+</script> 
+
+{% endblock js %}
+
+		

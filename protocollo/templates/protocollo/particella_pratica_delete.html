@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container bg-light">
+    
+    <h5>ELIMINA particella ( id={{particella_pratica.id}} )</h5>
+    <br>
+      <div class="row align-items-start">
+        
+        <div class="col">
+          <h6>Foglio : {{ particella.foglio }}</h6>
+        </div>
+        <div class="col">
+          <h6>Nome : {{particella.mappale }}</h6>
+        </div>
+        <div class="col">
+            <h6>Nome : {{particella.subalterno }}</h6>
+          </div>
+
+      </div>
+     
+  <br><br><hr>   
+  <p>Sei sicuro di volere elimare la particella?: </p>
+
+  <div class="row">
+    <div class="col-11">
+      <form action="" method="post">
+        {% csrf_token %}
+        <input class="btn btn-outline-danger btn-sm" type="submit" value="Elimina">
+      </form>
+    </div>
+    <div class="col-1">
+      <input type=button class="btn btn-success btn-sm" value="Indietro" onClick="javascript:history.go(-1);">
+    </div>
+  </div>
+  
+</div>
+{% endblock %}
+		

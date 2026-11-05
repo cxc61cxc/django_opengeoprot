@@ -1,0 +1,6 @@
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="btn btn-success">Salva</button>
+  <a href="{% url 'prg:marca_list' form.instance.cdu.id %}" class="btn btn-secondary">Annulla</a>
+</form>

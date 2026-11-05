@@ -1,0 +1,15 @@
+{% extends 'protocollo/protocollo_base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <div class="alert alert-danger" role="alert">
+    <h4 class="alert-heading">Accesso non consentito (403)</h4>
+    <p>{{ message }}</p>
+    {% if gruppi %}
+      <hr>
+      <p class="mb-0">I tuoi gruppi: {{ gruppi }}.</p>
+    {% endif %}
+    <hr>
+    <a href="{% url 'home:index' %}" class="btn btn-primary">Torna alla home</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+
+<div class="container py-4" style="min-height: 80vh; font-size: 0.8em;">
+    <!-- Header Sezione -->
+    <div class="hero-section shadow-sm border-start border-primary border-5">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <p class="lead text-danger mb-0"><b>OpenGeoProt</b></p>
+                <p class="lead text-muted mb-0">Sistema Gestionale Ufficio</p>
+                <p class="small text-secondary mt-2">
+                    <i class="bi bi-info-circle me-1"></i> U.O. 6.1.1 Pianificazione urbanistica & U.O. A.2.1 Sistemi informatici
+                </p>
+            </div>
+            
+            <div class="col-md-4 text-center">
+              {% if user.is_staff %}
+                <h4 class="mb-3">Pianificazione Urbanistica</h4>
+                <a class="btn btn-warning btn-lg px-5 shadow-sm" href="{% url 'prg:piani_list_url' %}">
+                    <i class="bi bi-map me-2"></i>Gestione Piani Urbanistici e Vincoli
+                </a>
+              {% endif %}
+            </div>
+            
+            
+            <div class="col-md-4 text-md-end">
+                <!-- <div class="badge bg-primary p-2 mb-2">Piattaforma Attiva</div> -->
+                <!-- <p class="h6 text-secondary small">Ricerche in archivio pratiche edilizia privata e SUAP</p>
+                <p class="h6 text-secondary small">Gestione pratiche</p> -->
+
+            </div>
+        </div>
+    </div>
+    <br>
+
+    <!-- Grid Principale Statistiche -->
+    <div class="row g-4">
+        <!-- Svincoli PEEP -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card dashboard-card h-100 border-top border-primary border-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold text-primary mb-3"><i class="bi bi-currency-euro me-2"></i>Svincoli PEEP</h5>
+                    <div class="stat-value text-primary mb-1">€ {{importo_totale}}</div>
+                    <div class="stat-label mb-3">Totale Importi</div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-1"><span>Istanze totali:</span> <strong>{{totale_svincoli}}</strong></div>
+                    <div class="d-flex justify-content-between mb-1"><span>Definite:</span> <strong class="text-success">{{totale_svincoli_chiusi}}</strong></div>
+                    <div class="d-flex justify-content-between mb-1"><span>In corso:</span> <strong class="text-warning">{{totale_incorso}}</strong></div>
+                    <div class="d-flex justify-content-between"><span>Determine firma:</span> <strong class="text-danger">{{totale_firma}}</strong></div>
+                    <div class="d-flex justify-content-between"><span>Sospese:</span> <strong class="text-danger">{{totale_sospese}}</strong></div>
+                    <div class="d-flex justify-content-between"><span>ai Notai:</span> <strong class="text-danger">{{totale_notaio}}</strong></div>
+                    <div class="d-flex justify-content-between"><span>Importi comunicati:</span> <strong class="text-danger">{{totale_importo_comunicato}}</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ascensori -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card dashboard-card h-100 border-top border-info border-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold text-info mb-3"><i class="bi bi-arrow-up-down me-2"></i>Ascensori {% now 'Y' %}</h5>
+                    <div class="stat-value">{{ istanze_ascensori }}</div>
+                    <div class="stat-label mb-3">Istanze Correnti</div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-1"><span>Matricole rilasciate:</span> <strong class="text-info">{{tot_matricole}}</strong></div>
+                    <div class="d-flex justify-content-between mb-1"><span>Interventi VVFF:</span> <strong>{{blocco_ascensore.count}}</strong></div>
+                    <div class="d-flex justify-content-between"><span>Verbali negativi:</span> <strong class="text-danger">{{negativi.count}}</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CDU -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card dashboard-card h-100 border-top border-warning border-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold text-warning mb-3"><i class="bi bi-file-earmark-text me-2"></i>CDU {% now 'Y' %}</h5>
+                    {% if tot_cdu %}
+                    <div class="stat-value">{{tot_cdu.count}}</div>
+                    <div class="stat-label mb-3">Predisposti</div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-1"><span>Rilasciati:</span> <strong class="text-success">{{cdu_rilasciati.count}}</strong></div>
+                    <div class="d-flex justify-content-between mb-1"><span>Alla firma:</span> <strong class="text-primary">{{cdu_alla_firma.count}}</strong></div>
+                    <div class="d-flex justify-content-between"><span>Sospesi:</span> <strong class="text-danger">{{cdu_sospesi.count}}</strong></div>
+                    {% else %}
+                    <p class="text-muted">Nessun dato disponibile per l'anno corrente.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Idoneità Alloggiative -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card dashboard-card h-100 border-top border-success border-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold text-success mb-3"><i class="bi bi-house-check me-2"></i>Idoneità {% now 'Y' %}</h5>
+                    <div class="stat-value">{{idonall.count}}</div>
+                    <div class="stat-label mb-3">Istanze Pervenute</div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-1"><span>Rilasciati:</span> <strong class="text-success">{{idonall_chiusi.count}}</strong></div>
+                    <div class="d-flex justify-content-between mb-1"><span>In corso:</span> <strong class="text-warning">{{idonall_incorso.count}}</strong></div>
+                    <div class="d-flex justify-content-between"><span>Sospesi:</span> <strong class="text-danger">{{idonall_sospesi.count}}</strong></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Serie Storiche -->
+    <div class="row g-4 mt-2">
+        <div class="col-md-3">
+            <div class="card dashboard-card">
+                <div class="card-header bg-white fw-bold">Svincoli per Anno</div>
+                <div class="card-body history-list" style="max-height: 8.5em; overflow-y: auto;">
+                    {% for entry in result_peep %}
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span>{{ entry.year }}</span> <span class="badge bg-light text-dark">{{ entry.count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-card">
+                <div class="card-header bg-white fw-bold">Ascensori per Anno</div>
+                <div class="card-body history-list" style="max-height: 8.5em; overflow-y: auto;">
+                    {% for entry in result_ascensori %}
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span>{{ entry.year }}</span> <span class="badge bg-light text-dark">{{ entry.count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-card">
+                <div class="card-header bg-white fw-bold">CDU per Anno</div>
+                <div class="card-body history-list" style="max-height: 8.5em; overflow-y: auto;">
+                    {% for entry in result_cdu %}
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span>{{ entry.year }}</span> <span class="badge bg-light text-dark">{{ entry.count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-card">
+                <div class="card-header bg-white fw-bold">Fotovoltaico per Anno</div>
+                <div class="card-body history-list" style="max-height: 8.5em; overflow-y: auto;">
+                    {% for entry in result %}
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span>{{ entry.year }}</span> <span class="badge bg-light text-dark">{{ entry.count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sezione Azioni Editor -->
+    
+
+    <!-- Sezione Accesso Non Autenticato -->
+    {% if not user.is_authenticated %}
+    <div class="row mt-5">
+        <div class="col-md-6 offset-md-3">
+            <div class="card border-0 shadow-lg p-4 text-center">
+                <h3>Benvenuto su OpenGeoProt</h3>
+                <p class="text-muted">Accedi per gestire le pratiche o visualizzare i dettagli completi.</p>
+                <div class="d-grid gap-2 d-md-block mt-3">
+                    <a href="{% url 'login' %}" class="btn btn-primary px-4 me-md-2">Login</a>
+                    <a href="{% url 'signup' %}" class="btn btn-outline-secondary px-4">Registrati</a>
+                </div>
+                <p class="mt-4 small"><a href="http://opengeoprot:8000/accounts/password_reset/" class="text-decoration-none text-muted">Password dimenticata?</a></p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

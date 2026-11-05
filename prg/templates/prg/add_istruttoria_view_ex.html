@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="container">
+  <div class="row">
+    <div class="form-group col-md-1 mb-0" >
+        <input type=button class="btn btn-outline-success btn-sm" value="Indietro" onClick="javascript:history.go(-1);">
+    </div>  
+    <div class="form-group col-md-11 mb-0" >
+        <h5>Aggiunge destinazione</h5>
+    </div>  
+    
+  </div>
+{% if submitted%}
+   <h4>
+      La destinazione è stata registrata!
+   </h4>
+{% else %}
+<div class="container p-2 my-2 border" style="font-size:0.9em;">
+    <form method="post" >
+    
+        {% csrf_token %}
+
+                <div class="form-row">
+                    <div class="form-group col-md-4 mb-0" >
+                        {{ form.piano  | as_crispy_field  }}
+                    </div>   
+                    
+                    <div class="form-group col-md-4 mb-0" >
+                        {{ form.destinazione  | as_crispy_field  }}
+                    </div>         
+                    
+                    <div class="form-group col-md-4 mb-0">
+                        {{ form.parte | as_crispy_field }}
+                        <input type="hidden" name="cataprat" value="{{ cataprat }}">
+                    </div>
+                </div>
+
+                
+                    
+                    <div class="form-group col-md-10 mb-0" >
+                    </div>         
+                    <div class="form-group col-md-1 mb-0" >
+                        <input type="submit" value="Salva" class="btn btn-outline-danger btn-sm">
+                    </div> 
+                        
+                </div>
+                
+        
+    </form>
+{% endif %}
+</div>
+
+{% endblock content %}

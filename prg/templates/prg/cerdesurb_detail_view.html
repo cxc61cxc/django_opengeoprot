@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static%}
+{% block content %}
+
+  
+<div class="container-fluid">
+    <div class="row my-2">
+      <div class="form-group col-md-1 mb-0" >
+          <!-- <input type=button class="btn btn-outline-success btn-sm" value="Indietro" onClick="javascript:history.go(-1);"> -->
+          <a class="btn btn-outline-info btn-sm" href="{% url 'protocollo:pratica_detail_url' pk=cdu.pratica.id %}">Indietro</a>
+      </div>  
+      <div class="form-group col-md-10 mb-0" >
+          <h5>Dettaglio CDU - pratica {{cdu.pratica.id}}</h5>
+      </div> 
+      <div class="form-group col-md-1 mb-0" >
+        <a class="btn btn-outline-info btn-sm" href="{% url 'prg:create_doc_url' cdu.id %}">Stampa</a>
+    </div>  
+      
+</div>
+  
+<div class="container-fluid p-2 my-2 border" style="font-size:0.9em;">
+    
+    <div class="form-row">
+        <div class="form-group col-md-4 mb-0" >
+           
+        </div>
+        <div class="form-group col-md-2 mb-0" >
+            <p>
+            Numero e data certificato
+            </p>
+        </div>
+        <div class="form-group col-md-2 mb-0 " >
+            <p>
+                Data di riferimento 
+            </p>
+        </div>
+        <div class="form-group col-md-1 mb-0 " >
+            <p>
+                Richiedenti
+            </p>
+        </div>
+        <div class="form-group col-md-3 mb-0 " >
+            <p>
+                {%for r in richiedente %}
+                <b>{{ r.cognome|upper }}</b> {{ r.nome| title }};
+                {%endfor%}
+            </p>
+        </div>
+        
+    </div>
+    <div class="form-row">
+        <div class="form-group col-md-1 " >
+             {% if cdu.uso != 'Successione' and cdu.uso != 'Informativa' %}
+            <p style="text-align: right; padding-right: 10%;">
+                <a style="color:green;" class="nav-link " 
+                                      title="Nuova Marca" 
+                                      href="{% url 'prg:marca_create' id=cdu.id %}"><img class="img" 
+            src="{% static 'img/icons8-plus.svg' %}" 
+            width="25" height="25" ></a>
+                {% comment %} <a href="{% url 'prg:marca_create' id=cdu.id %}" class="btn btn-outline-info btn-sm mb-2">Nuova Marca</a> {% endcomment %}
+            </p>
+             {% endif %}
+        </div>
+        <div class="form-group col-md-3 mb-0" >
+             {% if cdu.uso != 'Successione' and cdu.uso != 'Informativa' %}
+            <p class="h5">Gestione marche</p>
+            {% endif %}
+        </div>
+        
+        <div class="form-group col-md-2 mb-0" >
+            <h6>
+            CDU : {{ cdu.cdu_number }} del <span class="h6">{{ cdu.cdu_date | date:"d/m/Y" }}</span>
+            </h6>
+        </div>
+        <div class="form-group col-md-2 mb-0 " >
+            <h6 style="color:crimson">
+                {{ cdu.data_riferimento }}
+            </h6>
+        </div>
+        <div class="form-group col-md-3 mb-0 " >
+            <p class="h5">
+                Uso {{ cdu.uso }}
+            </p>
+        </div>
+        <div class="form-group col-md-2 mb-0 " >
+        </div>
+       
+
+    </div>
+</div>
+<!-- <div class="container-fluid p-2 my-2 border" style="font-size:0.9em;"> -->
+    <div class="form-row">
+        <div class="col-4" style="background-color: beige;">
+        <!-- mostra la tabella per le marche -->
+        {% if cdu.uso != 'Successione' and cdu.uso != 'Informativa' %}
+            {%block marca %}
+                {% include 'prg/partials/_marche_list.html' %}  
+            {% endblock %}
+        {% endif %}
+        </div>
+        <div class="col-6">
+            {% if particelle  %}      
+                    <table class="table table-hover table-sm text-center" style="font-size:.9em;">
+                        <thead>
+                        <tr class="text-muted   small" >
+                            <th scope="col"></th>
+                            
+                            <th scope="col">foglio</th>
+                            <th scope="col">mappale</th>
+                            <th scope="col"> tot. destinazioni</th>
+                            
+                        
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for d in particelle %}
+                        <tr>
+                        
+                            <td >
+                                {% if can_write %}<a class="btn btn-outline-success btn-sm" href="{% url 'prg:istruttoria_detail_url'  d.id_cataprat %}" style="width: 10px; height: 20px;" title=" Edita istruttoria cataprat_id={{ d.id_cataprat }}"></a>{% endif %}
+                            </td>
+
+                            
+                            <td><b>{{ d.foglio }}</b></td>
+                            <td>{{ d.mappale }}</td>
+                            <td>{{ d.tot }}</td>
+                        
+                            
+                        </tr>
+                        {% endfor %}
+                    
+                    </table>
+        </div>
+        {% else %}
+        <h4 class="font-weight-bold">Nessun riscontro!</h4>
+    </div>
+<!-- </div> -->
+    {% endif %}
+   
+
+
+
+{% endblock %}

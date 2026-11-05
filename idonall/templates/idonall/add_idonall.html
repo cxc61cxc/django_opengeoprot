@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+    <div class="container">
+        <div class="row my-3">
+            <div class="form-group col-md-1 mb-0" >
+                <input type=button class="btn btn-success " value="Indietro" onClick="javascript:history.go(-1);">
+            </div>  
+            <div class="row ">
+    <div class="col-12 h6 text-center"></div>
+  </div>
+  
+  <div class="row small bg-light m-0" >
+    
+  </div>
+            <div class="form-group col-md-11 mb-0" >
+                <div class="row">
+                    <div class="col-12">
+                        <p class="h5">NUOVA ISTRUTTORIA</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-3">
+                    </div>
+                    <div class="col-3">
+                        <b>Prot. Gen.</b>
+                    </div>
+                    <div class="col-3">
+                        <b>Oggetto</b>
+                    </div>
+                    <div class="col-3">
+                        <b>Soggetti</b>
+                    </div>
+                    
+                </div>
+                <div class="row">
+                    <div class="col-3">
+                        {{ pratica.tipo_pratica | upper }}
+                    </div>
+                    <div class="col-3">
+                        prot.gen  {{pratica.prot_gen }}/{{ pratica.data_prot_gen|date:"Y" }}
+                    </div>
+                    <div class="col-3">
+                        {{pratica.oggetto | linebreaks }}
+                    </div>
+                    <div class="col-3">
+                    {% for r in richiedente %}
+                            {{ r.cognome | upper }}  {{ r.nome|title }}<br>
+                    {% endfor %}
+                    </div>
+                    
+                </div>
+                
+            </div>  
+            
+        </div>
+    </div>
+    
+
+    <div class="container p-2 my-2 border " style="font-size:0.9em;">
+        
+        {% if can_write and is_editor == True %}
+            <div class="row">
+                <div class="col-12">
+                    <p >Il numero proposto per il NUOVO CERTIFICATO è <span class="h5"><b>{{idonall_proposto}}</b></span></p>
+                </div>
+            </div>
+        <form action="" method="POST">
+
+            {% csrf_token %}
+            
+            <div class="form-row">
+                <div  class="col-3 text-left">
+                    <label>Numero</label>
+                    <input class="form-control" type="number" name="idonall_number" value="{{ idonall_proposto }}">
+                    <!-- {{form.idonall_number | as_crispy_field}}  -->
+                </div>
+                
+                <div class="col-3 text-left" >
+                    <label>Data di rilascio</label>
+                    <input class="form-control" type="date" name="idonall_date" value="{{ today | date:'Y-m-d'}}">
+                    <!-- {{ form.idonall_date | as_crispy_field}} -->
+                </div>   
+                <div class="col-6" >
+                    <label>Descrizione</label>
+                    {{form.descrizione | as_crispy_field}} 
+                </div>
+            </div>
+            
+            
+            <div class="form-group col-md-1 mb-0 " style="text-align: right;">
+                <input type="submit" value="Salva" class="btn btn-outline-danger btn-sm">
+            </div>    
+        </form>
+        {% endif %}
+    </div>        
+{% endblock content %}

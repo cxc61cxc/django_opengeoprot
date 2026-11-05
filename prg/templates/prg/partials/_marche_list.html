@@ -1,0 +1,33 @@
+<table class="table table-hover table-sm text-center" style="font-size:.9em;">
+      <thead>
+        <tr class="text-muted   small" >
+          <th class="col-4">IUV</th>
+          <th class="col-1">Data</th>
+          <th class="col-4">Marca</th>
+          <th class="col-1">Data</th>
+          <th class="col-2"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in marche %}
+        <tr class=" small" >
+          <td class="col-4">{{ m.iuv }}</td>
+          <td class="col-1">{{ m.data_iuv|date:"d/m/Y" }}</td>
+          <td class="col-4">{{ m.marca }}</td>
+          <td class="col-1">{{ m.data_marca|date:"d/m/Y" }}</td>
+          <td class="col-2">
+            
+            <a  title="Modifica ... " 
+                href="{% url 'prg:marca_update' m.id  %}" 
+                style="width:20px;height:20px" class="btn btn-sm btn-outline-warning">
+            </a>
+            
+            {% if can_write %}<a  title="ELIMINA ... " 
+                href="{%  url 'prg:marca_delete' m.id  %}" 
+                style="width:20px;height:20px" class="btn btn-sm btn-outline-danger">
+            </a>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>

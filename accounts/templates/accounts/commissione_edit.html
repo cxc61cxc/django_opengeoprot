@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if commissione %}Modifica Commissione{% else %}Nuova Commissione{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 900px;">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-white px-0 py-2 mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home:index' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'accounts:user_management_url' %}">Gestione Utenti</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'accounts:commissioni_list_url' %}">Commissioni Consiliari</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{% if commissione %}Modifica{% else %}Nuova{% endif %} Commissione</li>
+    </ol>
+  </nav>
+
+  <h3 class="mb-3">
+    <i class="fa fa-{% if commissione %}edit{% else %}plus-circle{% endif %} me-2"></i>
+    {% if commissione %}Modifica Commissione{% else %}Nuova Commissione{% endif %}
+  </h3>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label for="codice" class="form-label">Codice <span class="text-danger">*</span></label>
+            <input type="text" name="codice" id="codice" class="form-control" required
+                   value="{{ commissione.codice|default:'' }}" placeholder="es. poc_2022">
+            <div class="form-text">Identificativo univoco breve (usato nei template).</div>
+          </div>
+          <div class="col-md-8">
+            <label for="nome" class="form-label">Nome <span class="text-danger">*</span></label>
+            <input type="text" name="nome" id="nome" class="form-control" required
+                   value="{{ commissione.nome|default:'' }}" placeholder="es. Osservazioni POC 2022">
+          </div>
+        </div>
+        <div class="row g-3 mt-1">
+          <div class="col-md-12">
+            <label for="descrizione" class="form-label">Descrizione</label>
+            <textarea name="descrizione" id="descrizione" class="form-control" rows="2">{{ commissione.descrizione|default:'' }}</textarea>
+          </div>
+        </div>
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label for="gruppo_django" class="form-label">Gruppo Django <span class="text-danger">*</span></label>
+            <input type="text" name="gruppo_django" id="gruppo_django" class="form-control" required
+                   value="{{ commissione.gruppo_django|default:'' }}" placeholder="es. consosspoc2022">
+            <div class="form-text">Verrà creato al volo clonato da <code>user_settore_6</code>.</div>
+          </div>
+          <div class="col-md-3">
+            <label for="ordine" class="form-label">Ordine</label>
+            <input type="number" name="ordine" id="ordine" class="form-control" min="0"
+                   value="{{ commissione.ordine|default:0 }}">
+          </div>
+          <div class="col-md-3 d-flex align-items-end">
+            <div class="form-check">
+              <input type="checkbox" name="attivo" id="attivo" class="form-check-input"
+                     {% if not commissione or commissione.attivo %}checked{% endif %}>
+              <label class="form-check-label" for="attivo">Attivo</label>
+            </div>
+          </div>
+        </div>
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label for="tipo_pratica" class="form-label">Tipi Pratica (filtro)</label>
+            <select name="tipo_pratica" id="tipo_pratica" class="form-control" multiple size="6">
+              {% for t in tipi_pratica %}
+                <option value="{{ t.id }}"
+                  {% if commissione and t in commissione.tipo_pratica.all %}selected{% endif %}>{{ t.name }}</option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Se vuoto, commissione trasversale (nessun filtro). Tenere Ctrl per selezioni multiple.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="settori" class="form-label">Settori collegati</label>
+            <select name="settori" id="settori" class="form-control" multiple size="6">
+              {% for s in tutti_settori %}
+                <option value="{{ s.id }}"
+                  {% if commissione and s in commissione.settori.all %}selected{% endif %}>
+                  {{ s.codice }} - {{ s.nome }}
+                </option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Tenere Ctrl premuto per selezioni multiple.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer d-flex justify-content-between">
+        <a class="btn btn-secondary" href="{% url 'accounts:commissioni_list_url' %}">Annulla</a>
+        <button type="submit" class="btn btn-success">
+          <i class="fa fa-save me-1"></i> Salva
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

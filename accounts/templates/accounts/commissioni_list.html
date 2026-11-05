@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Commissioni Consiliari{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-white px-0 py-2 mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home:index' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'accounts:user_management_url' %}">Gestione Utenti</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Commissioni Consiliari</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Commissioni Consiliari</h2>
+    <a class="btn btn-success" href="{% url 'accounts:commissione_new_url' %}">
+      <i class="fa fa-plus me-1"></i> Nuova Commissione
+    </a>
+  </div>
+
+  {% for g in gruppi %}
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-light d-flex align-items-center">
+        {% if g.settore %}
+          <span class="badge bg-primary me-2">{{ g.settore.codice }}</span>
+          <strong>{{ g.settore.nome }}</strong>
+        {% else %}
+          <strong class="text-muted">Senza settore di riferimento</strong>
+        {% endif %}
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 8%">Codice</th>
+                <th style="width: 22%">Nome</th>
+                <th style="width: 15%">Gruppo Django</th>
+                <th style="width: 20%">Tipo Pratica</th>
+                <th style="width: 10%" class="text-center">Consiglieri</th>
+                <th style="width: 8%" class="text-center">Attivo</th>
+                <th style="width: 17%" class="text-end">Azioni</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in g.items %}
+                {% with c=item.c %}
+                  <tr>
+                    <td><code>{{ c.codice }}</code></td>
+                    <td>{{ c.nome }}</td>
+                    <td><code>{{ c.gruppo_django }}</code></td>
+                    <td>
+                      {% for tp in c.tipo_pratica.all %}
+                        <span class="badge bg-info text-dark me-1">{{ tp.name }}</span>
+                      {% empty %}
+                        <span class="text-muted fst-italic">Trasversale</span>
+                      {% endfor %}
+                    </td>
+                    <td class="text-center">
+                      {% if item.iscritti %}
+                        <span class="badge bg-primary">{{ item.iscritti|length }}</span>
+                      {% else %}
+                        <span class="text-muted">0</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-center">
+                      {% if c.attivo %}
+                        <span class="badge bg-success">Sì</span>
+                      {% else %}
+                        <span class="badge bg-secondary">No</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-end">
+                      <div class="btn-group btn-group-sm">
+                        <a class="btn btn-outline-primary" href="{% url 'accounts:commissione_iscritti_url' c.pk %}" title="Consiglieri">
+                          <i class="fa fa-users"></i>
+                        </a>
+                        <a class="btn btn-outline-secondary" href="{% url 'accounts:commissione_edit_url' c.pk %}" title="Modifica">
+                          <i class="fa fa-edit"></i>
+                        </a>
+                        <a class="btn btn-outline-danger" href="{% url 'accounts:commissione_delete_url' c.pk %}" title="Elimina">
+                          <i class="fa fa-trash"></i>
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                {% endwith %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="alert alert-info">
+      <i class="fa fa-info-circle me-2"></i> Nessuna commissione presente.
+      <a href="{% url 'accounts:commissione_new_url' %}" class="alert-link">Clicca qui</a> per crearne una nuova.
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

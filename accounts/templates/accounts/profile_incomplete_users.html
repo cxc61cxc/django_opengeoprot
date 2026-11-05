@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Utenti con profilo incompleto{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-white px-0 py-2 mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home:index' %}">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Utenti con profilo incompleto</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">
+      <i class="fa fa-user-times text-warning me-2"></i>
+      Utenti con profilo incompleto
+    </h3>
+    <a href="{% url 'accounts:user_management_url' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="fa fa-arrow-left"></i> Indietro
+    </a>
+  </div>
+
+  {% if utenti %}
+  <div class="alert alert-warning">
+    <i class="fa fa-exclamation-triangle me-2"></i>
+    {{ utenti|length }} utente/i hanno il settore, servizio o U.O. non impostati.
+  </div>
+
+  <table class="table table-sm table-hover">
+    <thead class="thead-light sticky-header">
+      <tr>
+        <th>Username</th>
+        <th>Nome</th>
+        <th>Email</th>
+        <th>Gruppi</th>
+        <th>Settore</th>
+        <th>Servizio</th>
+        <th>U.O.</th>
+        <th class="text-center">Azioni</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in utenti %}
+      {% with u=item.user p=item.profilo %}
+      <tr>
+        <td><strong>{{ u.username }}</strong></td>
+        <td>{{ u.get_full_name|default:'-' }}</td>
+        <td>{{ u.email|default:'-' }}</td>
+        <td>
+          {% for g in u.groups.all %}
+          <span class="badge bg-secondary">{{ g.name }}</span>
+          {% endfor %}
+        </td>
+        <td class="text-center">
+          {% if item.settore_ok %}
+          <span class="badge badge-success">OK</span>
+          {% else %}
+          <span class="badge badge-danger">MANCANTE</span>
+          {% endif %}
+        </td>
+        <td class="text-center">
+          {% if item.servizio_ok %}
+          <span class="badge badge-success">OK</span>
+          {% else %}
+          <span class="badge badge-danger">MANCANTE</span>
+          {% endif %}
+        </td>
+        <td class="text-center">
+          {% if item.uo_ok %}
+          <span class="badge badge-success">OK</span>
+          {% else %}
+          <span class="badge badge-danger">MANCANTE</span>
+          {% endif %}
+        </td>
+        <td class="text-center">
+          <a href="{% url 'accounts:profile_edit' %}?user_id={{ u.id }}"
+             class="btn btn-sm btn-outline-primary" title="Modifica profilo">
+            <i class="fa fa-edit"></i> Modifica
+          </a>
+          <a href="{% url 'accounts:edit_user_groups_url' u.id %}"
+             class="btn btn-sm btn-outline-secondary" title="Gestione gruppi">
+            <i class="fa fa-groups"></i> Gruppi
+          </a>
+        </td>
+      </tr>
+      {% endwith %}
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="alert alert-success">
+    <i class="fa fa-check-circle me-2"></i>
+    Tutti gli utenti hanno il profilo completo. Nessun intervento necessario.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

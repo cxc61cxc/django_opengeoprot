@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% block content %}
+
+
+{% if submitted%}
+   <h4>
+      La pratica è stata registrata!
+   </h4>
+{% else %}
+<div class="container p-2 my-2 border" style="background-color: #F5FFFA; font-size:0.9em;">
+    
+    <div class="row"> 
+        <div class="col-3">
+          <!-- <a href="{% url 'protocollo:index_pratiche_url' %}" 
+                style="color:white;" class="btn btn-sm btn-info" >
+                Indietro
+          </a> -->
+          <input type=button class="btn btn-success btn-sm" value="Indietro" onClick="javascript:history.go(-1);">
+        </div> 
+        <div class="col-6">
+          <h4 class="font-weight-bold">Modifica pratica</h4>
+        </div>
+    </div>
+    <form action="" method="POST">
+    
+        {% csrf_token %}
+       
+
+                <div class="form-row">
+                    <div class="form-group col-md-2 mb-0">
+                        {{ form.stato | as_crispy_field }}
+                    </div>
+                    <div class="form-group col-md-3 mb-0" >
+                        {{ form.tipo_pratica  | as_crispy_field  }}
+                    </div>         
+                    <div class="form-group col-md-1 mb-0">
+                        {{ form.code_p | as_crispy_field }}
+                    </div>
+                    <div class="form-group col-md-1 mb-0">
+                        {{ form.sub_code | as_crispy_field }}
+                    </div>
+                    <div class="form-group col-md-1 mb-0">
+                        {{ form.classe | as_crispy_field }}
+                    </div>
+                    <div class="form-group col-md-2 mb-0">
+                        {{ form.prot_gen | as_crispy_field }}
+                    </div>
+                    <div class="form-group col-md-2 mb-0">
+                        <label>data protocollo</label>
+                        <input class="form-control" type="date" name="data_prot_gen" value="{{data_prot_gen|date:'Y-m-d'}}">                    
+                    </div>
+                    
+                </div>
+                <div class="form-row">
+                        
+                    <div class="form-group col-md-5 mb-0" >
+                        
+                        {{ form.street  | as_crispy_field  }}
+                        
+                    </div>
+
+                    <div class="form-group col-md-1 mb-0" >
+                        {{ form.housenumber  | as_crispy_field  }}
+                    </div>  
+                     
+                    <div class="form-group col-md-6 mb-0" >
+                    </div>
+                   
+                </div>
+                <div class="form-row">
+                                             
+                    <div class="form-group col-md-6 mb-0" >
+                        
+                        {{ form.oggetto  | as_crispy_field  }}
+                        <input type="hidden" id="posizione" name="posizione" value="{% if pratica.posizione %}{{ pratica.posizione.y }}, {{ pratica.posizione.x }}{% endif %}"></p>
+                        <input type="hidden" id="lat" name="lat" value="{{ lat }}"></p>
+                        <input type="hidden" id="lng" name="lng" value="{{ lng }}"></p>
+                    </div>
+                    <div class="form-group col-md-6 mb-0" >
+                        {{ form.annotazioni  | as_crispy_field  }}
+
+                        {{pratica.posizione.y}}
+
+                    </div>
+                </div>
+                <div id="map" style="height: 250px;"></div>
+                
+                    
+                <div class="d-flex justify-content-end form-group col-md-12 mb-0">
+                    <input type="submit" value="Salva" class="btn btn-info">
+                </div>
+        
+    </form>
+    {% endif %}
+</div>
+
+{% endblock content %}
+
+{% block js %}
+<style>
+    /* Uniforma Select2 allo stile form-control di Bootstrap */
+    .select2-container--default .select2-selection--single {
+        height: 38px !important;
+        border: 1px solid #ced4da !important;
+        border-radius: .25rem !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 36px !important;
+        padding-left: 12px !important;
+        color: #495057 !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+    }
+</style>
+<!-- Inclusione librerie Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    $("#id_street").select2({
+        ajax: {
+            url: "{% url 'protocollo:street_autocomplete' %}",
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return {
+                    term: params.term // Il parametro atteso da StreetAutocompleteView
+                };
+            },
+            processResults: function (data) {
+                // Poiché la vista usa serializers.serialize, dobbiamo parsare la stringa JSON
+                var parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+                return {
+                    results: $.map(parsedData, function (item) {
+                        return {
+                            id: item.pk,
+                            text: item.fields.street
+                        };
+                    })
+                };
+            },
+            cache: true
+        },
+        minimumInputLength: 2,
+        placeholder: 'Inizia a scrivere il nome della strada...',
+        width: '100%'
+    });
+
+    var map = L.map('map').setView([{% if initial_latitude and initial_longitude %}{{ initial_latitude|safe }}, {{ initial_longitude|safe }}{% else %}44.07, 10.07{% endif %}], 17);
+
+    var osm = L.tileLayer("{% static 'tiles/' %}{z}/{x}/{y}.png", {
+                  attribution: 'Comune di Carrara: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ',
+                  maxZoom: 19
+                  }).addTo(map);
+
+    var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EBP, and the GIS User Community'
+    });
+
+    var baseMaps = {
+        "OpenStreetMap": osm,
+        "Satellite": satellite
+    };
+
+    var marker;
+    {% if initial_latitude and initial_longitude %}
+      marker = L.marker([{{ initial_latitude|safe }}, {{ initial_longitude|safe }}], {draggable: true}).addTo(map)
+        .bindPopup('Pratica {{ form.prot_gen.value }}/{{ form.data_prot_gen.value.year }}').openPopup();
+
+      // Recupera la posizione quando il marker viene trascinato
+      marker.on('dragend', function(e) {
+          var position = e.target.getLatLng();
+          document.getElementById('posizione').value = position.lat + ', ' + position.lng;
+          document.getElementById('lat').value = position.lat;
+          document.getElementById('lng').value = position.lng;
+      });
+    {% endif %}
+
+    L.control.layers(baseMaps).addTo(map);
+
+    // Layer particelle database
+    var backgroundParcels = L.geoJSON(null, {
+        style: { color: "#2c3e50", weight: 1, fillOpacity: 0.05 },
+        onEachFeature: function(feature, layer) {
+            layer.bindPopup("Foglio: " + feature.properties.foglio + "<br>Mappale: " + feature.properties.mappale);
+        }
+    })
+
+    function loadNearbyParcels(l, g) {
+        fetch(`{% url 'protocollo:catasto_geojson_nearby_url' %}?lat=${l}&lng=${g}`)
+            .then(res => res.json())
+            .then(data => {
+                backgroundParcels.clearLayers();
+                backgroundParcels.addData(data);
+            });
+    }
+
+    // Caricamento iniziale
+    loadNearbyParcels(map.getCenter().lat, map.getCenter().lng);
+
+    map.on('click', function(e) {
+        document.getElementById('posizione').value = e.latlng.lat + ', ' + e.latlng.lng;
+        document.getElementById('lat').value = e.latlng.lat;
+        document.getElementById('lng').value = e.latlng.lng;
+        loadNearbyParcels(e.latlng.lat, e.latlng.lng);
+        
+        if (marker) {
+            marker.setLatLng(e.latlng);
+            marker.bindPopup('Pratica {{ form.prot_gen.value }}/{{ form.data_prot_gen.value.year }}').openPopup();
+        } else {
+            marker = L.marker(e.latlng, {draggable: true}).addTo(map);
+            marker.on('dragend', function(ev) {
+                var p = ev.target.getLatLng();
+                document.getElementById('posizione').value = p.lat + ', ' + p.lng;
+                document.getElementById('lat').value = p.lat;
+                document.getElementById('lng').value = p.lng;
+            });
+            marker.bindPopup('Pratica {{ form.prot_gen.value }}/{{ form.data_prot_gen.value.year }}').openPopup();
+        }
+    });
+  </script>
+{% endblock js %} 

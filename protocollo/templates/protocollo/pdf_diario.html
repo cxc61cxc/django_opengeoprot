@@ -1,0 +1,49 @@
+{% load static%}
+{% block content %}
+{% if pratica %}
+
+  <div class="container-fluid">
+    <h6>DIARIO pratica ID {{ pratica.id }} ....</h6>
+  <hr>
+  
+    <div class="row align-items-start">
+        <div class="col">
+          Tipo pratica : {{ pratica.tipo_pratica | upper}}
+        </div>
+        <div class="col">
+          Prot. Gen. : {{ pratica.prot_gen }}
+        </div>
+        <div class="col">
+          Data Prot. Gen : {{pratica.data_prot_gen|date:"d/m/Y"}}
+        </div>
+    </div>
+    <hr>
+      
+      
+      
+    {% if anagrafe_pratica %} 
+    
+    <div class="small">
+      
+      <tbody>
+        {% for p in anagrafe_pratica %}
+          <tr class="small text-left">
+          
+            <td>{{ p.tipo | upper}} {{ p.cognome | upper }} {{ p.nome|title }}</td>
+            <td>{{ p.codice_fiscale | upper }}</td>
+            <td>{{ p.data_nascita | date:"d/m/Y" }}</td>
+            <td>{{ p.comune_nascita | upper }}</td>
+            <td>{{ p.addr | upper }}</td>
+            
+          </tr>
+        {% endfor %}
+      </tbody>
+      
+
+    </table>
+    {% endif %} 
+    </div>
+
+{% endif %}
+{% endblock %}
+		

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="container">
+{% if submitted %}
+   <h4>
+      La pratica è stata registrata!
+   </h4>
+{% else %}
+  <div class="row">
+    <h5>Aggiungi Particella</h5>
+  </div>
+
+<div class="container p-2 my-2 border" style="font-size:0.9em;">
+    <form action="" method="POST">
+    
+        {% csrf_token %}
+            
+        
+                
+
+                <div class="form-row">
+                    <div class="form-group col-md-3 mb-0" >
+                        {{ form.foglio  | as_crispy_field  }}
+                    </div>         
+                    
+                    <div class="form-group col-md-2 mb-0">
+                        {{ form.mappale | as_crispy_field }}
+                    </div>
+                    
+                    <div class="form-group col-md-2 mb-0">
+                        {{ form.mpoly | as_crispy_field }}
+                    </div>
+                    
+                    
+                    
+                    <div class="form-group col-md-12 mb-0">
+                        <input type="submit" value="Conferma" class="btn btn-info">
+                    </div>
+                </div>
+        
+    </form>
+    {% endif %}
+</div>
+{% endblock content %}

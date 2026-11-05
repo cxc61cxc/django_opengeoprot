@@ -1,0 +1,52 @@
+{% load static %}
+
+{% if pcar %} 
+  <div class="row text-left mx-2 pt-2" style="background-color:#DAF2E6" >
+    
+    <div  class="col-6  ">
+      <h5 class="card-title ">Dati Passo Carraio</h5>
+    </div>
+
+    
+  </div>
+
+ 
+
+
+  {% for p in pcar %}
+
+  
+
+  <div class="row text-left mx-2 bg-ligth" >
+    <div class="col-12 h3">
+        <b>Passo carraio n. {{ p.pc_number }} del {{ p.pc_date|date:"d/m/Y"}}</b>
+    </div>
+   
+  </div>
+  <div class="row text-left mx-2 bg-ligth" >
+    <div class="col-3 h6">
+        <b>Larghezza :</b><br>{{ p.largh }}
+    </div>
+    <div class="col-3 h6">
+        <b>Profondità :</b><br>{{ p.prof }}
+    </div>
+    <div class="col-6 h6">
+        <b>Area :</b><br> <span style="color:red"> {{ p.area }}</span>
+       
+    </div>    
+  </div>
+  <div class="row text-left mx-2 bg-ligth" >
+    <div class="col-12 h6">
+        <b>Descrizione :</b><br>{{ p.description }}
+    </div>
+  </div>
+  
+   
+
+  
+  {% endfor %}
+
+
+
+{% endif %} 
+    

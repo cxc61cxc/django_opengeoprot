@@ -1,0 +1,76 @@
+{% load static %}
+<div class="row "> 
+  <div  class="col m-0 "><a style="color:green;" class="nav-link " title="Aggiungi commissione..." href="{% url 'paesaggio:commissione_add_url' pratica.id %}"><img class="img-fluid" 
+    src="{% static 'img/icons8-plus.svg' %}" 
+    width="25" height="25" ></a>
+  </div>
+  <div  class="col text-right m-0 ">
+    <h5 class="card-title pl-4">Commissioni</h5>
+  </div>
+</div>
+
+
+{% if commissioni %} 
+    <table class="table table-hover table-sm" style="font-size:.9em;">
+          
+      <thead>
+        <tr class="text-muted" style="font-size:.9em;">
+          <!-- <th scope="col">#</th> -->
+          <th scope="col">Numero</th>
+          <th scope="col">Data</th>
+          <th scope="col">Parere</th>
+         
+        </tr>
+      </thead>
+     
+      <tbody>
+        {% for c in commissioni|dictsortreversed:"commissione_number" %}
+          <tr style="vertical-align:bottom;">
+            <!-- <td scope="row"><small>{{ c.id }}</small></td> -->
+          
+            <td >
+              {% if c.parere_sintetico == "Contrario" %}
+                <span style="color:red;"><b>
+              {% else %}
+                <span>
+              {% endif%}
+
+                {{ c.commissione_number }}
+
+              {% if c.parere_sintetico == "Contrario" %}
+                </b></span>
+              {% else %}
+                </span>
+              {% endif %}
+              
+            </td>
+            
+            <td>
+              {% if c.parere_sintetico == "Contrario" %}
+                <span style="color:red;"><b>
+              {% else %}
+                <span>
+              {% endif%}
+              {{ c.commissione_date| date:"d/m/Y"  }}
+              {% if c.parere_sintetico == "Contrario" %}
+                </b></span>
+              {% else %}
+                </span>
+              {% endif %}
+            </td>
+            <td>{{ c.parere_sintetico  }}</td>
+            <td class="text-right">
+            
+                <a type="button" title="Modifica commissione: --- {{ c.parere }}" href="{% url 'paesaggio:commissione_edit_url' c.id %}"
+                style="width:20px;height:20px" class="btn btn-sm btn-outline-info" >
+                </a>
+              
+            </td>
+            
+          </tr>
+       
+      </tbody>
+      {% endfor %}
+    </table>
+    {% endif %} 
+    

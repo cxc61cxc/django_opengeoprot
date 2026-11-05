@@ -1,0 +1,85 @@
+<div class="container-fluid  m-1 rounded border" style="background-color: aliceblue;" style="font-size: 0.8rem;">
+    {% if impfot_esistente == 1  %}
+    <div class="container">
+        <div class="row my-1">
+            <div class="col-3">
+                Mod 1 {% if impfot.mod1   %}
+                    <input type="checkbox" checked disabled>
+                    {% else %}
+                    <input type="checkbox" disabled>
+                {% endif %}  
+            </div>
+            <div class="col-3">
+                Mod 2 {% if impfot.mod2   %}
+                    <input type="checkbox" checked disabled>
+                    {% else %}
+                    <input type="checkbox" disabled>
+                {% endif %}                
+            </div>
+            <div class="col-3 offset-3">
+                All. P {% if impfot.allp   %}
+                    <input type="checkbox" checked disabled>
+                    {% else %}
+                    <input type="checkbox" disabled>
+                {% endif %}  
+            </div>
+        </div>
+        <div class="row my-1 ">
+            <div class="col-5">
+                POD : <b> {{ impfot.pod | upper }}</b>
+            </div>
+            <div class="col-2">
+            </div>
+            <div class="col-5">
+                Codice id. impianto : <b> {{ impfot.code_e | upper }}</b>
+            </div>
+        </div>
+        <div class="row my-1 ">
+            <div class="col-4">
+                Potenza Nominale : <b> {{ impfot.pn }} kW</b>
+            </div>
+            <div class="col-4">
+                Potenza Accumulata : <b> {{ impfot.pa }} kW</b>
+            </div>
+            <div class="col-4">
+                Potenza Immessa : <b> {{ impfot.pi }} kW</b>
+            </div>
+        </div>
+        <div class="row my-1 ">
+            <div class="col-10">
+                Prot.pratica edilizia : <b> {{ impfot.prot_pe }} </b> del <b>{{ impfot.data_prot_pe | date:"d/m/Y"}}</b>
+            </div>
+           
+            <div class="col-2">
+            </div>
+        </div>
+        <div class="row my-1 ">
+            <div class="col-10">
+                Annotazioni : {{ impfot.annotazione }}
+            </div>
+           
+            <div class="col-2">
+            </div>
+        </div>
+        <div class="row my-1 ">
+            <div class="col-10">
+                {% if  pratica.stato != 'c' and pratica.stato != 'aa' %}
+                    <a title="Modifica " 
+                      href="{% url 'fotovoltaico:edit_fot_url' impfot.id pratica.id %}" class="btn btn-sm btn-outline-primary" >Edita  
+                    </a>
+                  {% endif %}
+            </div>
+        </div>
+        
+    </div>
+    {% else %}
+    <div class="container">
+        <div class="row my-3">
+            <div class="form-group col-md-1 mb-0" >
+                <a class="btn btn-outline-info btn-sm" title="Aggiungi impianto!" href="{% url 'fotovoltaico:add_fot_url' pratica.id %}"><span class="small">Aggiungi</span></a>
+            </div>  
+        </div>
+    </div>
+    {%  endif %}
+   
+</div>

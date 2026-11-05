@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% load static%}
+{% block content %}
+
+  
+
+<div class="container-fluid p-2 my-2 border" style="font-size:0.9em;">
+   
+    <div class="row">
+        <!-- prima colonna gestione -->
+        <div class="col-sm-2">
+            <div class="card">
+                <div class="card-body">
+                    <a title="Vedi i dettagli" 
+                            href="{% url 'prg:cerdesurb_detail_url' cdu.id %}" 
+                             class="btn btn-sm btn-outline-info">
+                            Indietro
+                    </a>
+                    <!-- <input type=button class="btn btn-outline-success btn-sm" value="Indietro" onClick="javascript:history.go(-1);"> -->
+                    
+                </div>
+            </div>
+            <div class="card ">
+                <div class="card-body p-0 my-0">
+                    {% if altre_particelle %}
+                        <table class="table-hover" style="width:90%;">
+                            <tr>
+                                <th>
+                                    id
+                                </th>
+                                <th>
+                                    Fg
+                                </th>
+                                <th>
+                                    Map
+                                </th>
+                                <th>
+                                    Tot.
+                                </th>
+                            </tr>
+                            {% for a in altre_particelle %}
+                            <tr {% if a.is_current %}style="background-color: #ffff99;"{% endif %}>
+                                <td>
+                                    {% if can_write %}<a class="btn btn-outline-success btn-sm" href="{% url 'prg:istruttoria_detail_url'  a.id_cataprat  %}" style="width: 10px; height: 20px;" title=" Edita istruttoria cataprat_id={{ a.id_particella }}"></a>{% endif %}
+                                    
+                                </td>
+                                <td {% if a.is_current %}style="color: red; font-weight: bold;"{% endif %}>
+                                    {{ a.foglio }}
+                                </td>
+                                <td {% if a.is_current %}style="color: red; font-weight: bold;"{% endif %}>
+                                    {{ a.mappale }}
+                                </td>
+                                <td>
+                                    {{ a.tot }}
+                                </td>
+                            </tr>
+
+                                
+
+                            {% endfor %} 
+                        </table>   
+                    {% endif %}
+                    
+                </div>
+            </div>
+           
+        </div>
+        <!-- seconda colonna con info generali e aggiunta destinazione -->
+        <div class="col-sm-2">
+
+            <div class="card">
+                <div class="card-body">
+                    <p class="card-title" style="font-weight: lighter;">Aggiungi destinazione </p>
+                    
+                    <p class="card-text">
+                        CDU n° <span style="font-size:1.7em;">{{ cdu.cdu_number | upper}}</span> del <span style="font-size:1.7em;">{{ cdu.cdu_date | date:"d/m/Y" }}</span> 
+                    </p>
+                    <p class="card-text">
+                        
+                            <form method="POST" style="font-weight: lighter;" action="{% url 'prg:add_istruttoria_url'  cataprat %}" >
+                                {% csrf_token %}
+                                {% comment %} <input type="text" name="id_particella" value={{ particella.id }}> {% endcomment %}
+                                <select   class="form-control" required  name="id" >
+                                    <option  disable="false" ></option>
+                                        {% for p in piano %}
+                                        <option required  value="{{ p.id}}">{{p.name}}
+                                    </option>
+                                        {% endfor %}
+                                </select>
+                                <hr>
+                                {% if can_write %}<input  class="btn btn-outline-info btn-sm" type="submit" value="aggiungi destinazione">{% endif %}
+                            </form>
+                        
+                        
+                    </p>
+                   
+                </div>
+                
+            </div>
+            
+            
+        </div>
+    <!-- terza colonna con destinazioni assegnate -->
+    <div class="col-sm-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"> 
+                <div class="row">
+                    <div class="col-8">
+                        Data di riferimento ISTRUTTORIA :<span style="color:red;"> {{ cdu.data_riferimento }} -</span><p style="font-size:.7em;">  fg {{ particella.foglio }} map. {{particella.mappale }} </p></h5>
+                    </div>
+                    <div class="col-4">
+                        {{ cognome|upper }} {{ nome|title }}
+                    </div>
+                
+            </div> 
+                <!-- <p class="card-text"> -->
+                    {% if istruttoria  %} 
+                    <div class="container p-2 my-2 border" style="font-size:0.9em;">
+                        <div class="row align-items-start">
+                
+                            
+                            <div class="form-group col-md-12 mb-0" >
+                                <table class="table table-hover" >
+                                    <thead>
+                                    <tr style="color:blue;background-color: azure; text-align: left;">
+                                        
+                                        <th scope="col-1"></th>
+                                        <th scope="col-2">Piano</th>
+                                        <th scope="col-6">Descrizione</th>
+                                        <th scope="col-1"></th>
+                                    
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for d in istruttoria %}
+                                    <tr>
+                                        <td> 
+                                            {{ d.id }}
+                                        </td>
+                
+                                        
+                
+                                        
+                                        <td style="color:blue; text-align: left;">
+                                            <b>{{ d.piano }}</b>
+                                        </td>
+                                        <td > 
+                                            <p >{{ d.description }}{% if d.parte %} , in parte {% else %} , intera particella {% endif %}</p>
+                                        </td>
+                                        <td >
+                                            
+                                            {% if can_write %}<a  class="btn btn-danger btn-sm" 
+                                                href="{% url 'prg:delete_istruttoria_url' d.id_istruttoria %}" 
+                                                style="width: 25px; height: 25px;" 
+                                                title="Elimina {{ d.description }}{% if d.parte %} , in parte {% else %} , intera particella {% endif %}">
+                                                
+                                            </a>{% endif %}
+                                        </td>
+                                    
+                                        
+                                    </tr>
+                                    {% endfor %}
+                                
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                        <h4 class="font-weight-bold">Nessun riscontro!</h4>
+                    {% endif %}
+                <!-- </p> -->
+                {% comment %} <a href="#" class="btn btn-primary">Go somewhere</a> {% endcomment %}
+            </div>
+        </div>    
+    </div>    
+        <!-- quarta colonna -->
+            <div class="col-sm-1">
+                <!--
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Special title treatment</h5>
+                        <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                        {% comment %} <a href="#" class="btn btn-primary">Go somewhere</a> {% endcomment %}
+                    </div>
+                </div> 
+                -->
+            </div>
+    </div>
+</div>
+      
+
+  
+
+
+
+
+{% endblock %}

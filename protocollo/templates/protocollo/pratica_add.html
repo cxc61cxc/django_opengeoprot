@@ -1,0 +1,213 @@
+    {% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+    {% if submitted%}
+   <h4>s
+      La pratica è stata registrata!
+   </h4>
+    {% else %}
+    <br><br>
+    <div class="container p-2 my-2 border" style="font-size:0.9em;">
+        <div class="alert alert-info" role="alert">
+            <div class="row"> 
+              <div class="col-3">
+                <a href="{% url 'protocollo:tipopratiche_list_url' %}" 
+                      style="color:white;" class="btn btn-sm btn-info" >
+                      Indietro
+                </a>
+              </div> 
+              <div class="col-6">
+                <h4 class="font-weight-bold">Aggiungi pratica</h4>
+              </div>
+            </div>
+        </div>  
+        <form action="" method="POST">
+        
+            {% csrf_token %}
+                
+            <input type="hidden" name="user" value="{{ form.user }}">
+                    
+
+                    <div class="form-row">
+                        
+
+                        <div class="form-group col-md-3 mb-0" >
+                            {{ form.tipo_pratica  | as_crispy_field  }}
+                        </div>   
+                        <div class="form-group col-md-2 mb-0">
+                            {{ form.prot_gen | as_crispy_field }}
+                        </div>
+                        <div class="form-group col-md-2 mb-0">
+                            {% comment %} <input class="form-control" type="date" name="data_prot_gen" value="{{m.data_prot_gen|date:'Y-m-d'}}"> {% endcomment %}
+                            {{ form.data_prot_gen | as_crispy_field }}
+                        </div>      
+                        <div class="form-group col-md-1 mb-0">
+                            {{ form.code_p | as_crispy_field }}
+                        </div>
+                        <div class="form-group col-md-1 mb-0">
+                            {{ form.sub_code | as_crispy_field }}
+                        </div>
+                        <div class="form-group col-md-1 mb-0">
+                            {{ form.classe | as_crispy_field }}
+                        </div>
+                        
+                        
+                        <div class="form-group col-md-2 mb-0">
+                            {{ form.stato | as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        
+                        <div class="form-group col-md-5 mb-0" >
+                            
+                            {{ form.street  | as_crispy_field  }}
+                            
+                        </div>
+
+                        <div class="form-group col-md-1 mb-0" >
+                            {{ form.housenumber  | as_crispy_field  }}
+                        </div>  
+                         
+                        <div class="form-group col-md-6 mb-0" >
+                        </div>
+                       
+                    </div>
+                    <div class="form-row">
+                                                 
+                        <div class="form-group col-md-6 mb-0" >
+                            {{ form.oggetto  | as_crispy_field  }}
+                        </div>
+                        <div class="form-group col-md-6 mb-0" >
+                            {{ form.annotazioni  | as_crispy_field  }}
+                        </div>
+                        <input type="hidden" id="lat" name="lat" value="{{ initial_latitude }}">
+                        <input type="hidden" id="lng" name="lng" value="{{ initial_longitude }}">
+
+                        <p><label>Coordinate</label></p>
+                        <p id="coord_display">{{ initial_latitude }}, {{ initial_longitude }}</p>
+                        <div class="row justify-content-end">
+                            <div class="col-2">
+                                <input type="submit" value="Salva" class="btn btn-outline-danger">
+                            </div>
+                        </div>
+                        </div>
+                    <div id="map" style="height: 250px;"></div>
+                       
+                    
+            
+        </form>
+        {% comment %} <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script> {% endcomment %}
+        {% endif %}
+    </div>
+
+{% endblock content %}
+
+    {% block js %}
+        <style>
+            /* Uniforma Select2 allo stile form-control di Bootstrap */
+            .select2-container--default .select2-selection--single {
+                height: 38px !important;
+                border: 1px solid #ced4da !important;
+                border-radius: .25rem !important;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+                line-height: 36px !important;
+                padding-left: 12px !important;
+                color: #495057 !important;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 36px !important;
+            }
+        </style>
+        <!-- Inclusione librerie Select2 -->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+        <script>
+            $("#id_street").select2({
+                ajax: {
+                    url: "{% url 'protocollo:street_autocomplete' %}",
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            term: params.term // Il parametro atteso da StreetAutocompleteView
+                        };
+                    },
+                    processResults: function (data) {
+                        // Poiché la vista usa serializers.serialize, dobbiamo parsare la stringa JSON
+                        var parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+                        return {
+                            results: $.map(parsedData, function (item) {
+                                return {
+                                    id: item.pk,
+                                    text: item.fields.street
+                                };
+                            })
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2,
+                placeholder: 'Inizia a scrivere il nome della strada...',
+                width: '100%'
+            });
+        </script>
+
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script>
+            var initialLat = {{ initial_latitude|default:44.07721|safe }};
+            var initialLng = {{ initial_longitude|default:10.09636|safe }};
+            
+            var map = L.map('map').setView([initialLat, initialLng], 13);
+
+            L.tileLayer("{% static 'tiles/' %}{z}/{x}/{y}.png", {
+                    attribution: 'Comune di Carrara: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ',
+                    maxZoom: 19
+                    }).addTo(map);
+
+            var marker = L.marker([initialLat, initialLng]).addTo(map);
+
+            function updateMarker(lat, lng) {
+                if (marker) map.removeLayer(marker);
+                marker = L.marker([lat, lng]).addTo(map);
+                map.setView([lat, lng], 17);
+                document.getElementById('lat').value = lat;
+                document.getElementById('lng').value = lng;
+                document.getElementById('coord_display').innerText = lat + ", " + lng;
+            }
+
+            map.on('click', function(e) {
+                updateMarker(e.latlng.lat, e.latlng.lng);
+            });
+
+            // Funzione per ricavare le coordinate da OpenStreetMap (Nominatim)
+            function geocodeAddress() {
+                var streetData = $("#id_street").select2('data');
+                var street = streetData.length > 0 ? streetData[0].text : '';
+                var housenumber = document.getElementById('id_housenumber').value;
+
+                if (street && street !== '' && housenumber) {
+                    var query = street + " " + housenumber + ", Carrara, Italy";
+                    fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query))
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.length > 0) {
+                                var lat = data[0].lat;
+                                var lon = data[0].lon;
+                                updateMarker(lat, lon);
+                            }
+                        })
+                        .catch(err => console.error('Errore Geocoding:', err));
+                }
+            }
+
+            // Listener per i cambiamenti su civico e strada
+            document.getElementById('id_housenumber').addEventListener('change', geocodeAddress);
+            $('#id_street').on('select2:select', geocodeAddress);
+        </script>
+    {% endblock js%}

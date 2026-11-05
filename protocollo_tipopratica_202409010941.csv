@@ -1,0 +1,31 @@
+"id"|"name"|"description"|"user_id"|"settore"
+1|impianti sportivi|impianti sportivi comunali|1|settore 5
+7|cdu|Certificato di Destinazione Urbanistica|1|settore 6
+11|pau|SUAP Provvedimento Autorizzativo Unico|1|settore 1
+12|insegna|insegne di esercizio permanenti|1|settore 1
+13|paesaggistica|Pratiche soggette a Vincolo Paesaggistico|1|settore 1
+14|fotovoltaico|Impianti fotovoltaici|1|settore 6
+15|cila|Comunicazione di inizio lavori asseverata|1|settore 6
+16|cil|Comunicazione di inzio lavori|1|settore 6
+17|pdc|Permesso di costruire|1|settore 6
+18|delibera di giunta|Delibera di Giunta Comunale|1|staff A
+19|suolo pubblico|Occupazione temporanea di suolo pubblico|1|settore 7
+20|abusivismo|Opere eseguite in assenza di titolo o in difformità|1|settore 6
+21|passo carraio|passo carraio|1|settore 1
+22|affittacamere|affittacamere|1|settore 1
+23|bed & breakfast|bed & breakfast|1|settore 3
+24|pubblico esercizio|pubblico esercizio|1|settore 1
+25|servizi alla persona|servizi alla persona|1|settore 1
+26|idoneità alloggiativa|idoneità alloggiativa|1|settore 6
+27|parere ( conformità urbanistica )|Richiesta parere di conformità urbanistica|1|settore 6
+28|scia|Segnalazione certificata di inizio attività|1|settore 6
+29|determinazione|Determina dirigenziale|1|""
+30|oss. perm. poc 2022|Osservatorio permanente al POC 2022|1|settore 6
+31|ordinanza|ordinanze|1|staff A
+32|scia in sanatoria|Segnalazione certificata di inzio attività in sanatoria|1|settore 6
+33|pdc in sanatoria|Permesso di costruire in sanatoria|1|settore 6
+34|aua|Autorizzazione unica ambientale|1|settore 1
+35|cooperativa|cooperative/ditte PEEP|1|settore 6
+36|diritto di superficie|Trasformazione del diritto di superficie in proprietà|1|settore 6
+37|patrimonio|Beni ascrivibili al patrimonio comunale|1|settore 5
+38|ascensore|Attribuzione numero di matricola e verifiche|1|settore 6

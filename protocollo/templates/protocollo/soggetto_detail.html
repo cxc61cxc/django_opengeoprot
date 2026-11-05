@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% block title %}Dettaglio Soggetto{% endblock %}
+
+{% block content %}
+  <div class="container-fluid p-3 my-3 border d-flex flex-column" style="height: calc(90vh - 85px); overflow: hidden;">
+    <div class="alert alert-info mb-3" role="alert">
+      <div class="row align-items-center">
+        <div class="col-6">
+          <h4 class="mb-0">Dettaglio Soggetto - {{ soggetto.cognome }} {{soggetto.nome }}</h4>
+        </div>
+        <div class="col-6">
+          <p class="nav justify-content-end mb-0">Id Soggetto: {{ soggetto.id }}</p>
+        </div>
+      </div>
+    </div>
+
+      <div class="row flex-grow-1" style="min-height: 0;">
+      <div class="col-lg-4 d-flex flex-column" style="min-height: 0;">
+        <div class="card mb-3">
+          <div class="card-header bg-light fw-bold">Anagrafica</div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6 text-capitalize">
+                <label class="form-label small text-muted mb-0">Cognome</label>
+                <div class="h5"><b>{{ soggetto.cognome|default:"—" }}</b></div>
+              </div>
+              <div class="col-md-6 text-capitalize">
+                <label class="form-label small text-muted mb-0">Nome</label>
+                <div class="h5"><b>{{ soggetto.nome|default:"—" }}</b></div>
+              </div>
+              <div class="col-md-4 text-capitalize">
+                <label class="form-label small text-muted mb-0">Data di nascita</label>
+                <div >{{ soggetto.data_nascita|date:"d/m/Y"|default:"—" }}</div>
+              </div>
+              <div class="col-md-4 text-capitalize">
+                <label class="form-label small text-muted mb-0">Comune di nascita</label>
+                <div> {{ soggetto.comune_nascita|default:"—" }}</div>
+              </div>
+              <div class="col-md-4 text-capitalize">
+                <label class="form-label small text-muted mb-0">Codice Fiscale</label>
+                <div> {{ soggetto.codice_fiscale|upper|default:"—" }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-header bg-light fw-bold">Residenza / Sede</div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6 text-capitalize">
+                <label class="form-label small text-muted mb-0">Comune di residenza</label>
+                <div >{{ soggetto.comune_residenza|default:"—" }}</div>
+              </div>
+              <div class="col-md-6 text-capitalize">
+                <label class="form-label small text-muted mb-0">Indirizzo residenza</label>
+                <div >{{ soggetto.addr|default:"—" }}</div>
+              </div>
+              <div class="col-md-12 text-capitalize">
+                <label class="form-label small text-muted mb-0">Indirizzo sede</label>
+                <div >{{ soggetto.addr_sede|default:"—" }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-header bg-light fw-bold">Contatti</div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small text-muted mb-0">Email</label>
+                <div class="h6 text-lower">{{ soggetto.email|default:"—" }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small text-muted mb-0">PEC</label>
+                <div class="h6 text-lower">{{ soggetto.pec|default:"—" }}</div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small text-muted mb-0">Cellulare</label>
+                <div >{{ soggetto.cellulare|default:"—" }}</div>
+              </div>
+              <div class="col-md-3 text-upper">
+                <label class="form-label small text-muted mb-0">Telefono</label>
+                <div >{{ soggetto.telefono|default:"—" }}</div>
+              </div>
+              <div class="col-md-3 text-upper">
+                <label class="form-label small text-muted mb-0">Fax</label>
+                <div >{{ soggetto.fax|default:"—" }}</div>
+              </div>
+              <div class="col-md-3">
+                <!-- <label class="form-label small text-muted mb-0">Utente associato</label>
+                <div >{{ soggetto.user|default:"—" }}</div> -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12 nav justify-content-end">
+            <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary">Indietro</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4 d-flex flex-column" style="min-height: 0;">
+        <div class="card mb-3 flex-grow-1 d-flex flex-column" style="min-height: 0;">
+          <div class="card-header bg-light fw-bold sticky-top" style="top: 0; z-index: 20; border-radius: 0;">Pratiche collegate a questo soggetto ( {{ pratiche|length }} )</div>
+          <div class="table-responsive flex-grow-1" style="min-height: 0; max-height: calc(100vh - 300px); overflow-y: auto;">
+            {% if pratiche %}
+              <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light sticky-top" style="top: 0; z-index: 10;">
+                  <tr>
+                    <th>Prot. Gen.</th>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Ruolo</th>
+                    <th>Oggetto / Ubicazione</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for p in pratiche %}
+                  <tr data-pratica-id="{{ p.id_pratica }}" data-lat="{{ p.lat|default:'' }}" data-lng="{{ p.lng|default:'' }}">
+                    <td >{{ p.prot_gen }}</td>
+                    <td >{{ p.data_prot_gen|date:"d/m/Y" }}</td>
+                    <td >{{ p.tipo_pratica|default:"—" }}</td>
+                    <td >{{ p.tipo|default:"—" }}</td>
+                    <td >
+                      {% if p.oggetto %}{{ p.oggetto }}{% endif %}
+                      {% if p.ubicazione %}<br><span class="text-muted">{{ p.ubicazione }}</span>{% endif %}
+                    </td>
+                    <td class="text-end">
+                      <a href="{% url 'protocollo:pratica_detail_url' p.id_pratica %}" class="btn btn-sm btn-outline-primary">Apri</a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              {% if pratiche|length > 0 %}
+              <div class="p-2 text-center text-muted small border-top">
+                Visualizzate le {{ pratiche|length }}  pratiche per {{ soggetto.cognome }} {{soggetto.nome }}. Usa il filtro di ricerca per restringere i risultati.
+              </div>
+              {% endif %}
+            {% else %}
+            <div class="p-4 text-center text-muted">
+              Nessuna pratica collegata a questo soggetto.
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4 d-flex flex-column" style="min-height: 0;">
+        <div class="card mb-3 flex-grow-1 d-flex flex-column" style="min-height: 0;">
+          <div class="card-header bg-light fw-bold">Mappa pratiche</div>
+          <div class="card-body d-flex flex-column p-2" style="min-height: 0; flex-grow: 1;">
+            <div id="soggetto-map" class="flex-grow-1" style="min-height: 0; border: 1px solid #ddd; border-radius: 4px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  {{ pratiche|json_script:"pratiche-data" }}
+  <script>
+    (function () {
+      var pratiche = JSON.parse(document.getElementById('pratiche-data').textContent);
+      var mapEl = document.getElementById('soggetto-map');
+      if (!mapEl) return;
+
+      var praticaBaseUrl = "{% url 'protocollo:pratica_detail_url' 0 %}".slice(0, -2); // rimuove "/0" finale
+
+      var defaultView = [44.07721, 10.09636];
+      var map = L.map(mapEl, { scrollWheelZoom: false }).setView(defaultView, 14);
+
+      var osm = L.tileLayer("{% static 'tiles/' %}{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+      }).addTo(map);
+
+      var practiceIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: "<div style='background-color:#007bff; width:12px; height:12px; border-radius:50% 50% 50% 0; transform: rotate(-45deg); border: 1px solid white;'></div>",
+        iconSize: [12, 12],
+        iconAnchor: [6, 12],
+        popupAnchor: [0, -12]
+      });
+
+      var markersByPracticeId = {};
+      var featureGroup = L.featureGroup().addTo(map);
+
+      pratiche.forEach(function (p) {
+        if (p.lat === null || p.lat === '' || p.lng === null || p.lng === '') return;
+        var lat = parseFloat(p.lat);
+        var lng = parseFloat(p.lng);
+        var popupHtml =
+          '<b>Pratica ' + (p.prot_gen || '') + '</b><br>' +
+          (p.oggetto ? p.oggetto + '<br>' : '') +
+          (p.ubicazione ? '<span class="text-muted">' + p.ubicazione + '</span><br>' : '') +
+          '<a href="' + praticaBaseUrl + p.id_pratica + '/">Apri pratica</a>';
+        var marker = L.marker([lat, lng], { icon: practiceIcon })
+          .bindPopup(popupHtml)
+          .addTo(featureGroup);
+        markersByPracticeId[p.id_pratica] = { marker: marker, originalIcon: practiceIcon, color: '#007bff' };
+      });
+
+      if (featureGroup.getLayers().length > 0) {
+        map.fitBounds(featureGroup.getBounds(), { padding: [20, 20] });
+      }
+
+      function enlargeMarker(practiceId) {
+        var data = markersByPracticeId[practiceId];
+        if (!data) return;
+        var enlargedIcon = L.divIcon({
+          className: 'custom-div-icon',
+          html: "<div style='background-color:" + data.color + "; width:24px; height:24px; border-radius:50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.5);'></div>",
+          iconSize: [24, 24],
+          iconAnchor: [12, 24],
+          popupAnchor: [0, -24]
+        });
+        data.marker.setIcon(enlargedIcon);
+      }
+
+      function resetMarker(practiceId) {
+        var data = markersByPracticeId[practiceId];
+        if (!data) return;
+        data.marker.setIcon(data.originalIcon);
+      }
+
+      document.querySelectorAll('tr[data-pratica-id]').forEach(function (row) {
+        var id = row.getAttribute('data-pratica-id');
+        row.addEventListener('mouseenter', function () {
+          enlargeMarker(id);
+          var data = markersByPracticeId[id];
+          if (data) {
+            map.setView(data.marker.getLatLng(), Math.max(map.getZoom(), 16));
+          }
+        });
+        row.addEventListener('mouseleave', function () { resetMarker(id); });
+      });
+
+      setTimeout(function () { map.invalidateSize(); }, 200);
+    })();
+  </script>
+{% endblock %}

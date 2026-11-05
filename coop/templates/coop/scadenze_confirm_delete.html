@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Conferma eliminazione</h1>
+<p>Sei sicuro di voler eliminare la scadenza con ID {{ scadenza.id }}?</p>
+<ul>
+    <li>Convenzione: {{ scadenza.convenzione_id }}</li>
+    <li>Data Scadenza: {{ scadenza.data_scadenza }}</li>
+    <li>Importo Rata: {{ scadenza.importo_rata }}</li>
+    <li>Data Pagamento: {{ scadenza.data_pagamento }}</li>
+    <li>IUV: {{ scadenza.iuv }}</li>
+</ul>
+<form method="post" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit">Conferma</button>
+</form>
+<a href="{% url 'coop:edit_accettazione_view_url' id=scadenza.convenzione_id %}">Annulla</a>
+{% endblock %}

@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block title %}Struttura ente{% endblock %}
+
+{% block content %}
+<style>
+  .settore-card {
+    border-left: 6px solid #138496;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .settore-card > .card-header {
+    background: linear-gradient(135deg, #f4f3f3, #e8eef2);
+    border-bottom: 2px solid #138496;
+  }
+  .settore-card > .card-header summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+  }
+  .settore-card > .card-header summary::-webkit-details-marker {
+    display: none;
+  }
+  .settore-card > .card-header summary::after {
+    content: '\f078';
+    font-family: 'FontAwesome';
+    margin-left: auto;
+    padding-left: 1rem;
+    transition: transform 0.15s ease;
+  }
+  .settore-card[open] > .card-header summary::after,
+  .settore-card > details[open] > .card-header summary::after {
+    transform: rotate(180deg);
+  }
+  .settore-info {
+    margin-right: auto;
+  }
+  .settore-codice {
+    display: inline-block;
+    background-color: #138496;
+    color: #fff;
+    padding: 0.15rem 0.6rem;
+    border-radius: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+  }
+  .settore-nome {
+    font-size: 1.05rem;
+    font-weight: bold;
+    color: #2c3e50;
+  }
+  .servizi-list-wrap {
+    padding-left: 2.5rem;
+    padding-right: 1rem;
+  }
+  .servizi-list-wrap .servizio-row {
+    background-color: #fafbfc;
+    border-top: 1px dashed #cfd8dc;
+    padding: 0.55rem 1rem;
+  }
+  .servizi-list-wrap .servizio-row:last-child {
+    border-bottom: 1px dashed #cfd8dc;
+  }
+  .servizi-list-wrap .servizio-codice {
+    display: inline-block;
+    background-color: #20c997;
+    color: #fff;
+    padding: 0.1rem 0.5rem;
+    border-radius: 0.3rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+  }
+  .servizio-clickable {
+    cursor: pointer;
+    user-select: none;
+  }
+  .servizio-clickable:hover .servizio-codice,
+  .servizio-clickable:hover strong {
+    text-decoration: underline;
+  }
+  .servizi-empty-row {
+    background-color: #fafbfc;
+    padding: 0.55rem 1rem;
+    color: #6c757d;
+    font-style: italic;
+  }
+  .action-cell {
+    min-width: 165px;
+    text-align: right;
+    white-space: nowrap;
+    margin-left: auto;
+    padding-left: 1rem;
+  }
+  .action-cell .btn-group .btn {
+    margin-left: 2px;
+  }
+  .servizio-action-cell {
+    min-width: 165px;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .servizio-action-cell .btn {
+    margin-left: 2px;
+  }
+  .modal .attivita-row {
+    background-color: #f4f9f7;
+    padding: 0.5rem 0.8rem;
+    border-left: 3px solid #20c997;
+    margin-bottom: 0.4rem;
+    border-radius: 0.25rem;
+  }
+  .modal .attivita-action-cell {
+    min-width: 130px;
+    text-align: right;
+    white-space: nowrap;
+    padding-left: 2rem;
+  }
+  .modal .attivita-action-cell .btn {
+    margin-left: 2px;
+  }
+  .modal-body .modal-attivita-list {
+    padding-left: 1rem;
+    padding-right: 2rem;
+  }
+</style>
+
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Struttura Ente</h3>
+    <div class="action-cell">
+      <a href="{% url 'struttura_ente:settore_create' %}" class="btn btn-success btn-sm">
+        <i class="fa fa-plus"></i> Nuovo Settore
+      </a>
+    </div>
+  </div>
+
+  {% for s in settori %}
+  <details class="card mb-3 settore-card">
+    <summary class="card-header">
+      <div class="settore-info">
+        <span class="settore-codice">{{ s.codice }}</span>
+        <span class="settore-nome ml-2">{{ s.nome }}</span>
+        <small class="text-muted ml-1">({{ s.servizi.count }})</small>
+      </div>
+      <div class="action-cell text-right">
+        <div class="btn-group btn-group-sm" role="group" aria-label="Azioni settore" onclick="event.stopPropagation();">
+          <a href="{% url 'struttura_ente:servizio_create' s.pk %}" class="btn btn-outline-success" title="Aggiungi Servizio">
+            <i class="fa fa-plus"></i> Serv.
+          </a>
+          <a href="{% url 'struttura_ente:settore_edit' s.pk %}" class="btn btn-outline-primary" title="Modifica">
+            <i class="fa fa-pencil"></i>
+          </a>
+          <a href="{% url 'struttura_ente:settore_storico' s.pk %}" class="btn btn-outline-info" title="Storico">
+            <i class="fa fa-history"></i>
+          </a>
+          <a href="{% url 'struttura_ente:settore_delete' s.pk %}" class="btn btn-outline-danger" title="Elimina">
+            <i class="fa fa-trash"></i>
+          </a>
+        </div>
+      </div>
+    </summary>
+    <div class="servizi-list-wrap">
+      {% for srv in s.servizi.all %}
+      <div class="servizio-row d-flex justify-content-between align-items-center">
+        <div class="servizio-clickable flex-grow-1" data-toggle="modal" data-target="#attivitaModal-{{ srv.pk }}" title="{% if srv.descrizione %}{{ srv.descrizione }}{% endif %}">
+          <small class="text-muted">({{ srv.attivita.count }})</small>
+          <span class="servizio-codice">{{ srv.codice }}</span>
+          <strong class="ml-1">{{ srv.nome }}</strong>
+        </div>
+        <span class="servizio-action-cell">
+          <a href="{% url 'struttura_ente:servizio_edit' srv.pk %}" class="btn btn-outline-primary btn-sm" title="Modifica Servizio">
+            <i class="fa fa-pencil"></i>
+          </a>
+          <a href="{% url 'struttura_ente:servizio_storico' srv.pk %}" class="btn btn-outline-info btn-sm" title="Storico Servizio">
+            <i class="fa fa-history"></i>
+          </a>
+          <a href="{% url 'struttura_ente:servizio_delete' srv.pk %}" class="btn btn-outline-danger btn-sm" title="Elimina Servizio">
+            <i class="fa fa-trash"></i>
+          </a>
+        </span>
+      </div>
+
+      <div class="modal fade" id="attivitaModal-{{ srv.pk }}" tabindex="-1" role="dialog" aria-labelledby="attivitaModalLabel-{{ srv.pk }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="attivitaModalLabel-{{ srv.pk }}">
+                <span class="servizio-codice">{{ srv.codice }}</span>
+                {{ srv.nome }}
+                <small class="text-muted">({{ srv.settore.codice }})</small>
+              </h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="modal-attivita-list">
+                {% for a in srv.attivita.all %}
+                <div class="attivita-row d-flex justify-content-between align-items-center" title="{% if a.descrizione %}{{ a.descrizione }}{% endif %}">
+                  <span>
+                    <i class="fa fa-caret-right text-muted mr-1"></i>
+                    <strong>{{ a.nome }}</strong>
+                  </span>
+                  <span class="attivita-action-cell">
+                    <a href="{% url 'struttura_ente:attivita_edit' a.pk %}" class="btn btn-outline-primary btn-sm" title="Modifica">
+                      <i class="fa fa-pencil"></i>
+                    </a>
+                    <a href="{% url 'struttura_ente:attivita_storico' a.pk %}" class="btn btn-outline-info btn-sm" title="Storico">
+                      <i class="fa fa-history"></i>
+                    </a>
+                    <a href="{% url 'struttura_ente:attivita_delete' a.pk %}" class="btn btn-outline-danger btn-sm" title="Elimina">
+                      <i class="fa fa-trash"></i>
+                    </a>
+                  </span>
+                </div>
+                {% empty %}
+                <div class="alert alert-info mb-0">
+                  <i class="fa fa-info-circle"></i> Nessuna attivita U.O. definita per questo servizio.
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Chiudi</button>
+              <a href="{% url 'struttura_ente:attivita_create' srv.pk %}" class="btn btn-info ml-auto">
+                <i class="fa fa-plus"></i> Aggiungi Attivita U.O.
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="servizi-empty-row">
+        <i class="fa fa-info-circle"></i> Nessun servizio definito per questo settore.
+      </div>
+      {% endfor %}
+    </div>
+  </details>
+  {% empty %}
+  <div class="alert alert-info">Nessun settore definito. Clicca "Nuovo Settore" per iniziare.</div>
+  {% endfor %}
+</div>
+{% endblock %}

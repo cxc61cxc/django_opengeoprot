@@ -1,0 +1,107 @@
+{% load static %}
+{% load accounts_extras %}
+    <div class="form-row " >
+      <nav style="height: 70px; background-color: #DAF2E6;"  class="navbar navbar-expand-sm fixed-top">
+        <div class="col-1">
+          <a class="btn  btn-info btn-sm" style="color: #DAF2E6;" href="{% url 'home:index'%}"><b>HOME</b></a>
+        </div>
+        <div class="col-1 ">
+          <a href="https://web.comune.carrara.ms.it" target="self">
+            <img class="img-fluid"
+            src="{% static 'img/sturmtruppen_aereo.jpg' %}"
+            width="90px" height="90px" >
+          </a>
+        </div>
+
+        {% if user.is_authenticated and not user|is_consigliere %}
+
+        <div class="col-2 ">
+          {% if edilizia_available %}
+          <a class="btn btn-outline-info btn-sm" title="Archivio Giovanna ( ex works )!" href="{% url 'edilizia:pratica_search' %}"><span class="small">Archivio</span></a>
+          {% endif %}
+        </div>
+
+        <div class="col-1">
+          {# RIPRISTINO: href="{% url 'protocollo:index_pratiche_url'%}" #}
+          <a class="btn btn-outline-primary btn-sm"  title="Le tue ultime pratiche..." href="{% url 'protocollo:mie_pratiche_url'%}"><span class="small">OpenGeoProt</span></a>
+        </div>
+
+        <div class="col-1" >
+
+        </div>
+          <div class="col-1" >
+            <a  class="btn btn-outline-primary btn-sm"  href="{% url 'protocollo:pratica_add_url' %}"><span class="small">Nuova pratica</span></a>
+
+          </div>
+          <!-- <div class="col-1" >
+            <a  class="btn btn-outline-primary btn-sm"  href="{% url 'prg:cdu_list' %}"><span class="small">cdu_list</span></a>
+          </div> -->
+          <div class="col-1">
+            <a class="btn btn-outline-primary btn-sm"  href="{% url 'protocollo:manager_dashboard' %}"><span class="small">Riepilogo pratiche</span></a>
+          </div>
+
+          <div class="col-1">
+            <a class="btn btn-outline-primary btn-sm"  title="Invia un messaggio email allo staff!" href="{% url 'mailer:index' %}"><span class="small">Segnala</span></a>
+          </div>
+        <div class="col-1">
+          <!--
+          <a  href="https://gis.comune.carrara.ms.it/lizmap/index.php/view/map/?repository=007&project=test_django"
+                class ="btn  btn-warning btn-sm" target="_BLANK"><span class="small"> mappa pratiche</span>
+          </a>
+          -->
+        </div>
+        {% endif %}
+
+        <div class="col-2 text-right">
+          {% if user.is_authenticated %}
+            <a class="btn btn-outline-danger btn-sm mr-2" href="{% url 'home:help' %}" title="Manuale utente"><span class="small"><i class="fa fa-book"></i> Aiuto</span></a>
+            <div class="dropdown ">
+                <button class=" btn btn-success btn-sm dropdown-toggle"  title="Gestisci il tuo profilo..." type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="fa fa-user-circle"></i> <span class="small"> {{user.username }} </span>
+                </button>
+                  <div class="dropdown-menu dropdown-menu-right shadow small" aria-labelledby="dropdownMenuButton">
+                    <a class="dropdown-item" href="{% url 'accounts:profile_view_url' %}">
+                      <i class="fa fa-user text-primary"></i> Visualizza profilo
+                    </a>
+                    {% if not user|is_consigliere %}
+                    <a class="dropdown-item" href="{% url 'accounts:profile_edit' %}">
+                      <i class="fa fa-user text-primary"></i> Modifica profilo
+                    </a>
+                    <a class="dropdown-item" href="{% url 'protocollo:mie_pratiche_url' %}">
+                      <i class="fa fa-briefcase text-primary"></i> Le mie pratiche
+                    </a>
+                    {% else %}
+                    <a class="dropdown-item" href="{% url 'accounts:mie_commissioni_url' %}">
+                      <i class="fa fa-list text-primary"></i> Le mie Commissioni
+                    </a>
+                    {% endif %}
+                    {% if user.is_staff or user.is_superuser %}
+                    <a class="dropdown-item" href="{% url 'protocollo:accessi_report' %}">
+                      <i class="fa fa-chart-bar text-primary"></i> Report Accessi
+                    </a>
+                    {% endif %}
+                     <!-- Inizio blocco da aggiungere -->
+                    {% if user.is_superuser %}
+                        <div class="dropdown-divider"></div>
+                        <h6 class="dropdown-header">Amministrazione</h6>
+                        <a class="dropdown-item" href="{% url 'accounts:user_management_url' %}">Gestione Utenti</a>
+                        <a class="dropdown-item" href="{% url 'accounts:group_management_url' %}">Gestione Gruppi</a>
+                        <a class="dropdown-item" href="{% url 'accounts:commissioni_list_url' %}">Gestione Commissioni</a>
+                    {% endif %}
+                    <!-- Fine blocco -->
+                    <div class="dropdown-divider"></div>
+                    <form action="{% url 'logout' %}" method="post">
+                      {% csrf_token %}
+                      <button type="submit" class="dropdown-item text-danger" style="cursor:pointer;"><i class="fa fa-sign-out"></i> Log Out</button>
+                    </form>
+                    <!-- <a class="dropdown-item" href="{% url 'password_reset' %}">Cambia pass</a> -->
+                  </div>
+            </div>
+            {% else %}
+                    <a class="btn btn-success btn-sm" title="accesso consentito ai soli utenti registrati!", href="{% url 'login' %}">Log In</a>
+            {% endif %}
+        </div>
+
+      </nav>
+
+    </div>

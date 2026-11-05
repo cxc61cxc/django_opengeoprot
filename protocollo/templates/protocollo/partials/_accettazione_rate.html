@@ -1,0 +1,44 @@
+{% if scadenze %}
+<div class="container border " style="font-size:0.9em;">
+    <p class='h6'>
+        Scadenze
+    </p>
+    {% for s in scadenze %}
+    <table class="table border-0 table-hover ">
+         <thead>
+          <tr class="border-top border-warning border-2 bg-light text-center">
+            <th scope="col-1" class="text-right" >ID</th>
+            <th scope="col-2">Scadenza</th>
+            <th scope="col-2">importo rata.</th>
+            <th scope="col-2">Pagamento</th>
+            <th scope="col-2"> IUV</th>
+            <th scope="col-1">+</th>
+            <th scope="col-1">-</th>
+            <th scope="col-1">?</th>
+            
+          </tr>
+        </thead>
+        <tr class="text-center">
+            <td class="text-right">
+            {{s.id}}
+            </td>
+            <td>
+            {{s.data_scadenza|date:"d-m-Y"}}
+            </td>
+            <td>
+            {{s.importo_rata}}
+            </td>
+            <td>
+            {{s.data_pagamento|date:"d-m-Y"}}
+            </td>
+            <td>
+            {{s.iuv}}
+            </td>
+        </tr>
+    
+    </table>
+
+    {%  endfor %}
+    
+</div>  
+{% endif %}   

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% load humanize %}
+{% block content %}
+<div class="container">
+    <h1>Report Versamenti Effettuati</h1>
+
+    <div class="summary">
+        <div class="row">
+            <div class="col-md-6">
+                <span class="text-muted">Totale versamenti:</span>
+                <span class="stat text-primary">{{ totale_versamenti }}</span>
+            </div>
+            <div class="col-md-6 text-end">
+                <span class="text-muted">Importo totale versato:</span>
+                <span class="stat text-success">€ {{ totale_versato|floatformat:2|intcomma }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Protocollo</th>
+                    <th>Data pagamento</th>
+                    <th>Primo richiedente</th>
+                    <th class="text-end">Importo (€)</th>
+                    <th>IUV</th>
+                    <th>Tipo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in versamenti %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        {% if v.pratica_id %}
+                            <a href="{% url 'protocollo:pratica_detail_url' v.pratica_id %}">{{ v.prot_gen }}</a>
+                        {% else %}
+                            {{ v.prot_gen|default:"—" }}
+                        {% endif %}
+                    </td>
+                    <td>{{ v.data_pagamento|date:"d/m/Y" }}</td>
+                    <td>{{ v.primo_richiedente|default:"—" }}</td>
+                    <td class="text-end">{{ v.importo_pagamento|floatformat:2|intcomma }}</td>
+                    <td class="iuv">{{ v.iuv|default:"—" }}</td>
+                    <td>
+                        {% if v.tipo_versamento == 'Unico' %}
+                            <span class="badge bg-info text-dark">Unico</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Rata</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted">
+                        Nessun versamento registrato.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="table-active">
+                    <td colspan="5" class="fw-bold">Totale</td>
+                    <td class="text-end fw-bold">€ {{ totale_versato|floatformat:2|intcomma }}</td>
+                    <td colspan="2">—</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

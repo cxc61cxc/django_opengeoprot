@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% load l10n %}
+
+{% block content %}
+  <div class="container-fluid border d-flex flex-column" style="height: 100vh;">
+    {% if pratica %}
+      <div class="row no-gutters flex-nowrap">
+        <div class="col-12">
+          <div class="card sticky-top shadow-sm" style="background-color: rgb(245, 243, 239); z-index: 1020;">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-10">
+                  <h4>
+                    <b style="color: blue;">Storico modifiche</b>
+                 
+                  <p class="small">
+                    Pratica: <b>{{ pratica.tipo_pratica }}</b> |
+                    Prot. Gen.: {{ pratica.prot_gen }} del {{ pratica.data_prot_gen|date:"d-m-Y" }}
+                  </p>
+                   </h4>
+                </div>
+                <div class="col-2 text-right">
+                  <a title="Torna al dettaglio"
+                     href="{% url 'protocollo:pratica_detail_url' pk=pratica.pk %}"
+                     class="btn btn-sm btn-outline-secondary">Dettaglio</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="Contenitore flex-grow-1 overflow-auto">
+        <div class="row mt-2">
+
+          {% if history %}
+            
+              <table class="table  table-hover h6">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Data</th>
+                    <th>Utente</th>
+                    <th>Evento</th>
+                    <th>Tipo</th>
+                    <th>Dettagli</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in history %}
+                    <tr>
+                      <td>{{ forloop.counter }}</td>
+                      <td class="col-2 small">{{ item.date|date:"Y-m-d H:i" }}</td>
+                      <td>{% if item.user %}{{ item.user }}{% else %}<em>sistema</em>{% endif %}</td>
+                      <td>{{ item.model }}</td>
+                      <td>
+                        {% if item.type_code == '+' %}
+                          <span class="badge bg-success">{{ item.type }}</span>
+                        {% elif item.type_code == '~' %}
+                          {% if item.type == 'Visualizzazione' %}
+                            <span class="badge bg-info text-dark">Visualizzazione</span>
+                          {% else %}
+                            <span class="badge bg-warning text-dark">{{ item.type }}</span>
+                          {% endif %}
+                        {% elif item.type_code == '-' %}
+                          <span class="badge bg-danger">{{ item.type }}</span>
+                        {% elif item.type_code == 'sost' %}
+                          <span class="badge bg-primary">{{ item.type }}</span>
+                        {% else %}
+                          <span class="badge bg-secondary">{{ item.type }}</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if item.type_code == '+' %}
+                          {% if item.detail %}
+                            <small>{{ item.detail }}</small>
+                          {% else %}
+                            <small>{{ item.model }} creato/aggiunto</small>
+                          {% endif %}
+                        {% elif item.type_code == '-' %}
+                          {% if item.detail %}
+                            <small>{{ item.detail }}</small>
+                          {% elif item.changes %}
+                            <ul class="list-unstyled mb-0">
+                              {% for change in item.changes %}
+                                <li>
+                                  <b>{{ change.field }}:</b>
+                                  <span class="text-muted">"{{ change.old|default:"—" }}"</span>
+                                </li>
+                              {% endfor %}
+                            </ul>
+                          {% else %}
+                            <small class="text-muted">Nessuna modifica significativa</small>
+                          {% endif %}
+                        {% elif item.type == 'Visualizzazione' %}
+                          <small class="text-muted">Solo visualizzazione</small>
+                         {% elif item.changes %}
+                           <ul class="list-unstyled mb-0">
+                             {% for change in item.changes %}
+                               <li>
+                                 <b>{{ change.field }}:</b>
+                                 <span class="text-muted">"{{ change.old|default:"—" }}"</span>
+                                 &rarr;
+                                 <span class="text-primary">"{{ change.new|default:"—" }}"</span>
+                               </li>
+                             {% endfor %}
+                           </ul>
+                         {% elif item.detail %}
+                           <small>{{ item.detail }}</small>
+                         {% else %}
+                           <small class="text-muted">Nessuna modifica significativa</small>
+                         {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+          {% else %}
+            <p class="h5 text-muted">Nessuna modifica registrata.</p>
+          {% endif %}
+            
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

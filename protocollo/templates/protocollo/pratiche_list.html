@@ -1,0 +1,415 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css %}
+   <style>
+    .pratiche-table {
+      width: 100%;
+      table-layout: fixed;
+    }
+    .pratiche-table th,
+    .pratiche-table td {
+      vertical-align: top;
+    }
+   .pratiche-table th:nth-child(1),
+   .pratiche-table td:nth-child(1) { width: 50px; text-align: center; }
+   .pratiche-table th:nth-child(2),
+   .pratiche-table td:nth-child(2) { width: 22%; }
+   .pratiche-table th:nth-child(3),
+   .pratiche-table td:nth-child(3) { width: 110px; }
+   .pratiche-table th:nth-child(4),
+   .pratiche-table td:nth-child(4) { width: 18%; }
+   .pratiche-table th:nth-child(5),
+   .pratiche-table td:nth-child(5) { width: 16%; }
+   .pratiche-table th:nth-child(6),
+   .pratiche-table td:nth-child(6) { width: 22%; }
+   .pratiche-table th:nth-child(7),
+   .pratiche-table td:nth-child(7) { width: 14%; }
+   .pratiche-table th:nth-child(8),
+   .pratiche-table td:nth-child(8) { width: 50px; text-align: center; }
+   #opengeoprot-tab.active,
+   #archivio-tab.active {
+     font-size: 1.15rem;
+     font-weight: bold;
+     letter-spacing: 0.3px;
+     color: #0d6efd !important;
+   }
+   </style>
+{% endblock css %}
+
+
+{% block content %}
+  
+ 
+  <!-- 
+    RICHIAMA UNA PAGINA "partials"
+    SE è UNA LISTA DELLE PRATICHE CON ID = 30 ( osservatorio permanente !!!--- modificare per altre pratiche) 
+    PROPONE ALCUNI AFFINAMENTI DELLA QUERY
+  -->
+  
+  {% comment %} {% block choice %} 
+     
+            {% include "protocollo/partials/_tipopratica_choice.html" %}
+          
+  {% endblock choice %} {% endcomment %}
+  
+
+  {% if pratica or edilizia_pratica_list %} 
+
+
+
+    {% if show_user_filters %}
+    <form method="get" action="{% url 'protocollo:mie_pratiche_url' %}" class="form-inline mb-2 ml-3">
+        <select name="anno" class="form-control form-control-sm mr-2">
+            <option value="">Tutti gli anni</option>
+            {% for d in anni_disponibili %}
+            <option value="{{ d.year }}" {% if selected_anno == d.year|stringformat:'s' %}selected{% endif %}>{{ d.year }}</option>
+            {% endfor %}
+        </select>
+        <select name="tp" class="form-control form-control-sm mr-2">
+            <option value="">Tutti i tipi</option>
+            {% for t in tp %}
+            <option value="{{ t.id }}" {% if selected_tp == t.id|stringformat:'s' %}selected{% endif %}>{{ t.name|lower }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-sm btn-primary">Filtra</button>
+    </form>
+    {% endif %}
+
+    <ul class="nav nav-tabs mt-3 justify-content-center" id="risultatiTab" role="tablist">
+      {% if show_archivio %}
+      <li class="nav-item">
+        <a class="nav-link {% if active_tab == 'archivio' %}active{% endif %}" id="archivio-tab" data-toggle="tab" href="#archivio" role="tab" aria-controls="archivio" aria-selected="{% if active_tab == 'archivio' %}true{% else %}false{% endif %}">
+          ARCHIVIO <span class="badge badge-info">{{ edilizia_tot }}</span>
+        </a>
+      </li>
+      {% endif %}
+      {% if show_opengeoprot %}
+        <li class="nav-item">
+          <a class="nav-link {% if active_tab == 'opengeoprot' %}active{% endif %}" id="opengeoprot-tab" data-toggle="tab" href="#opengeoprot" role="tab" aria-controls="opengeoprot" aria-selected="{% if active_tab == 'opengeoprot' %}true{% else %}false{% endif %}">
+            <i class="fa fa-globe"></i> OPENGEOPROT <span class="badge badge-success">{{ totale_p }}</span>
+          </a>
+        </li>
+      {% endif %}
+    </ul>
+
+    <div class="tab-content" id="risultatiTabContent">
+      {% if show_archivio %}
+      <div class="tab-pane fade {% if active_tab == 'archivio' %}show active{% endif %}" id="archivio" role="tabpanel" aria-labelledby="archivio-tab">
+         <div class="container-fluid px-2 bg-light mt-2">
+          <div class="row border border-warning border-2 my-3 bg-light">
+            <div class="col-5 m-2 text-left d-flex align-items-center">
+              <div class="text-dark font-weight-light h4 mb-0">
+                Totale pratiche {{ edilizia_tot }}
+              </div>
+              {% if edilizia_ids %}
+                {% if query_string %}
+                <a href="{% url 'protocollo:mappa_results_url' %}?{{ query_string }}&tab=archivio" class="btn btn-sm btn-info ml-3 shadow-sm">
+                {% else %}
+                <a href="{% url 'protocollo:mappa_results_url' %}?ids={% for i in edilizia_ids %}{{ i }}{% if not forloop.last %},{% endif %}{% endfor %}&tab=archivio" class="btn btn-sm btn-info ml-3 shadow-sm">
+                {% endif %}
+                  <i class="fa fa-map"></i> Vedi in Mappa
+                </a>
+              {% elif edilizia_pratica_list %}
+                {% if query_string %}
+                <a href="{% url 'protocollo:mappa_results_url' %}?{{ query_string }}&tab=archivio" class="btn btn-sm btn-info ml-3 shadow-sm">
+                {% else %}
+                <a href="{% url 'protocollo:mappa_results_url' %}?ids={% for p in edilizia_pratica_list %}{{ p.id }}{% if not forloop.last %},{% endif %}{% endfor %}&tab=archivio" class="btn btn-sm btn-info ml-3 shadow-sm">
+                {% endif %}
+                  <i class="fa fa-map"></i> Vedi in Mappa
+                </a>
+              {% endif %}
+            </div>
+          </div>
+          {% include 'edilizia/partials/pratica_results.html' with pratica_list=edilizia_pratica_list tot_pratiche=edilizia_tot totale_p=totale_p pratiche_with_particelle=pratiche_with_particelle page_param='edilizia_page' %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if show_opengeoprot %}
+      <div class="tab-pane fade {% if active_tab == 'opengeoprot' %}show active{% endif %}" id="opengeoprot" role="tabpanel" aria-labelledby="opengeoprot-tab">
+          <div class="container-fluid px-2 bg-light">
+        
+        <div class="row border border-warning border-2 my-3 bg-light" >
+            <div class="col-5  m-2 text-left d-flex align-items-center" >
+                {# RIPRISTINO: <div class="text-dark font-weight-light  h4 mb-0"> Totale pratiche {{ totale_p }} </div> #}
+                <div class="text-muted font-weight-light h6 mb-0">
+                    {% if show_all %}Ultime pratiche {{ totale_p }}{% else %}Le tue ultime pratiche {{ totale_p }}{% endif %}
+                </div>
+                {% if protocollo_ids %}
+                    <a href="{% url 'protocollo:mappa_results_url' %}?ids={% for i in protocollo_ids %}{{ i }}{% if not forloop.last %},{% endif %}{% endfor %}&tab=opengeoprot" class="btn btn-sm btn-outline-info ml-3 shadow-sm">
+                        <i class="fa fa-map"></i> Vedi in Mappa
+                    </a>
+                {% elif pratiche_ids %}
+                    <a href="{% url 'protocollo:mappa_results_url' %}?ids={% for i in pratiche_ids %}{{ i }}{% if not forloop.last %},{% endif %}{% endfor %}&tab=opengeoprot" class="btn btn-sm btn-outline-info ml-3 shadow-sm">
+                        <i class="fa fa-map"></i> Vedi in Mappa
+                    </a>
+                {% else %}
+                    {% if query_string %}
+                    <a href="{% url 'protocollo:mappa_results_url' %}?{{ query_string }}&tab=opengeoprot" class="btn btn-sm btn-outline-info ml-3 shadow-sm">
+                    {% else %}
+                    <a href="{% url 'protocollo:mappa_results_url' %}?ids={% for p in pratica %}{{ p.id }}{% if not forloop.last %},{% endif %}{% endfor %}&tab=opengeoprot" class="btn btn-sm btn-outline-info ml-3 shadow-sm">
+                    {% endif %}
+                        <i class="fa fa-map"></i> Vedi in Mappa
+                    </a>
+                {% endif %}
+            </div>
+            <div class="col-5  m-2 text-right" >
+                   
+                {% if pratica.has_previous %}
+                    <a href="?page={{ pratica.previous_page_number }}&tab=opengeoprot{% if query_string %}&{{ query_string }}{% endif %}">Indietro</a>
+                {% endif %}
+                {% if pratica.paginator.num_pages > 1 %}
+                  <span>Pagina {{ pratica.number }} di {{ pratica.paginator.num_pages }}</span>
+                {% endif %}
+                {% if pratica.has_next %}
+                    <a href="?page={{ pratica.next_page_number }}&tab=opengeoprot{% if query_string %}&{{ query_string }}{% endif %}">Avanti</a>
+                {% endif %}
+                {% if request.GET.tp == '30' %}
+                    <a href="{% url 'protocollo:report_poc_2022_pdf' %}{% if query_string %}?{{ query_string }}{% endif %}" class="btn btn-sm btn-outline-success ml-3 shadow-sm" target="_blank">
+                        <i class="fa fa-file-pdf-o"></i> Report POC 2022
+                    </a>
+                    <a href="{% url 'protocollo:report_istrcomm_poc_pdf' %}" class="btn btn-sm btn-outline-primary ml-2 shadow-sm" target="_blank">
+                        <i class="fa fa-file-pdf-o"></i> Esaminate in commissione
+                    </a>
+                {% elif request.GET.tp == '7' %}
+                    <a href="{% url 'protocollo:riepilogo_cdu_url' %}" class="btn btn-sm btn-outline-success ml-3 shadow-sm">
+                        <i class="fa fa-file-text"></i> Riepilogo CDU
+                    </a>
+                {% elif request.GET.tp == '26' %}
+                    <a href="{% url 'protocollo:riepilogo_idonall_url' %}" class="btn btn-sm btn-outline-success ml-3 shadow-sm">
+                        <i class="fa fa-file-text"></i> Riepilogo Idoneita'
+                    </a>
+                {% endif %}
+                </div>
+             </div>
+       {% if pratica and pratica.object_list %}
+       <div style="height: 600px; overflow-y: auto;">
+        <table class="table border-0 table-hover sticky-header pratiche-list-table pratiche-table">
+           <thead>
+          <tr class="border-top border-warning border-2 bg-light">
+            <th class="text-center">ID</th>
+            <th>Tipo</th>
+            <th>Prot.Gen.</th>
+            <th>Soggetti</th>
+            <th>ubicazione</th>
+            <th>Oggetto</th>
+            <th>particelle</th>
+            <th></th>
+            
+          </tr>
+        </thead>
+          <tbody>
+            {% for p in pratica%}
+            <tr class="btn-outline rounded-2" title="{{ p.annotazioni }}">
+              <td class="text-center">
+                <p class="text-muted">
+                  {% if pratica.start_index %}
+                    {{ pratica.start_index|add:forloop.counter0 }}
+                  {% else %}
+                    {{ forloop.counter }}
+                  {% endif %}
+                </p>
+                <a title="Vedi i dettagli della pratica id {{ p.id }}" 
+                    href="{% url 'protocollo:pratica_detail_url' p.id %}" 
+                    class="btn btn-outline-primary pratica-map-btn"
+                    style="width:25px;height:25px"
+                    data-pratica-id="{{ p.id }}">
+                </a>
+              </td>
+              <td>
+                <p class=" m-0 text-left">
+                    <b>
+                       {{ p.tipo_pratica|upper}}
+                    </b>
+                </p>
+
+                {% if p.has_idonall_cert and p.stato == 'c'  %}
+                <p class="text-right text-danger small">
+                    cert {{ p.idonall_number }}/{{ p.idonall_date|date:"Y" }}
+                </p>
+                {% endif %}
+
+                {% if p.stato == 'c' and p.matricola %}
+                <p class="text-right text-primary small">
+                    matricola {{ p.matricola|upper }}
+                </p>
+                {% endif %}
+
+                {% if p.pratiche_cdu and p.stato == 'c' %}
+                <p class="text-left text-primary small">
+                    {% if p.pratiche_cdu.uso == 'Informativa' %}
+                        info {{ p.pratiche_cdu.cdu_number }}/{{ p.pratiche_cdu.cdu_date | date:"Y"}}
+                    {% else %}
+                        cdu {{ p.pratiche_cdu.cdu_number }}/{{ p.pratiche_cdu.cdu_date | date:"Y"}}
+                    {% endif %}
+                </p>
+                {% endif %}
+                <p class="m-0 small">
+                    {{p.id}} - <span class=" h6 font-weight-bold">{{p.code_p}}{% if p.sub_code %}-{{p.sub_code}}{% endif %}</span>/{{ p.data_prot_gen|date:"Y"}}
+                   {% if p.classe %} classe-{{p.classe}}{% endif %}
+                </p>
+                <p class="m-0 font-italic" style="font-weight: bold;">
+                    {% if p.stato == 'i' %}
+                    <small style="color: rgb(34, 37, 232);">IN CORSO </small>
+                    {% endif %}
+                    {% if p.stato == 'bd' %}
+                    <small style="color: rgb(174, 61, 35);">BOZZA DETERMINA </small>
+                    {% endif %}
+                    {% if p.stato == 'df' %}
+                    <small class="text-success" style="font-weight:bold;">DETERMINA FIRMATA </small>
+                    {% endif %}
+                    {% if p.stato == 'ic' %}
+                    <small class="text-success">INVIATA COMUNICAZIONE </small>
+                    {% endif %}
+                    {% if p.stato == 'ri' %}
+                    <small style="font-weight:bold;color: rgb(235, 13, 187);">RICHIESTA INTEGRAZIONE </small>
+                    {% endif %}
+                    {% if p.stato == 'c' %}
+                    <small class="text-danger"> CHIUSA</small>
+                    {% elif p.stato == 'aa' %}
+                    <small style="font-weight:bold;color: rgb(25, 62, 230);"> ARCHIVIATA</small>
+                    {% endif %}
+                    {% if p.stato == 's' %}
+                    <small style="font-weight:bold; color: blueviolet;"> SOSPESA</small>
+                    {% endif %}
+                    {% if p.stato == 'a' %}
+                    <small style="font-weight:bold; color: darkblue;">ATTIVA</small>
+                    {% endif %}
+                    {% if p.stato == 'ai' %}
+                    <small style="font-weight:bold; color:rgb(181, 12, 211);">IMPORTO ACCETTATO</small>
+                    {% endif %}
+                    {% if p.stato == 'ia' %}
+                    <small style="font-weight:bold; color: rgb(21, 151, 238);">INVIATA AD AMMINISTRATIVI</small>
+                    {% endif %}
+                    {% if p.stato == 'np' %}
+                    <small style="font-weight:bold; color: rgb(106, 13, 235);">IMPROCEDIBILE</small>
+                    {% endif %}
+                    {% if p.stato == 'af' %}
+                    <small style="font-weight:bold; color: rgb(26, 115, 199);">ALLA FIRMA</small>
+                    {% endif %}
+                    {% if p.stato == 'dn' %}
+                    <small style="font-weight:bold; color: rgb(16, 226, 156);">DETERMINA INVIATA A NOTAIO</small>
+                    {% endif %}
+                    {% if p.stato == 'eo' %}
+                    <small style="font-weight:bold; color: rgb(226, 16, 16);">EMESSA ORDINANZA</small>
+                    {% endif %}
+                    
+                </p>
+                <p>
+                  {% if p.data_mod %}
+                    <small >ultima modifica : {{p.data_mod|date:'d/m/Y'}}
+                    {% if p.modified_by %} da {{ p.modified_by.get_full_name|default:p.modified_by.username }}{% endif %}
+                    </small>
+                  {% endif %}
+                </p>
+              </td>
+              
+              <td>
+                <b>{{ p.prot_gen }}</b><br><span >{{ p.data_prot_gen|date:"d/m/Y" }}</span>
+              </td>
+              
+              <td>
+
+                
+
+                
+                {% for anagrafe in p.soggetto_pratica.all|slice:":5" %}
+                  <li class="li"><span>  <b>{{ anagrafe.cognome|upper }}</b> {{anagrafe.nome|title }} </span></li>
+                {% endfor %}
+              
+              </td>
+              
+              <td>
+                <a href="https://www.openstreetmap.org/search?query= {{ p.street }} {{ p.housenumber }} carrara" target="_BLANK">
+                  {{ p.street }} {{ p.housenumber}}
+                </a>
+              </td>
+              
+              <td class="text-secondary">
+                <p class="m-0 fw-light ">{{ p.oggetto|linebreaks|truncatechars:75 }}</p>
+               
+               
+                {% if p.annotazioni %}
+                <p class="text-lowercase text-right">{{ p.annotazioni | truncatechars:70 }}</p> 
+                {% endif %}
+                {% for eventi in p.id.all|slice:":5" %}
+                <p>{{eventi}}</p>
+                {% endfor %}                
+              </td>
+              <td>
+                
+                {% for cp in p.pratiche.all|slice:":5" %}
+                  <p class="p-0 m-0 bold"><span> 
+                    {{ cp.particella.foglio }} {{ cp.particella.mappale }} 
+                    {% if cp.subalterno and cp.subalterno != '-' %}
+                      sub. {{ cp.subalterno }}
+                    {% endif %}
+                  </span></p>
+                {% endfor %}
+                
+              </td>
+              
+             
+              <td class="text-center">
+                {% if user.is_editor and p.stato != 'c' and p.stato != 'aa' or user.is_superuser or user.is_staff %}
+                <a title="Elimina " 
+                  href="{% url 'protocollo:pratica_delete_url' pk=p.pk %}"
+                  style="width:20px;height:20px" 
+                  class="btn btn-sm btn-outline-danger">
+                </a>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+    <div class="alert alert-warning mt-3" role="alert">
+      <i class="fa fa-exclamation-triangle"></i>
+      <strong>Nessun risultato</strong> per il tipo selezionato.
+    </div>
+    {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  {% else %}
+    <div class="alert alert-warning mt-3" role="alert">
+      <i class="fa fa-exclamation-triangle"></i>
+      <strong>Nessun risultato</strong> per la ricerca effettuata. Prova a modificare i filtri.
+    </div>
+  {% endif %}
+{% endblock %}
+
+{% block js %}
+<script>
+  $(document).ready(function() {
+      
+      // La TAB attiva e' gia' decisa server-side (active_tab / ?tab= nella URL),
+      // quindi il markup e' sempre corretto. Qui solo un ripristino di sicurezza
+      // leggendo ?tab= dalla URL (utile se il reload non ha riallineato Bootstrap).
+      var params = new URLSearchParams(window.location.search);
+      var tab = params.get('tab');
+      if (tab === 'opengeoprot' || tab === 'archivio') {
+          setTimeout(function() {
+              var $t = $('#' + tab + '-tab');
+              if ($t.length && !$t.hasClass('active')) { $t.tab('show'); }
+          }, 0);
+      }
+  });
+</script>
+
+{% if nessun_risultato %}
+<script>
+  setTimeout(function() {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = "{% url 'protocollo:search_protocollo_url' %}";
+    }
+  }, 3000);
+</script>
+{% endif %}
+{% endblock js %}

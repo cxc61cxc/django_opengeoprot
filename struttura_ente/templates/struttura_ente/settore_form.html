@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if settore %}Modifica{% else %}Nuovo{% endif %} Settore{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 700px;">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      {% if settore %}Modifica Settore{% else %}Nuovo Settore{% endif %}
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label>Codice</label>
+          <input class="form-control" type="text" name="codice" required maxlength="20" value="{{ settore.codice|default_if_none:'' }}" placeholder="Es. settore 5">
+        </div>
+        <div class="form-group">
+          <label>Nome</label>
+          <input class="form-control" type="text" name="nome" required value="{{ settore.nome|default_if_none:'' }}">
+        </div>
+        <div class="form-group">
+          <label>Descrizione</label>
+          <textarea class="form-control" name="descrizione" rows="3">{{ settore.descrizione|default_if_none:'' }}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Ordine</label>
+          <input class="form-control" type="number" name="ordine" value="{{ settore.ordine|default_if_none:'0' }}">
+        </div>
+        <div class="form-group">
+          <label>Atto di riferimento (opzionale)</label>
+          <input class="form-control" type="text" name="atto_riferimento" placeholder="Es. Delibera n.123 del 2025-09-01">
+          <small class="text-muted">Verr&agrave; registrato nello < delle modifiche che modi questo settore.</small>
+        </div>
+        <div class="text-right">
+          <a href="{% url 'struttura_ente:settore_list' %}" class="btn btn-outline-secondary">Annulla</a>
+          <button type="submit" class="btn btn-primary">Salva</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

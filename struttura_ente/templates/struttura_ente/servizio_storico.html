@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Storico Servizio {{ servizio.codice }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3>Storico: <strong>{{ servizio.codice }}</strong> &mdash; {{ servizio.nome }} <small class="text-muted">({{ servizio.settore.codice }})</small></h3>
+  <p class="text-muted">Tutte le versioni del servizio, dalla piu' recente alla piu' vecchia.</p>
+
+  <table class="table table-striped table-sm">
+    <thead class="thead-dark">
+      <tr>
+        <th>Stato</th>
+        <th>Settore</th>
+        <th>Codice</th>
+        <th>Nome</th>
+        <th>Descrizione</th>
+        <th>Ordine</th>
+        <th>Data Inizio</th>
+        <th>Data Fine</th>
+        <th>Atto di riferimento</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in versioni %}
+      <tr {% if v.vigente %}class="table-success"{% endif %}>
+        <td>
+          {% if v.vigente %}
+            <span class="badge badge-success">VIGENTE</span>
+          {% else %}
+            <span class="badge badge-secondary">chiuso</span>
+          {% endif %}
+        </td>
+        <td>{{ v.settore_storico.codice }}</td>
+        <td>{{ v.codice }}</td>
+        <td>{{ v.nome }}</td>
+        <td>{{ v.descrizione|default:"-" }}</td>
+        <td>{{ v.ordine }}</td>
+        <td>{{ v.data_inizio|date:"d/m/Y H:i" }}</td>
+        <td>{{ v.data_fine|date:"d/m/Y H:i"|default:"-" }}</td>
+        <td>{{ v.atto_riferimento|default:"-" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" class="text-center text-muted">Nessuna versione storica registrata.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <a href="{% url 'struttura_ente:settore_list' %}" class="btn btn-outline-secondary">
+    <i class="fa fa-arrow-left"></i> Torna all'elenco
+  </a>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+
+    <div class="row">
+        <h5>Elenco Tipo di pratica</h5>
+    </div>
+
+    <div class="container p-2 my-2 border" style="font-size:0.9em;">
+        
+        {% if lista %}
+            <table class="table table-hover table-sm">
+                <thead>
+                <tr>
+                    <th scope="col" class="col-md-1"></th>
+                    
+                    <th scope="col" class="col-md-2">Codice</th>
+                    <th scope="col" class="col-md-6">Descrizione</th>
+                    <th scope="col" class="col-md-1"></th>
+                    <th scope="col" class="col-md-1"></th>
+                    <th scope="col" class="col-md-1"></th>
+
+
+                    
+                </tr>
+                </thead>
+                <tbody>
+                {% for s in lista %}
+                <tr>
+                    
+                   
+                    
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ s.name|upper }}</td>
+                    <td>{{ s.description|title }}</td>
+
+                    <td><a href="{% url 'protocollo:tipopratica_edit_url' id=s.pk %}"><img class="img-fluid" 
+                        src="{% static 'img/icons8-edit.svg' %}" 
+                        width="20" height="20" ></a>
+                    </td>
+                    <td>
+                    <a title="Vedi i dettagli" href="{% url 'protocollo:tipopratica_edit_url' id=s.pk %}"><img class="img-fluid" 
+                        src="{% static 'img/book.svg' %}" 
+                        width="20" height="20" ></a>
+                    </td>
+                    <td>
+                    <a title="Elimina " href="{% url 'protocollo:tipopratica_delete_url' id=s.pk %}"><img class="img-fluid" 
+                        src="{% static 'img/icons8-trash.svg' %}" 
+                        width="20" height="20" ></a>
+                    </td>
+                    
+                </tr>
+                {% endfor %}
+                </tbody>
+          </table>
+        {% endif %}
+    </div>
+ 
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Dettagli particella - protocollo{% endblock %}
+
+{% block content %}
+{% load static %}  <!-- load static -->
+{% comment %} {% include 'protocollo/protocollo_base.html' %} {% endcomment %}
+  <div class="container p-3 my-3 border">
+    <div class="alert alert-info" role="alert">
+      <div class="row">     
+        <div class="col-8">
+          <h4 class="font-weight-bold">Aggiungi eventuali subalterni particella</h4>
+        </div>
+        <div class="col-4">
+          <p class="nav justify-content-end">Pratica in lavorazione : {{ pk }}</p>
+          <p class="nav justify-content-end">Id particella : {{ particella.id }}</p>
+        </div>
+      </div>
+    </div>  
+    <div class="row">  
+      
+      <div class="col-6">
+        <p>Particella</p>
+        <h4>Fg. {{ particella.foglio|upper  }} map. {{ particella.mappale|title }}</h4>
+      </div>
+      
+      
+    </div>
+    <form action="{% url 'protocollo:add_particella_pratica_url' %}" method = "POST" >
+      {% csrf_token %}
+      <div class="row">  
+        <div class="col-4">
+          <input type="hidden" name="particella" value="{{ particella.id }}" readonly>
+        </div>
+        <div class="col-4">
+          <input type="hidden" name="pratica" value="{{ pk }}" readonly>
+        </div>
+        <div class="col-4 nav justify-content-end">
+          <input type="text" title = "Inserisci eventuali subalterni riferibili alla particella. Es. 1-2-3" name="subalterno" autofocus onfocus="this.select();"  value="-">
+        </div>
+        
+      </div>
+      <div class="row">
+        <div class="col-6">
+          <input class = "btn btn-outline-primary btn-sm m-3" type="submit" name="continua" value="aggiungi e continua" title="Salva la particella e torna alla ricerca per inserirne un'altra">
+        </div>
+        <div class="col-6 nav justify-content-end">
+          <input class = "btn btn-outline-success btn-sm m-3" type="submit" value="aggiungi">
+        </div>
+      </div>
+    </form>
+      
+      
+    
+    
+  </div>
+{% endblock %}

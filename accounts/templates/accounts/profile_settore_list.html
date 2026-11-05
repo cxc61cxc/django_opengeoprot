@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Verifica impostazioni profilo{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-white px-0 py-2 mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home:index' %}">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Verifica impostazioni profilo</li>
+    </ol>
+  </nav>
+
+  <h3 class="mb-3">Settore / Servizio / U.O.</h3>
+
+  {% if not settore_ok %}
+  <div class="alert alert-warning">
+    <i class="fa fa-exclamation-triangle me-2"></i>
+    <strong>Settore non impostato.</strong>
+    <p class="text-danger h5">
+    Di seguito trovi l'elenco dei settori disponibili. Seleziona il servizio che
+    ti interessa e verra' reindirizzato alla pagina di modifica profilo per
+    completare l'impostazione.
+    </p>
+  </div>
+  {% elif not uo_ok %}
+  <div class="alert alert-warning">
+    <i class="fa fa-exclamation-triangle me-2"></i>
+    <strong>Servizio / U.O. non impostati.</strong>
+    <br>
+    <p class="h4">Il tuo settore ({{ profile.settore.codice }}) e' corretto, ma non hai ancora
+    scelto il servizio e l'unita' operativa. Scegli dalla lista qui sotto.
+    </p>
+  </div>
+  {% endif %}
+
+  {% if settori %}
+  {% for s in settori %}
+  <details class="card mb-3 settore-card" {% if profile.settore and s.codice == profile.settore.codice %}open{% endif %}>
+    <summary class="card-header">
+      <div class="settore-info">
+        <span class="settore-codice">{{ s.codice }}</span>
+        <span class="settore-nome ml-2">{{ s.nome }}</span>
+      </div>
+    </summary>
+    <div class="servizi-list-wrap">
+      {% for srv in s.servizi %}
+      <div class="servizio-row d-flex justify-content-between align-items-center">
+        <div class="flex-grow-1">
+          <span class="servizio-codice">{{ srv.codice }}</span>
+          <strong class="ml-1">{{ srv.nome }}</strong>
+          {% if srv.descrizione %}<br><small class="text-muted">{{ srv.descrizione }}</small>{% endif %}
+        </div>
+        <span class="servizio-action-cell">
+          <small class="text-muted mr-2">({{ srv.uo_count }} U.O.)</small>
+          <a href="{% url 'accounts:profile_edit' %}?settore={{ s.codice }}&servizio={{ srv.id }}"
+             class="btn btn-outline-primary btn-sm" title="Vai alla modifica profilo con questo servizio">
+            <i class="fa fa-check"></i> Imposta
+          </a>
+        </span>
+      </div>
+      {% empty %}
+      <div class="servizi-empty-row">
+        <i class="fa fa-info-circle"></i> Nessun servizio definito per questo settore.
+      </div>
+      {% endfor %}
+    </div>
+  </details>
+  {% endfor %}
+  {% else %}
+  <div class="alert alert-info">
+    <i class="fa fa-info-circle"></i>
+    <p class="h4">
+    Non e' disponibile alcun settore corrispondente al tuo profilo utente.
+    Contatta l'amministrazione per l'assegnazione del settore.
+    </p>
+  </div>
+  {% endif %}
+
+  <div class="d-flex justify-content-between align-items-center mt-4">
+    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline-primary">
+      <i class="fa fa-user-pen me-1"></i> Modifica profilo
+    </a>
+    <a href="{% url 'accounts:profile_view_url' %}" class="btn btn-outline-secondary">
+      <i class="fa fa-user me-1"></i> Visualizza profilo
+    </a>
+  </div>
+</div>
+
+<style>
+  .settore-card {
+    border-left: 6px solid #138496;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .settore-card > .card-header {
+    background: linear-gradient(135deg, #f4f3f3, #e8eef2);
+    border-bottom: 2px solid #138496;
+    cursor: pointer;
+    user-select: none;
+  }
+  .settore-card > .card-header::-webkit-details-marker { display: none; }
+  .settore-card > .card-header::after {
+    content: '\f078';
+    font-family: 'FontAwesome';
+    margin-left: auto;
+    float: right;
+    padding: 0.5rem 1rem;
+    transition: transform 0.15s ease;
+  }
+  .settore-info { margin-right: auto; }
+  .settore-codice {
+    display: inline-block;
+    background-color: #138496;
+    color: #fff;
+    padding: 0.15rem 0.6rem;
+    border-radius: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+  }
+  .settore-nome { font-size: 1.05rem; font-weight: bold; color: #2c3e50; }
+  .servizi-list-wrap { padding-left: 2.5rem; padding-right: 1rem; }
+  .servizio-row {
+    background-color: #fafbfc;
+    border-top: 1px dashed #cfd8dc;
+    padding: 0.55rem 1rem;
+  }
+  .servizio-row:last-child { border-bottom: 1px dashed #cfd8dc; }
+  .servizio-codice {
+    display: inline-block;
+    background-color: #20c997;
+    color: #fff;
+    padding: 0.1rem 0.5rem;
+    border-radius: 0.3rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+  }
+  .servizi-empty-row {
+    background-color: #fafbfc;
+    padding: 0.55rem 1rem;
+    color: #6c757d;
+    font-style: italic;
+  }
+  .servizio-action-cell { min-width: 180px; text-align: right; white-space: nowrap; }
+  .servizio-action-cell .btn { margin-left: 2px; }
+</style>
+{% endblock %}

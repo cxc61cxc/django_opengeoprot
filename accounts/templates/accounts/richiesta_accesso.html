@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Richiesta accesso{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 700px;">
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning">
+            <h4 class="mb-0">Richiesta accesso {{ pratica_type }} #{{ pratica.id }}</h4>
+        </div>
+        <div class="card-body">
+            <p class="text-muted small">
+                Sei un utente di sola lettura. Compila il modulo per richiedere l'accesso completo a questa pratica.
+                La richiesta verrà inviata agli amministratori.
+            </p>
+            <div class="alert alert-info">
+                <strong>Pratica:</strong> #{{ pratica.id }} - {{ pratica.prot_gen }}<br>
+                <strong>Oggetto:</strong> {{ pratica.oggetto }}
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                {% if close_on_success %}<input type="hidden" name="from_pdf" value="1">{% endif %}
+                {{ form.motivazione|as_crispy_field }}
+                <div class="text-right mt-3">
+                    <input type="button" class="btn btn-outline-secondary btn-sm mr-2" value="Annulla" onClick="javascript:history.go(-1);">
+                    <button type="submit" class="btn btn-warning">Invia richiesta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

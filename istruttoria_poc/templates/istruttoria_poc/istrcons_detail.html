@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'protocollo:index_pratiche_url' %}">Pratiche</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'protocollo:pratica_detail_url' pratica.id %}">Pratica {{ pratica.prot_gen }}</a></li>
+            <li class="breadcrumb-item active">{{ etichetta }}</li>
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="card-header">
+            <strong>{{ etichetta }} pratica</strong>
+            <span class="float-right">{{ pratica.data_prot_gen|date:"d/m/Y" }}</span>
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Pratica: {{ pratica.prot_gen }} - {{ pratica.data_prot_gen|date:"d/m/Y" }}</h5>
+            <p class="card-text">{{ pratica.oggetto|default:"-"|linebreaksbr }}</p>
+            <hr>
+            <small class="text-muted">
+                Pratica creata da {{ pratica.user|default:"sconosciuto" }} il {{ pratica.data_crea|date:"d/m/Y H:i" }}<br>
+                Ultima modifica: {{ pratica.data_mod|date:"d/m/Y H:i" }}
+            </small>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>{{ etichetta }}</strong>
+            {% if istruttoria.compilata %}
+                <div>
+                    <a href="?edit=1" class="btn btn-sm btn-outline-primary">Modifica</a>
+                    {% if puo_eliminare %}
+                    <form method="post" action="{% url url_elimina pratica_id=pratica.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('Eliminare {{ etichetta|lower }} della pratica {{ pratica.prot_gen|escapejs }}?');">
+                            Elimina
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            {% else %}
+                <a href="?edit=1" class="btn btn-sm btn-outline-success">
+                    <i class="fa fa-plus"></i> Aggiungi
+                </a>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if istruttoria.compilata and not edit %}
+                <p class="mb-1">{{ istruttoria.testo|default:"-"|linebreaksbr }}</p>
+                <hr>
+                <small class="text-muted">
+                    Data: {{ istruttoria.data_val|date:"d/m/Y"|default:"-" }}<br>
+                    Redatto da {{ istruttoria.user|default:"sconosciuto" }}
+                    il {{ istruttoria.data_crea|date:"d/m/Y H:i" }}<br>
+                    Ultima modifica: {{ istruttoria.data_mod|date:"d/m/Y H:i" }}
+                </small>
+            {% else %}
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="form-group">
+                                <label for="{{ form.testo.id_for_label }}">{{ form.testo.label }}</label>
+                                {{ form.testo }}
+                                {% if form.testo.help_text %}
+                                    <small class="form-text text-muted">{{ form.testo.help_text }}</small>
+                                {% endif %}
+                                {% for errore in form.testo.errors %}
+                                    <div class="invalid-feedback d-block">{{ errore }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-group">
+                                <label for="{{ form.data_val_field.id_for_label }}">{{ form.data_val_field.label }}</label>
+                                {{ form.data_val_field }}
+                                {% for errore in form.data_val_field.errors %}
+                                    <div class="invalid-feedback d-block">{{ errore }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">Salva</button>
+                        <a href="{% url url_dettaglio pratica_id=pratica.pk %}" class="btn btn-secondary">Annulla</a>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

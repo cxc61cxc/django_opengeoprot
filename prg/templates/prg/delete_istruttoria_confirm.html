@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% load static%}
+{% block content %}
+
+  
+
+<div class="container-fluid p-2 my-2 border" style="font-size:0.9em;">
+    <h1>Elimina istruttoria</h1>
+
+    <p>Sei sicuro di voler cancellare l'istruttoria?: {{ istruttoria.name }}</p>
+    
+    <form action="" method="post">
+    {% csrf_token %}
+    {% if can_write %}<input type="submit" value="Delete">{% endif %}
+    </form>
+</div>
+      
+
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Piani urbanistici e vincoli{% endblock %}
+
+{% block content %}
+
+    <div class="container-fluid p-6">
+        {% if tot_piani %}
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Descrizione</th>
+                
+            </tr>
+            </thead>
+            {% for r in destinazioni %}
+
+      <tbody class="table-group-divider">
+          <tr>
+            <td></td>
+            <td>{{ r.description | linebreaks }}</td>
+            
+          </tr>
+          
+        </tbody>
+        {% endfor %}
+
+        </table>
+        {% endif %}
+    </div>
+    
+
+{% endblock %}

@@ -1,0 +1,40 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+
+<div class="container bg-light">
+    
+    <h5>ELIMINA pratica ( id={{pratica.id}} )</h5>
+    <br>
+      <div class="row align-items-start">
+        <div class="col">
+          <h4>Codice : {{ pratica.name | upper}} </h4>
+        
+          <h4> Descrizione : {{ pratica.description }} </h4>
+        </div>
+       
+      </div>
+     
+<br><br><hr>   
+<p>Sei sicuro di volere elimare il Tipo di pratica?: </p>
+
+<form action="" method="post">
+{% csrf_token %}
+<div class="row" style="text-align: center;">
+    <div class="col-md-2 ">
+        <a class="btn btn-outline-success " href="../../list_tipopratica_view">No </a>
+    </div>
+    <div class="col-md-2 offset-8">
+        <input class="btn btn-outline-danger " type="submit" value="Si, elimina">
+    </div>
+</div>
+
+</form>
+</div>
+
+
+
+{% endblock %}

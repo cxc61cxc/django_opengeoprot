@@ -1,0 +1,372 @@
+{% load static %}
+
+{% load crispy_forms_tags %}
+
+<!DOCTYPE html>
+<html>
+    <head>
+      
+        <title>Gestione pratiche</title>
+
+
+        <link href="{% static 'js/jquery-ui-1.12.1/jquery-ui.min.css' %}" rel="stylesheet">
+        <link href="{% static 'js/jquery-ui-1.12.1/jquery-ui.structure.min.css' %}" rel="stylesheet">
+        <link href="{% static 'js/jquery-ui-1.12.1/jquery-ui.theme.min.css' %}" rel="stylesheet">
+
+
+        <!-- Bootstrap 4 -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+        <style>
+          body { font-size: 1rem; }
+          h1 { font-size: 2rem; }
+          h2 { font-size: 1.75rem; }
+          h3 { font-size: 1.5rem; }
+          h4 { font-size: 1.25rem; }
+          h5 { font-size: 1.1rem; }
+          .table { font-size: 0.95rem; }
+          .btn-sm { font-size: 0.85rem; }
+          .card-header { font-size: 1rem; font-weight: 500; }
+          .badge { font-size: 0.8rem; }
+        </style>
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <!-- Font Awesome -->
+        <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+
+        <!-- Moment.js -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.23.0/moment.min.js" integrity="sha256-VBLiveTKyUZMEzJd6z2mhfxIqz3ZATCuVMawPZGzIfA=" crossorigin="anonymous"></script>
+
+        <!-- Tempus Dominus Bootstrap 4 -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.1.2/css/tempusdominus-bootstrap-4.min.css" integrity="sha256-XPTBwC3SBoWHSmKasAk01c08M6sIA5gF5+sRxqak2Qs=" crossorigin="anonymous" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.1.2/js/tempusdominus-bootstrap-4.min.js" integrity="sha256-z0oKYg6xiLq3yJGsp/LsY9XykbweQlHl42jHv2XTBz4=" crossorigin="anonymous"></script>
+         
+        <link rel="stylesheet" type="text/css" href="{% static 'css/archivi.css' %}" />
+         
+        <!-- Leaflet CSS - version 1.9.4 -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+         
+        <!-- script per la selezione da lista -->
+        <script> 
+            $(document).ready(function(){
+                $('.select_check_value').click(function(){
+                    var selected_txt="";
+                    $('.select_check_value:checked').each(function(){
+                        selected_txt+=$(this).val()+" -  "
+                    });
+                    $('#select_checked').val(selected_txt);
+                });
+            });
+        </script>
+ 
+        <script>
+            $(document).ready(function(){
+                $('.parte_check_value').click(function(){
+                    var parte_txt="";
+                    $('.parte_check_value:checked').each(function(){
+                        parte_txt+=$(this).val()+" -  "
+                    });
+                    $('#select_parte').val(parte_txt);
+                });
+            });
+        </script>
+         
+        {% block css %}{% endblock css %}
+        <style>
+            body {
+            padding-bottom: 12px; /* altezza del footer */
+            }
+            footer {
+            position: fixed; 
+            text-align: center;
+            font-size: smaller;
+            background-color:#DAF2E6;
+            bottom: 8px; 
+            left: 0;
+            width: 100%; 
+            z-index: 1050;
+            padding: 6px 0;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+            }
+            .destinazione-card {
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+            .destinazione-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+            }
+            .destinazione-card:hover .card-title {
+                color: #000000 !important;
+            }
+            /* Ingrandisce le checkbox e migliora l'allineamento con il testo */
+            .select_check_value, .parte_check_value {
+                transform: scale(1.5);
+                margin-right: 6px;
+                cursor: pointer;
+                vertical-align: middle;
+            }
+            .destinazione-card label {
+                cursor: pointer;
+                vertical-align: middle;
+            }
+            .sticky-header thead th {
+                position: sticky;
+                top: 0;
+                background-color: #fff;
+                z-index: 2;
+            }
+            .navbar .dropdown-toggle {
+                max-width: 160px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .navbar .nav-item.dropdown {
+                min-width: 0;
+            }
+            .transition {
+                transition: all 0.2s ease;
+            }
+            .transition:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+            }
+            footer:hover {
+                box-shadow: 0 -4px 12px rgba(0,0,0,0.12);
+            }
+</style>
+    </head>
+   
+    <body  style="background-color:white; opacity:0.9; margin-top: 72px; margin-bottom: 50px;" data-spy="scroll" data-target=".navbar"  >
+      
+         
+        <!-- include archivi/header.html: richiede l'app archivi (non pubblicata nel repository) -->
+        {% include 'navbar.html' %}
+        
+        {% if messages %}
+        <div class="container mt-2" id="django-messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Chiudi">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}
+
+        {% endblock %}
+
+        {% block js %}
+        {% endblock js %}
+        <script>
+            // Auto-dismiss Django messages after 3 seconds
+            $(function() {
+                $('#django-messages .alert-dismissible').each(function() {
+                    var $alert = $(this);
+                    var timer = setTimeout(function() {
+                        $alert.fadeOut('slow', function() {
+                            $(this).remove();
+                        });
+                    }, 3000);
+                    $alert.on('close.bs.alert closed.bs.alert', function() {
+                        clearTimeout(timer);
+                    });
+                    // Also handle manual close button
+                    $alert.find('.close').on('click', function() {
+                        clearTimeout(timer);
+                        $alert.fadeOut('slow', function() {
+                            $(this).remove();
+                        });
+                    });
+                });
+            });
+        </script>
+        {% if user.is_authenticated %}
+        <!-- <nav style="height: 50px;"  class="navbar navbar-expand-sm  navbar-dark bg-dark fixed-top  "></nav> -->
+        <div class="fixed-bottom "  >
+          <div  id="accordion">
+            <div class="card " style="background-color:#DAF2E6; opacity:0.9">
+              <div class="card-header" id="headingOne">
+                <div class="row" style="text-align:center;" >
+                </div>
+              </div>
+              
+              <div id="collapseOne" class="collapse hidden" aria-labelledby="headingOne" data-parent="#accordion">
+                <div class="card-body">
+                  <div class="container-fluid col-8"  style="font-size:0.9em;"> 
+
+                    <form method="GET"  action="{% url 'protocollo:search_stato_url' %}">
+                      {% csrf_token %}
+                      
+                      <div class="row mt-4" >
+                        <div  class="col-2">
+                          <input class="form-control" type="text" name="anno"   placeholder="anno..." >
+                        </div>
+                        <div  class="col-4">
+                          <select id="tp" name="tp" class="form-control">
+                            <option value="*">Seleziona Tipo Pratica</option>
+                            {% for t in tp %}
+                                <option value="{{ t.id }}">{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                        </div>
+                        
+                        <div  class="col-4">
+                          <select id="stato" name="stato" class="form-control" required>
+                            <option value="*">Stato pratica</option>
+                            <option value="i">In corso</option>
+                            <option value="ai">Importo accettato</option>
+                            <option value="af">alla firma</option>
+                            <option value="bd">Bozza determina</option>
+                            <option value="df">Determinazione firmata</option>
+                            <option value="ic">Inviata comunicazione importi</option>
+                            <option value="ia">Inviata ad amministrativi</option>
+                            <option value="ri">Richiesta integrazione</option>
+                            <option value="c">Chiusa</option>
+                            <option value="a">Attiva</option>
+                            <option value="s">Sospesa</option>
+                            <option value="np">Improcedibile</option>
+                            <option value="dn">Determina inviata a notaio</option>
+                            <option value="eo">emessa Ordinanza</option>
+                          </select>                        
+                        </div>
+                      
+                        <div  class="col-2 text-left ">
+                          <input class="btn btn-outline-info btn-sm " type="submit"  value="cerca">
+                        </div>
+                        
+                      </div>
+                      
+                      
+                    </form>
+                    <form method="POST"  action="{% url 'protocollo:search_url' %}">
+                      {% csrf_token %}
+                      <div class="row mt-4" >
+                        <div  class="col-2 ">
+                          {% comment %} <h6 style="text-align:right" >Cerca nominativo</h6> {% endcomment %}
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" autofocus  name="cognome" value="{{cognome}}"  placeholder="cognome" >
+                        </div>
+                        <div  class="col-4">
+                          <input class="form-control" type="text" name="nome" value="{{ nome }}"  placeholder="nome" >
+                        </div>
+                      
+                        <div  class="col-2 text-left ">
+                          <input class="btn btn-outline-info btn-sm " type="submit"  value="cerca nominativo">
+                        </div>
+                        
+                      </div>
+                    </form>
+                    <form method="POST"  action="{% url 'protocollo:search_particella_url' %}">
+                      {% csrf_token %}
+                      <div class="row" >
+                        
+                      </div>
+                      <div class="row mt-4" >
+                        <div  class="col-2 ">
+                          {% comment %} <h6 style="text-align:right" >Cerca particella</h6> {% endcomment %}
+                        </div>
+                        <div class="col-2 offset-4 ">
+                          <input class="form-control" type="text" required   name="foglio" value="{{foglio}}"  placeholder="foglio.." >
+                        </div>
+                       
+                        <div  class="col-2">
+                          <input class="form-control" type="text" required name="mappale" value="{{ mappale }}"  placeholder="mappale" >
+                        </div>
+                        
+                        <div  class="col-2 text-left">
+                          <input class="btn btn-outline-info btn-sm" type="submit"  value="cerca particella">
+                        </div>
+                        
+                      </div>
+                      
+                    </form>
+                    
+                    <form method="POST"  action="{% url 'protocollo:search_protocollo_url' %}">
+                      {% csrf_token %}
+                      <div class="row" >
+                        
+                      </div>
+                      <div class="row mt-4" >
+                        <!-- <div  class="col-2 ">
+                          <select id="stato" name="stato" class="form-control" >
+                            <option value="*">Nessun valore</option>
+                            <option value="i">In corso</option>
+                            <option value="ai">Importo accettato</option>
+                            <option value="ic">Inviata comunicazione importi</option>
+                            <option value="ri">Richiesta integrazione</option>
+                            <option value="c">Chiusa</option>
+                            <option value="a">Attiva</option>
+                            <option value="s">Sospesa</option>
+                          </select>
+                        </div> -->
+                        <div  class="col-2 ">
+                          <!-- <input class="form-control" type="text"   name="prot_gen"   placeholder="protocollo.." value="{{ pratica.stato }}"> -->
+                        </div>
+                        <div class="col-2 offset-4 ">
+                          <input class="form-control" type="text"   name="prot_gen"   placeholder="protocollo.." >
+                        </div>
+                        
+                        <div  class="col-2">
+                          <input class="form-control" type="text" name="anno"   placeholder="anno..." >
+                        </div>
+                        
+                        <div  class="col-2 text-left">
+                          <input class="btn btn-outline-info btn-sm" type="submit"  value="cerca protocollo pratica">
+                        </div>
+                        
+                      </div>
+                      
+                    </form>
+                    <form method="POST"  action="{% url 'protocollo:search_documento_url' %}">
+                      {% csrf_token %}
+                      <div class="row" >
+                        
+                      </div>
+                      <div class="row mt-4" >
+                      
+                        <div  class="col-2 ">
+                        </div>
+                        <div class="col-2 offset-4 ">
+                          <input class="form-control" type="text"   name="prot_gen"   placeholder="protocollo.." >
+                        </div>
+                        
+                        <div  class="col-2">
+                          <input class="form-control" type="text" name="anno"   placeholder="anno..." >
+                        </div>
+                        
+                        <div  class="col-2 text-left">
+                          <input class="btn btn-outline-info btn-sm" type="submit"  value="cerca protocollo allegato">
+                        </div>
+                        
+                      </div>
+                      
+                    </form>
+                  </div> 
+                </div>
+              </div>
+</div>
+        
+        {% endif %}
+      <!-- Footer -->
+        <footer >
+            <p class="bottom">Gestione istruttorie ufficio. Sviluppata con <a  href="https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.djangoproject.com/&ved=2ahUKEwjXqoy236qPAxUynf0HHa89NAcQFnoECBUQAQ&usg=AOvVaw3E6qaJashVeeIx3oahQxD7" target="_blank" > Django </a> da Carlo A. Nicolini / Flavio Lodoli </p>
+        </footer>
+    </body>
+    
+   
+    <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="https://unpkg.com/@trevoreyre/autocomplete-js"></script>
+    </html>

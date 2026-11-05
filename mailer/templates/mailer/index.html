@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Home{% endblock %}
+<br><br><br><br><br><br>
+
+{% block content %}
+    {% if messageSent %}
+    <div class="container p-5 my-5">
+      <h3><strong>Email correttamente inviata!</strong></h3>
+      <p>Il tuo messaggio è stato inviato ... sarai contattato!</p>
+    </div>
+    {% else %}
+    <br><br>
+    <div class="container p-5 my-5 border" >
+      <h3><strong>Invia SEGNALAZIONE</strong></h3>
+
+      <form method="post">
+        {% csrf_token %} 
+
+            <div class="form-row" >
+                  <div class="form-group col-md-4 mb-0" >
+                     La tua email <br>{{ user.email }}
+                  </div>
+          
+                  <div class="form-group col-md-6 mb-0">
+                     {{ form.message | as_crispy_field }}
+                  </div>
+                  
+            </div>
+            <div class="form-group col-md-1 offset-1 mb-0">
+              {% if can_write %}<input
+              type="submit"
+              class="btn btn-danger btn-sm"
+              
+              value="Invia"
+              />{% endif %}
+            </div>
+          </div> 
+
+        
+        <br />
+       
+      </form>
+    </div>
+    {% endif %}
+  {% endblock%}

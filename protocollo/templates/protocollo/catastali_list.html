@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block title %}Catastali{% endblock %}
+
+{% block content %}
+{% load static %}  <!-- load static -->
+
+{% for p in particelle %}
+<p>foglio {{ p.foglio }} mappale {{ p.mappale }}</p>
+{% endfor %}
+
+{% endblock %}

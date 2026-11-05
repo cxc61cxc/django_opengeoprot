@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Grandi Lavori</h1>
+    {% for periodo, regs in periodi.items %}
+    <div class="mt-4">
+        <h3>{{ periodo }}</h3>
+        <div class="d-flex flex-wrap gap-2">
+            {% for r in regs %}
+            <a href="{% url 'grandi_lavori:download' r.pk %}" target="_blank" class="btn btn-outline-primary btn-sm">
+                {{ r.titolo }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

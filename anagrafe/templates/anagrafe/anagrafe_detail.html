@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Dettagli Soggetto{% endblock %}
+
+{% block content %}
+{% load static %}  <!-- load static -->
+{% include 'protocollo/protocollo_base.html' %}
+<div class="container p-3 my-3 border">
+    <div class="alert alert-info" role="alert">
+      <div class="row">     
+        <div class="col-6">
+          <h4 class="font-weight-bold">Dettaglio soggetto</h4>
+        </div>
+        <div class="col-6">
+          <p class="nav justify-content-end">Pratica in lavorazione : {{ pk }}</p>
+          <p class="nav justify-content-end">Id soggetto : {{ id_soggetto }}</p>
+        </div>
+      </div>
+    </div>  
+</div>
+
+{% endblock %}

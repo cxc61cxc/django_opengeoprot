@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="container">
+  <div class="row my-3">
+    <div class="form-group col-md-1 mb-0">
+        <input type="button" class="btn btn-outline-success btn-sm" value="Indietro" onClick="javascript:history.go(-1);">
+    </div>
+    <div class="form-group col-md-10 mb-0">
+        <h5>Modifica Matricola</h5>
+        <h5>{{ pratica.tipo_pratica|upper }} - prot.gen {{ pratica.prot_gen }}/{{ pratica.data_prot_gen|date:"Y" }}</h5>
+        <h5>Impianto: <b>{{ impianto.num_impianto }}</b></h5>
+    </div>
+    <div class="form-group col-md-1 mb-0">
+        <a class="btn btn-outline-info btn-sm" href="{% url 'ascensori:create_matricola_url' impianto.id %}">Stampa</a>
+    </div>
+  </div>
+
+  <div class="container p-2 my-2 border" style="font-size:0.9em;">
+    <form action="" method="POST">
+        {% csrf_token %}
+
+        <div class="form-row">
+            <div class="form-group col-md-3 mb-0">
+                {{ form.numero | as_crispy_field }}
+            </div>
+            <div class="form-group col-md-3 mb-0">
+                {{ form.matricola_date | as_crispy_field }}
+            </div>
+            <div class="form-group col-md-3 mb-0">
+                {{ form.matricola_comunicata | as_crispy_field }}
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-6 mb-0">
+                {{ form.description | as_crispy_field }}
+            </div>
+        </div>
+
+        <!-- Campo virtuale: mostra la matricola calcolata/assegnata -->
+        <div class="form-row">
+            <div class="form-group col-md-6 mb-0">
+                <label><strong>Matricola assegnata</strong></label>
+                <input type="text" class="form-control" value="{{ matricola.matricola_assegnata }}" readonly>
+            </div>
+        </div>
+
+        {% if can_write and is_editor == True and pratica.stato != 'c' and pratica.stato != 'aa' or user.is_superuser %}
+        <div class="form-row">
+            <div class="form-group col-md-10 mb-0"></div>
+            <div class="form-group col-md-1 mb-0">
+                <input type="submit" value="Salva" class="btn btn-outline-danger btn-sm">
+            </div>
+        </div>
+        {% endif %}
+
+    </form>
+  </div>
+{% endblock content %}

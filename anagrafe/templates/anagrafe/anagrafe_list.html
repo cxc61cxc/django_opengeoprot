@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container p-3 my-3 border">
+  <div class="row">
+      <div class="col-md-10">
+        <div class="font-weight-bold">Scegli dall'elenco o premi Crea</div>
+      </div>
+      <div class="col-md-2">
+        <a class="btn btn-outline-info" href="{% url 'protocollo:add_soggetto_url' %}">Crea</a>
+      </div>
+  </div>
+</div>
+  <div class="card">
+    <div class="card-body">
+     
+        
+        {% if tot_res %}
+        <p>Trovati {{ tot_res }} residenti</p>
+        {% else %}
+        <p> Effettua la ricerca!</p>
+        {% endif %}
+      <form method="post" style="text-align: center;">
+          {% csrf_token %}
+        <div class="container"> 
+          <div class="row" >
+            <div col-3>
+              <input class="form-control" type="text" autofocus  name="cognome" value="{{cognome}}" size="30" placeholder="cognome" >
+            </div>
+            <div col-3>
+              <input class="form-control" type="text" name="nome" value="{{ nome }}" size="25" placeholder="nome" >
+            </div>
+            <div col-1>
+              <input class="form-control" type="text" name="dug" size="5" placeholder="Dug" >
+            </div>
+            <div col-3>
+              <input class="form-control" type="text" name="descrizione" size="20" placeholder="Nome strada" >
+            </div>
+            <div col-2>
+              <input class="form-control" type="text" name="civico" size="5" placeholder="civico" >
+            </div>
+          </div>
+          <div class="row float-right" >
+            <input class="btn btn-outline-info btn-sm" type="submit"  value="cerca">
+          </div>
+        </div>
+          
+          
+      <form/>
+    </div>
+  </div>
+    <!-- <div class="container-fluid p-6"> -->
+      {% if tot_res %}
+      <div class="col-10 offset-1">
+        <table class="table table-sm table-hover " style="font-size: 1.2em;">
+        <!-- <table class="table"> -->
+            <thead>
+              <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Cognome</th>
+                  <th scope="col">Nome</th>
+                  <th scope="col">Codice fiscale</th>
+                  <th scope="col">Comune di nascita</th>
+                  <th scope="col">Data di nascita</th>
+                  
+                  <th scope="col">Indirizzo</th>
+
+              </tr>
+            </thead>
+          {% for r in residents %}
+
+            <tbody class="table-group-divider">
+                <tr>
+                  <th scope="row">
+                    {% if can_write %}<a class="btn btn-sm btn-outline-success " title="Seleziona..." style="width: 60px;"  href="{% url 'anagrafe:anagrafe_edit_url' id=r.id %}">
+                      <span class="text-muted small">
+                      {{ r.id_famiglia }}
+                      </span>
+                    </a>{% endif %}
+                  </th>
+                  
+                  <td><b>{{ r.cognome | upper }}</b></td>
+                  <td>{{ r.nome | title }}</td>
+                  <td>{{ r.codice_fiscale |upper }} </td>
+                  <td>{{ r.comune_nascita |title }} </td>
+                  <td>{{ r.data_nascita |date:'d/m/Y' }} </td>
+                  <td>{{ r.addr |title }} </td>
+                </tr>
+                
+              </tbody>
+          {% endfor %}
+
+        </table>
+        {% else %}
+        <p class="h5 text-center">
+        Nessun dato trovato in anagrafe
+        </p>
+        {% endif %}
+      </div>
+
+{% endblock %}

@@ -1,0 +1,49 @@
+{% load static %}
+<div class="container-fluid m-1 rounded border" style="background-color: aliceblue; font-size: 0.8rem;">
+  {% if accettazione_boolean == 1 %}
+    <div class="row m-2">
+      <div class="col-3">
+        {% if pratica.stato != 'c' and pratica.stato != 'aa' or request.user.is_superuser or request.user.is_staff %}
+          <a title="Modifica accettazione...." href="{% url 'coop:edit_accettazione_view_url' accettazione.convenzione_id %}" class="btn btn-outline-primary btn-sm">
+            <span class="small">Edita</span>
+          </a>
+        {% endif %}
+      </div>
+      <div class="h5 col-9 text-muted">Accettazione</div>
+    </div>
+    <div class="row m-2 border" style="font-size: 0.7em;">
+      <div class="col-2">
+        <label class="bolder">Data</label>
+        <p class="bolder">{{ accettazione.data_accettazione | date:"d/m/Y" }}</p>
+      </div>
+      <div class="col-1">
+        <label>prot.</label>
+        <p class="bolder">{{ accettazione.prot_gen }}</p>
+      </div>
+      <div class="col-2">
+        <label>importo</label>
+        <p class="bolder">{{ accettazione.importo }}</p>
+      </div>
+      <div class="col-3">
+        <label>IUV</label>
+        <p class="bolder">{{ accettazione.iuv }}</p>
+      </div>
+      <div class="col-1">
+        <label>Rateo</label>
+        <p class="bolder">{{ accettazione.rateo }}</p>
+      </div>
+      <div class="col-3">
+        <label>note</label>
+        <p class="bolder">{{ accettazione.annotazione }}</p>
+      </div>
+    </div>
+  {% else %}
+    <div class="row m-2">
+      <div class="col-4 text-left">
+        {% if pratica.stato == 'ai' or pratica.stato != 'np' or pratica.stato != 'c' and pratica.stato != 'aa' %}
+          <a href="{% url 'coop:add_accettazione_view_url' pratica.id %}" class="btn btn-sm btn-outline-primary">Crea accettazione</a>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</div>

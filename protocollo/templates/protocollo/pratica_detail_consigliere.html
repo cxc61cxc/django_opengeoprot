@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Dettaglio Pratica {{ pratica.id }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">
+      Pratica #{{ pratica.id }}
+      <small class="text-muted">{{ pratica.tipo_pratica.name|default:'' }}</small>
+    </h3>
+    <div>
+      <a class="btn btn-outline-secondary btn-sm"
+         href="{% url 'accounts:mie_commissioni_url' %}">
+        <i class="fa fa-arrow-left"></i> Torna alle mie Commissioni
+      </a>
+    </div>
+  </div>
+
+  <div class="alert alert-warning">
+    <i class="fa fa-lock"></i>
+    <strong>Visualizzazione limitata.</strong>
+    In qualità di consigliere, puoi consultare i dati sintetici della pratica.
+    Soggetti, particelle catastali e mappa catastale non sono visibili.
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-light">
+      <strong>Dati generali</strong>
+    </div>
+    <div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-sm-3">Protocollo generale</dt>
+        <dd class="col-sm-9">
+          {{ pratica.code_p|default:'—' }}/{{ pratica.data_prot_gen|date:"Y"|default:'—' }}
+          {% if pratica.sub_code %}- {{ pratica.sub_code }}{% endif %}
+          {% if pratica.classe %} <span class="badge bg-info">classe {{ pratica.classe }}</span>{% endif %}
+        </dd>
+
+        <dt class="col-sm-3">Tipo Pratica</dt>
+        <dd class="col-sm-9">
+          {% if pratica.tipo_pratica %}
+            <span class="badge bg-primary">{{ pratica.tipo_pratica.name }}</span>
+            {% if pratica.tipo_pratica.settore %}
+              <small class="text-muted">— Settore: {{ pratica.tipo_pratica.settore.codice }}</small>
+            {% endif %}
+          {% else %}—{% endif %}
+        </dd>
+
+        <dt class="col-sm-3">Stato</dt>
+        <dd class="col-sm-9"><span class="badge bg-secondary">{{ pratica.get_stato_display|default:pratica.stato }}</span></dd>
+
+        <dt class="col-sm-3">Data protocollo</dt>
+        <dd class="col-sm-9">{{ pratica.data_prot_gen|date:"d/m/Y"|default:'—' }}</dd>
+
+        <dt class="col-sm-3">Data ultima modifica</dt>
+        <dd class="col-sm-9">{{ pratica.data_mod|date:"d/m/Y H:i"|default:'—' }}</dd>
+
+        <dt class="col-sm-3">Oggetto</dt>
+        <dd class="col-sm-9">{{ pratica.oggetto|default:'—' }}</dd>
+
+        <dt class="col-sm-3">Annotazioni</dt>
+        <dd class="col-sm-9" style="white-space: pre-wrap;">
+          {% if pratica.annotazioni %}{{ pratica.annotazioni }}{% else %}<span class="text-muted">(nessuna)</span>{% endif %}
+        </dd>
+
+        {% if pratica.commissione %}
+        <dt class="col-sm-3">Commissione</dt>
+        <dd class="col-sm-9">
+          <span class="badge bg-info">{{ pratica.commissione }}</span>
+        </dd>
+        {% endif %}
+
+        {% if pratica.convenzioni %}
+        <dt class="col-sm-3">Convenzioni</dt>
+        <dd class="col-sm-9">{{ pratica.convenzioni }}</dd>
+        {% endif %}
+
+        {% if pratica.atto %}
+        <dt class="col-sm-3">Atto</dt>
+        <dd class="col-sm-9">{{ pratica.atto }}</dd>
+        {% endif %}
+      </dl>
+    </div>
+    <div class="card-footer bg-white text-right">
+      <a class="btn btn-warning btn-sm"
+         href="{% url 'accounts:richiesta_accesso' pratica.id %}">
+        <i class="fa fa-file-pdf-o"></i> Richiedi copia / accesso
+      </a>
+    </div>
+  </div>
+
+  <div class="mt-3 text-muted small">
+    <i class="fa fa-info-circle"></i>
+    Per informazioni più dettagliate su questa pratica, contatta l'ufficio competente.
+  </div>
+</div>
+{% endblock %}

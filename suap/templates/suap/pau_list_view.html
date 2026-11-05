@@ -1,0 +1,44 @@
+{% load static %}
+<div class="row">
+  <small>Provvedimento Unico Autorizzativo - pratica {{ pk }}</small>
+</div>
+<!-- <div class="row">
+ 
+  <div class="m-0"><a style="color:green;" class="nav-link " href="{% url 'suap:pau_add_url'  %}"><img class="img-fluid" 
+    src="{% static 'img/icons8-plus.svg' %}" 
+    width="25" height="25" >Aggiungi/Edita pau</a>
+  </div>
+</div>     -->
+
+{% if pau %} 
+    <table class="table table-hover table-sm" style="font-size:.9em;">
+          
+      <thead>
+        <tr class="text-muted" style="font-size:.9em;">
+          <th scope="col">#</th>
+          <th scope="col">Numero</th>
+          <th scope="col">Data</th>
+          
+         
+        </tr>
+      </thead>
+     
+      <tbody>
+        {% for c in pau %}
+        <tr style="vertical-align:bottom;">
+          <th scope="row">{{ c.id }}</th>
+         
+          <td style="font-size:1.1em">
+            {{ c.pau_number }}
+          </td>
+          
+          <td>{{ c.pau_date| date:"d/m/Y"  }}</td>
+
+          
+        </tr>
+        {% endfor %}
+      </tbody>
+
+    </table>
+    {% endif %} 
+    

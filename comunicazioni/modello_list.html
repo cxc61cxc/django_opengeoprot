@@ -1,0 +1,138 @@
+
+{% load static %}
+
+<!-- {% for modello in modello_list %}
+    {% for colname in modello.column_set.all  %}
+        <p>{{colname}}</p>
+    {% endfor %}
+{% endfor %} -->
+
+
+
+<div class="container">
+
+    <div class="row"> 
+        <div class="col-3 text-center">
+            <a type="button" title="crea cartellina!" 
+                style="width:20px;height:20px" class="btn btn-sm btn-outline-success" href="{% url 'comunicazioni:Cartellina_url' %}">
+            </a>
+        </div>
+        <div  class="col-9 text-center">
+          <h5 class="card-title pl-4">Stampe</h5>
+        </div>
+    </div>
+    {% if modello_list %} 
+        {% if pratica.stato != 'c' and pratica.stato != 'aa' or pratica.stato != 'np' %}
+            
+            <table class="table table-hover table-sm text-center" style="font-size:.9em;">
+                <thead>
+                    <tr class="text-muted" style="font-size:.9em;">
+                        <th class="text-left" scope="col">Descrizione </th>
+                        <th class="text-left" scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for modello in modello_list %}
+                        <tr>
+                            <td class="text-left">{{modello.description}}</td>
+                                <td class="text-right">
+                                    {% if modello.id == 1 or modello.id == 6 or modello.id == 7 or modello.id == 23 %}
+                                    <a type="button" title="crea avvio del procedimento!" 
+                                            style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'comunicazioni:SuapAvvioProcNoSosp_url'  %}">
+                                    </a>
+                                    {% endif %}
+                                    {% if modello.id == 8 or modello.id == 10 or modello.id == 24 %}
+                                    <a type="button" title="crea avvio del procedimento! - sospensione" 
+                                            style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'comunicazioni:SuapAvvioProcSosp_url'  %}">
+                                    </a>
+                                    {% endif %}
+                                    
+                                    {% if modello.id == 5 %}
+                                    <a type="button" title="Parere preventivo!" 
+                                            style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'comunicazioni:ParerePreventivoPaesaggio_url'  %}">
+                                    </a>
+                                    {% endif %}
+                                    {% if modello.id == 9 %}
+                                    <a type="button" title="crea avvio del procedimento! PDC" 
+                                            style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'comunicazioni:PdcAvvioProc_url'  %}">
+                                    </a>
+                                    {% endif %}
+                                    {% if modello.id == 11 or modello.id == 12 or modello.id == 13 %}
+                                    <a type="button" title="Richiesta parere VVUU" 
+                                            style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'comunicazioni:RichiestaParere_url'  %}">
+                                    </a>
+                                    {% endif %}
+                                    {% if pratica.stato != 'c' and pratica.stato != 'aa'  and pratica.stato != 'af' and pratica.stato != 'ic' and pratica.stato != 'np' and pratica.stato != 'dn'  and pratica.stato != 'df' and pratica.stato != 'ai' or pratica.stato == 'a'  and pratica.stato == 'i' and pratica.stato == 'ia' %}
+                                        {% if modello.id == 16 %} 
+                                        <a type="button" title="crea calcolo del valore di svincolo!" 
+                                                style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'coop:importi_coop_print_url' pratica.id%}">
+                                        </a>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    {% if modello.id == 19 and pratica.stato != 'c' and pratica.stato != 'aa' %} 
+                                            <a type="button" title="crea richiesta integrazione Istanza!" 
+                                                    style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'coop:integrazione_istanza_url' pratica.id%}">
+                                            </a>
+                                    {% endif %}
+
+                                    <!-- se la pratica non è CHIUSA mostra le stampe ASCENSORE-->
+                                    
+                                        {% if modello.id == 17 and pratica.stato != 'c' and pratica.stato != 'aa' %}
+                                        <a type="button" title="Risposta a VVFF!" 
+                                                style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'comunicazioni:Risposta_vvff_url' pk=pratica.id %}">
+                                        </a>
+                                        {% endif %}
+
+                                        {% if modello.id == 18 and pratica.stato != 'c' and pratica.stato != 'aa' %}
+                                        <a type="button" title="Crea matricola!" 
+                                                style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'ascensori:create_matricola_url'  pratica.id %}">
+                                        </a>
+                                        {% endif %}
+                                        {% if modello.id == 20 and pratica.stato != 'c' and pratica.stato != 'aa' %}
+                                        <a type="button" title="Crea Ordinanza di fermo a seguito comunicazione VVFF!" 
+                                                style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'ascensori:create_ordinanza_url'  pratica.id %}">
+                                        </a>
+                                        {% endif %}
+                                        {% if  modello.id == 26 and pratica.stato != 'c' and pratica.stato != 'aa' %}
+                                                <a type="button" title="Crea Ordinanza di fermo a seguito di Verifica Negativa!" 
+                                                        style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'ascensori:create_ordinanza_esito_negativo_url'  pratica.id %}">
+                                                </a>
+                                        {% endif %}
+                                        {% if  modello.id == 25 and pratica.stato != 'c' and pratica.stato != 'aa' %}
+                                                <a type="button" title="Richiesta integrazione" 
+                                                        style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'comunicazioni:richiesta_integrazione_url' pratica.id %}">
+                                                </a>
+                                        {% endif %}
+
+                                       
+
+                                    {% if pratica.stato != 'c' and pratica.stato != 'aa' or pratica.stato != 'np'%}
+                                        {% if modello.id == 21 %}
+                                            {% if pratica.stato != 'c' and pratica.stato != 'aa' and pratica.stato != 'af'  and pratica.stato != 'np' and pratica.stato != 'dn'  and pratica.stato != 'dn'  and pratica.stato != 'df'  or pratica.stato == 'a'  and pratica.stato == 'i' and pratica.stato == 'ia' %}
+                                                <a type="button" title="Crea Determinazione svincolo" 
+                                                        style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'coop:determina_svincolo_url'  pratica.id %}">
+                                                </a>
+                                            {% endif %}
+                                        {% endif %}
+                                        {% if modello.id == 27 %}
+                                            {% if pratica.stato != 'c' and pratica.stato != 'aa' or pratica.stato != 'np' and pratica.stato == 'ai' %}        
+                                                <a type="button" title="Dichiarazione RUP" 
+                                                        style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'coop:dichiarazione_rup_url'  pratica.id %}">
+                                                </a>
+                                            {% endif %}
+                                        {% endif %}
+                                        
+                                    {% endif %}
+                                    
+                                </td>
+                            </td>
+                        </tr>
+                    {% endfor %}
+            
+                </tbody>
+            </table>    
+        {% endif %}
+    {% endif %} 
+</div>
+

@@ -1,0 +1,44 @@
+{% load static %}
+<div class=" container-fluid hero-section shadow-sm border-start border-primary border-5">
+
+  <div class="row" style="vertical-align: text-bottom;">
+    <div class="col-2">
+      {% if pratica.stato != 'c' or pratica.stato != 'aa' or user.is_superuser %}
+        <a style="color:green;" class="nav-link" 
+           title="Aggiungi voce di diario" 
+           href="{% url 'protocollo:add_diario_url' pratica.pk %}">
+          <img class="img" src="{% static 'img/icons8-plus.svg' %}" width="30" height="30" />
+        </a>
+      {% endif %}
+    </div>
+    <div class="col-10">
+      <h5 class="mb-0">Voce di Diario</h5>
+    </div>
+  </div>
+  <div class="row" style="vertical-align: text-bottom;">
+    <div class="col-6" >
+      {% if user.is_staff or user.is_superuser %}
+           <a class="btn-warning btn-sm" href="{% url 'protocollo:pratica_history_url' pk %}" title="Stampa storico procedimento pratica">History log</a>
+      {% endif %}
+    </div>
+  <div class="col-" >
+    <a class="btn-success btn-sm" href="{% url 'protocollo:pdf_diario_url' pratica.pk %}" title="Stampa storico procedimento pratica">Stampa</a>
+  </div>
+  </div>
+
+  <!-- Contenitore con limite di altezza e scroll -->
+  {% if diari %}
+  <div style="max-height: 200px; overflow-y: auto; margin-bottom: 20px;">
+    {% for d in diari %}
+    <div class="row m-1">
+      <span style="font-size: 0.8em;">
+        <a title="Modifica voce di diario" href="{% url 'protocollo:edit_diario_url' d.id %}">
+          {{ d.data_crea | date:"d/m/Y" }}
+        </a> {{ d.description |linebreaks|truncatechars:75 }}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+ 

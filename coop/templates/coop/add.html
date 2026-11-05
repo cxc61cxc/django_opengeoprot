@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="container">
+    <div class="row my-3">
+        <div class="form-group col-md-1 mb-0" >
+            <input type=button class="btn btn-success " value="Indietro" onClick="javascript:history.go(-1);">
+        </div>  
+        
+        <div class="form-group col-md-11 mb-0" >
+            <div class="row">
+                <div class="col-3">
+                    <b>Aggiungi i dati della convenzione</b>
+                </div>
+                <div class="col-3">
+                    <b>Prot. Gen.</b>
+                </div>
+                <div class="col-3">
+                    <b>Oggetto</b>
+                </div>
+                <div class="col-3">
+                    <b>Soggetti</b>
+                </div>
+                
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    {{ pratica.tipo_pratica | upper }}
+                </div>
+                <div class="col-3">
+                    prot.gen  {{pratica.prot_gen }}/{{ pratica.data_prot_gen|date:"Y" }}
+                </div>
+                <div class="col-3">
+                    {{pratica.oggetto | linebreaks }}
+                </div>
+                <div class="col-3">
+                   {% for r in richiedente %}
+                        {{ r.cognome | upper }}  {{ r.nome|title }}<br>
+                   {% endfor %}
+                </div>
+                
+            </div>
+            
+        </div>  
+        
+    </div>
+</div>
+<div class="container p-2 my-2 border " style="font-size:0.9em;">
+    {% if is_editor == True %}
+    <form action="" method="POST">
+
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="col-2" >
+                {{form.tipo_diritto|as_crispy_field}} 
+            </div>
+            <div class="col-4" >
+                {{ form.notaio  | as_crispy_field  }}
+            </div>   
+            <div class="col-2" >
+                {{form.data_atto|as_crispy_field}} 
+            </div>
+
+            <div class="col-4" >
+                {{ form.atto  | as_crispy_field  }}
+            </div>   
+        </div>
+
+        <div class="form-row">
+            <div class="col-1" >
+                {{ form.durata  | as_crispy_field  }}
+            </div>  
+            <div class="col-2" >
+                {{ form.area  | as_crispy_field  }}
+            </div>   
+            <div class="col-2" >
+                {{ form.volume  | as_crispy_field  }}
+            </div>  
+            <div class="col-2" >
+                {{ form.edifici  | as_crispy_field  }}
+            </div>
+            <div class="col-2" >
+                {{ form.ref_millesimi  | as_crispy_field  }}
+            </div>   
+            <div class="col-1" >
+                {{ form.alloggi  | as_crispy_field  }}
+            </div> 
+            <div class="col-2" >
+                {% comment %}<fieldset disabled="disabled"> {% endcomment %}
+                    {{form.coeff_istat | as_crispy_field}}
+                    {% comment %}</fieldset>{% endcomment %}
+                
+            </div>  
+        </div>
+
+        
+
+
+        
+
+        <div class="form-row">
+            <div class="form-group col-md-2 mb-0" >
+                <label>Data di rivalutazione</label>
+                <p class="h5">{{pratica.data_prot_gen|date:"M Y"}} </p>
+            </div> 
+            <div class="form-group col-md-2 mb-0" >
+                {{ form.conv_lire  | as_crispy_field  }}
+            </div>   
+            <div class="form-group col-md-2 mb-0" >
+                <!-- {{ form.cong_lire  | as_crispy_field  }} -->
+            </div> 
+            <div class="form-group col-md-2 mb-0" >
+                {{ form.valore_perizia  | as_crispy_field  }}
+            </div> 
+            <div class="form-group col-md-2 mb-0" >
+                {{ form.cong_rival  | as_crispy_field  }}
+            </div> 
+            <div class="form-group col-md-2 mb-0" >
+                {{ form.millesimi  | as_crispy_field  }}
+            </div> 
+        </div>
+        
+        <hr>
+        <br>
+        <div class="form-row">
+            <div class="form-group col-md-10 mb-0" >
+            </div>         
+            <div class="form-group col-md-1 mb-0 " style="text-align: right;">
+                {% if can_write %}<input type="submit" value="Salva" class="btn btn-outline-danger btn-sm">{% endif %}
+            </div> 
+        </div>    
+    
+    </form>
+    {% endif %}
+</div>        
+{% endblock content %}

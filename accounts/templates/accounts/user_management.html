@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestione Utenti{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-white px-0 py-2 mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home:index' %}">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Gestione Utenti</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Gestione Utenti</h2>
+    <a href="{% url 'accounts:group_management_url' %}" class="btn btn-outline-secondary">
+      <i class="fa fa-users-cog me-1"></i> Gestisci Gruppi
+    </a>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 15%">Username</th>
+              <th style="width: 25%">Email</th>
+              <th style="width: 25%">Gruppi</th>
+              <th style="width: 10%" class="text-center">Staff</th>
+              <th style="width: 25%" class="text-end">Azioni</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in users %}
+              <tr>
+                <td>
+                  <strong>{{ u.username }}</strong>
+                  {% if u.is_superuser %}
+                    <i class="fa fa-shield-halved text-warning ms-1" title="Superuser"></i>
+                  {% endif %}
+                </td>
+                <td>{{ u.email|default:'—' }}</td>
+                <td>
+                  {% for g in u.groups.all %}
+                    <span class="badge bg-info text-dark me-1">{{ g.name }}</span>
+                  {% empty %}
+                    <span class="text-muted small">Nessun gruppo</span>
+                  {% endfor %}
+                </td>
+                <td class="text-center">
+                  {% if u.is_staff %}
+                    <span class="badge bg-success">Sì</span>
+                  {% else %}
+                    <span class="badge bg-secondary">No</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm">
+                    <a href="{% url 'accounts:edit_user_groups_url' u.id %}" class="btn btn-outline-primary" title="Modifica Gruppi">
+                      <i class="fa fa-edit"></i> Gruppi
+                    </a>
+                    {% if not u.is_superuser %}
+                      <form method="post" action="{% url 'accounts:toggle_staff_url' u.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-{% if u.is_staff %}danger{% else %}success{% endif %}"
+                                title="{% if u.is_staff %}Rimuovi staff{% else %}Rendi staff{% endif %}">
+                          <i class="fa fa-{% if u.is_staff %}user-times{% else %}user-check{% endif %}"></i>
+                        </button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted p-4">Nessun utente presente.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

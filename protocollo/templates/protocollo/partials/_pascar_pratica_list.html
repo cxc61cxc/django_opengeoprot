@@ -1,0 +1,67 @@
+{% load static %}
+
+  <div class="row">
+    
+    
+    {% if tot_pascar %} 
+      <!-- Se è presente almeno un cdu NON mostra il tasto aggiungi -->
+    {% else %}
+        <div class="col-sm-5">
+          <a style="color:green;" class="nav-link " href="{% url 'pascar:pascar_add_url' %}"><img class="img-fluid" 
+            src="{% static 'img/icons8-plus.svg' %}" 
+            width="25" height="25" >-Aggiungi/Edita passo carraio
+          </a>
+        </div>
+    {% endif %}
+        
+        
+    
+  </div>    
+
+  <!-- {% if cdu %}  -->
+  {% if tot_pascar %} 
+  <table class="table table-hover table-sm" style="font-size:.9em;">
+            
+    <thead>
+      <tr class="text-muted" style="font-size:.9em;">
+        
+        <th scope="col">#</th>
+        <th scope="col">#</th>
+        <th scope="col">Numero</th>
+        <th scope="col">Data</th>
+        
+      
+      </tr>
+    </thead>
+  <!-- {% endif %}  -->
+
+    <tbody>
+      <p>Passo Carraio</p>
+      {% for c in pascar %}
+      <tr style="vertical-align:bottom;">
+        <th scope="row">
+          <a title="Vai alla pratica" class="btn btn-outline-info btn-sm" style="height:20px; width:20px;" href="{% url 'pascar:pascar_detail_url' c.id %}">
+          
+          </a>
+        </th>
+        <td>
+          PASSO CARRAIO
+        </td>
+      
+        <td style="font-size:1.1em">
+          {{ c.pc_number }}
+        </td>
+        
+        <td>{{ c.pc_date| date:"d/m/Y"  }}</td>
+
+        <td>
+          <a title="Modifica dati della pratica" class="btn btn-warning btn-sm" style="height:20px; width:20px;" href="{% url 'pascar:pascar_edit_url' c.id %}"></a>
+        </td>
+      </tr>
+      
+    </tbody>
+  {% endfor %}
+  </table>
+{% endif %}
+ 
+    

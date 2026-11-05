@@ -1,0 +1,85 @@
+{% load static %}
+{% load accounts_extras %}
+<nav class="navbar navbar-expand-sm fixed-top shadow" style="height: 72px; background-color: #DAF2E6;">
+  <div class="container-fluid h-100 d-flex align-items-center">
+    <!-- Left: Home + Logo + Segnala -->
+    <div class="d-flex align-items-center position-relative" style="z-index: 2;">
+      <a class="btn btn-info btn-sm mr-3 shadow-sm" style="color: #DAF2E6;" href="{% url 'home:index'%}"><b>HOME</b></a>
+      <a href="https://web.comune.carrara.ms.it" target="self" class="d-flex align-items-center">
+        <img class="img-fluid shadow-sm rounded" 
+        src="{% static 'img/sturmtruppen_aereo.jpg' %}" 
+        width="90px" height="90px" style="max-height: 68px; transition: transform 0.2s ease, box-shadow 0.2s ease;" 
+        onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)';" 
+        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)';" > 
+      </a>
+      {% if not user|is_consigliere %}
+      <a class="btn btn-outline-primary btn-sm ml-3 shadow-sm" title="Invia un messaggio email allo staff!" href="{% url 'mailer:index' %}"><span class="small">Segnala</span></a>
+      {% endif %}
+    </div>
+
+    <!-- Center: Navigation buttons (absolutely centered) -->
+    {% if user|can_use_protocollo %}
+    <div class="position-absolute w-100 d-flex justify-content-center" style="z-index: 1; left: 0;">
+      <div class="d-flex align-items-center">
+        {% if not user|is_consigliere %}
+        {# RIPRISTINO: href="{% url 'protocollo:index_pratiche_url'%}" #}
+        <a class="btn btn-outline-primary btn-sm mx-3 shadow-sm transition" title="Le tue ultime pratiche" href="{% url 'protocollo:mie_pratiche_url'%}"><span class="bold">|   OpenGeoProt   |</span></a>
+        <a class="btn btn-outline-warning btn-sm mx-3 shadow-sm transition" href="{% url 'protocollo:search_protocollo_url' %}"><span class="">____ Cerca ____</span></a>
+        <a class="btn btn-outline-primary btn-sm mx-3 shadow-sm transition" href="{% url 'protocollo:pratica_add_url' %}"><span class="small">Nuova pratica</span></a>
+        <a class="btn btn-outline-primary btn-sm mx-3 shadow-sm transition" href="{% url 'protocollo:manager_dashboard' %}"><span class="small">Riepilogo pratiche</span></a>
+        <a class="btn btn-outline-success btn-sm mx-3 shadow-sm transition" href="{% url 'protocollo:mappa_area_sviluppo_url' %}"><span class="small">Mappa Sviluppo</span></a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+    
+    <!-- Right: Help + User menu -->
+    <div class="d-flex align-items-center ml-auto position-relative" style="z-index: 2;">
+      {% if user.is_authenticated %}
+      <a class="btn btn-outline-danger btn-sm mr-2 shadow-sm transition" href="{% url 'home:help' %}" title="Manuale utente"><span class="small"><i class="fa fa-book"></i> Aiuto</span></a>
+      <div class="dropdown">
+        <button class="btn btn-success btn-sm dropdown-toggle shadow-sm transition" title="Gestisci il tuo profilo..." type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i class="fa fa-user-circle"></i> <span class="small">{{user.username}}</span>
+        </button>
+        <div class="dropdown-menu dropdown-menu-right shadow small" aria-labelledby="dropdownMenuButton">
+          <a class="dropdown-item" href="{% url 'accounts:profile_view_url' %}">
+            <i class="fa fa-user text-primary"></i> Visualizza profilo
+          </a>
+          {% if not user|is_consigliere %}
+          <a class="dropdown-item" href="{% url 'accounts:profile_edit' %}">
+            <i class="fa fa-user text-primary"></i> Modifica profilo
+          </a>
+          <a class="dropdown-item" href="{% url 'protocollo:mie_pratiche_url' %}">
+            <i class="fa fa-briefcase text-primary"></i> Le mie pratiche
+          </a>
+          {% else %}
+          <a class="dropdown-item" href="{% url 'accounts:mie_commissioni_url' %}">
+            <i class="fa fa-list text-primary"></i> Le mie Commissioni
+          </a>
+          {% endif %}
+          {% if user.is_staff or user.is_superuser %}
+          <a class="dropdown-item" href="{% url 'protocollo:accessi_report' %}">
+            <i class="fa fa-chart-bar text-primary"></i> Report Accessi
+          </a>
+
+          <div class="dropdown-divider"></div>
+          <h6 class="dropdown-header">Amministrazione</h6>
+          <a class="dropdown-item" href="{% url 'accounts:user_management_url' %}">Gestione Utenti</a>
+          <a class="dropdown-item" href="{% url 'accounts:group_management_url' %}">Gestione Gruppi</a>
+          <a class="dropdown-item" href="{% url 'accounts:commissioni_list_url' %}">Gestione Commissioni</a>
+          <a class="dropdown-item" href="{% url 'struttura_ente:settore_list' %}">Struttura Ente</a>
+          <a class="dropdown-item" href="{% url 'protocollo:tipopratiche_list_url' %}"><i class="fa fa-tags text-primary"></i> Gestione Tipi Pratica</a>
+          {% endif %}
+          <div class="dropdown-divider"></div>
+          <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-item text-danger" style="cursor:pointer;"><i class="fa fa-sign-out"></i> Log Out</button>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <a class="btn btn-success btn-sm shadow-sm" title="accesso consentito ai soli utenti registrati!" href="{% url 'login' %}">Log In</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>

@@ -1,0 +1,78 @@
+
+{% load static %}
+
+<!-- {% for modello in modello_list %}
+    {% for colname in modello.column_set.all  %}
+        <p>{{colname}}</p>
+    {% endfor %}
+{% endfor %} -->
+
+
+
+       
+
+    <div class="row"> 
+        <div class="col">
+            <a type="button" title="crea cartellina!" 
+                style="width:20px;height:20px" class="btn btn-sm btn-outline-success" href="{% url 'comunicazioni:Cartellina_url' %}">
+            </a>
+        </div>
+        <div  class="col text-right m-0 ">
+          <h5 class="card-title pl-4">Stampe</h5>
+        </div>
+    </div>
+    {% if modello_list %} 
+        <table class="table table-hover table-sm text-center" style="font-size:.9em;">
+            <thead>
+                <tr class="text-muted" style="font-size:.9em;">
+                    <th class="text-left" scope="col">Descrizione</th>
+                    <th class="text-left" scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for modello in modello_list %}
+                    <tr>
+                        <td class="text-left">{{modello.description}}</td>
+                            <td class="text-right">
+                                {% if modello.id == 1 or modello.id == 6 or modello.id == 7%}
+                                <a type="button" title="crea avvio del procedimento!" 
+                                        style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'comunicazioni:SuapAvvioProcNoSosp_url'  %}">
+                                </a>
+                                {% endif %}
+                                {% if modello.id == 8 or modello.id == 10 %}
+                                <a type="button" title="crea avvio del procedimento! - sospensione" 
+                                        style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'comunicazioni:SuapAvvioProcSosp_url'  %}">
+                                </a>
+                                {% endif %}
+                                
+                                {% if modello.id == 5 %}
+                                <a type="button" title="Parere preventivo!" 
+                                        style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'comunicazioni:ParerePreventivoPaesaggio_url'  %}">
+                                </a>
+                                {% endif %}
+                                {% if modello.id == 9 %}
+                                <a type="button" title="crea avvio del procedimento! PDC" 
+                                    style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'comunicazioni:PdcAvvioProc_url'  %}">
+                                </a>
+                                {% endif %}
+                                {% if modello.id == 11 or modello.id == 12 or modello.id == 13 %}
+                                <a type="button" title="Richiesta parere VVUU" 
+                                    style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'comunicazioni:RichiestaParere_url'  %}">
+                                </a>
+                                {% endif %}
+                                {% if modello.id == 16 %}
+                                <a type="button" title="crea richiesta di integrazione!" 
+                                    style="width:20px;height:20px" class="btn btn-sm btn-outline-info" href="{% url 'comunicazioni:ascensore_integra_url'  %}">
+                                </a>
+                                {% endif %}
+                                                                
+                            </td>
+                        </td>
+                    </tr>
+                {% endfor %}
+        
+            </tbody>
+        </table>    
+    {% endif %} 
+    
+

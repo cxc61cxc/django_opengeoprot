@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Richiesta inviata{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 700px;">
+    <div class="alert alert-success">
+        <h4 class="alert-heading">Richiesta inviata</h4>
+        <p class="mb-0">Verrai contattato se l'accesso verr&agrave; concesso. Verrai reindirizzato all'elenco delle pratiche tra 3 secondi&hellip;</p>
+        {% comment %} <p class="mt-2"><a href="{{ return_url }}" class="btn btn-sm btn-outline-primary">Vai subito all'elenco</a></p> {% endcomment %}
+    </div>
+</div>
+<script>
+    setTimeout(function() {
+        window.location.href = "{{ return_url }}";
+    }, 3000);
+</script>
+{% endblock %}

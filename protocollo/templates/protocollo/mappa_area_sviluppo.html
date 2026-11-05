@@ -1,0 +1,954 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+<style>
+    html { height: 100%; }
+    /* La pagina resta fissa: l'altezza e' gestita dalla riga principale, che
+       occupa lo spazio residuo dello schermo. A scorrere e' solo la colonna
+       di sinistra. L'overflow hidden sul body impedisce lo scroll della pagina
+       (il valore viene ereditato dal viewport). */
+    body { height: auto; overflow: hidden; }
+    /* Pagina divisa in due colonne: a sinistra strumenti + risultati, a destra la mappa.
+       L'altezza della riga viene calcolata da JS in base a tutto cio' che sta
+       sopra (navbar, titolo, messaggi), cosi' la pagina non scorre. */
+    .page-row { height: calc(100vh - 175px); min-height: 320px; }
+    .mappa-area { padding-top: 6px; padding-bottom: 6px; }
+    .col-pannello, .col-mappa { display: flex; flex-direction: column; height: 100%; }
+    .scroll-sx { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 10px; }
+    #map { flex: 1 1 auto; width: 100%; min-height: 0; }
+    .box-strumenti {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    .nota-item { border-left: 3px solid #ced4da; padding: 0.25rem 0.5rem; margin-bottom: 0.4rem; background: #fff; border-radius: 0.25rem; }
+    .nota-item.stato-bozza { border-left-color: #f00808ff; }
+    .nota-item.stato-definita { border-left-color: #28a745; }
+    .nota-item.stato-inviata { border-left-color: #17a2b8; }
+    .badge-stato-bozza { color: #fff !important; background-color: #f00808ff !important; border-color: #f00808ff !important; }
+    #modalNota { pointer-events: none; }
+    #modalNota .modal-dialog { pointer-events: auto; }
+    .area-toolbar { flex: 0 0 auto; margin: 10px 0 0 0; }
+    .area-empty { padding: 1rem; color: #6c757d; }
+    .risultato-etichetta { font-weight: 600; }
+    .popup-risultato { font-size: 0.85rem; }
+    #area-risultati .nav-tabs { font-size: 0.9rem; }
+    #area-risultati .table { font-size: 0.8rem; }
+</style>
+{% endblock css %}
+
+{% block content %}
+<div class="container-fluid mappa-area">
+    <div class="row mb-1">
+        <div class="col-12 d-flex flex-wrap justify-content-between align-items-center">
+            <div class="d-flex align-items-baseline flex-wrap">
+                <h5 class="mb-0 mr-2">Mappa area - Sviluppo</h5>
+                <small class="text-muted">
+                    Disegna un rettangolo o un poligono e cerca le pratiche
+                    <strong>OPENGEOPROT</strong> e <strong>ARCHIVIO</strong> che intersecano l'area.
+                </small>
+            </div>
+            <div class="mt-1">
+                <span class="badge badge-success">OPENGEOPROT <span id="badge-totale-p">{{ totale_p }}</span></span>
+                <span class="badge badge-info ml-1">ARCHIVIO <span id="badge-totale-ed">{{ totale_ed }}</span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row page-row">
+        <!-- Colonna sinistra: strumenti (ricerca particelle, note) + risultati -->
+        <div class="col-5 col-pannello">
+            <div class="scroll-sx">
+                <div class="box-strumenti">
+                    <h6>Strumenti</h6>
+                    <button class="btn btn-primary btn-sm mb-2" data-toggle="modal" data-target="#modalRicerca">
+                        <i class="fa fa-search"></i> Ricerca particella
+                    </button>
+                    <button class="btn btn-warning btn-sm mb-2" id="btn-apri-nota" data-toggle="modal" data-target="#modalNota">
+                        <i class="fa fa-sticky-note"></i> Nuova nota
+                    </button>
+                    <div class="form-check mt-1 mb-2">
+                        <input class="form-check-input" type="checkbox" id="toggle-note">
+                        <label class="form-check-label small" for="toggle-note">Mostra note sulla mappa</label>
+                    </div>
+                    <hr class="w-100">
+                    <div id="nota-info" class="small"></div>
+                    <div id="nota-lista" class="mt-2"></div>
+                </div>
+
+                {% if area_cercata %}
+                <div id="area-risultati">
+                    <ul class="nav nav-tabs" id="area-risultati-tab" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-toggle="tab" href="#tab-opengeoprot" role="tab">
+                                <i class="fa fa-globe"></i> OPENGEOPROT <span class="badge badge-success">{{ totale_p }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="tab" href="#tab-archivio" role="tab">
+                                ARCHIVIO <span class="badge badge-info">{{ totale_ed }}</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="tab-content border border-top-0 bg-white">
+                            <div class="tab-pane fade show active" id="tab-opengeoprot" role="tabpanel">
+                                {% if pratiche_area %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped mb-0">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Protocollo</th>
+                                                <th>Oggetto</th>
+                                                <th>Richiedenti</th>
+                                                <th>Tipo pratica</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for p in pratiche_area %}
+                                            <tr data-feature="opengeoprot-{{ p.id }}">
+                                                <td>
+                                                    {{ p.prot_gen|default:"-" }}
+                                                    <br><small class="text-muted">{{ p.data_prot_gen.year|default:"-" }}</small>
+                                                </td>
+                                                <td>{{ p.oggetto|truncatechars:60|default:"-" }}</td>
+                                                <td>{{ p.richiedenti_lista|join:", "|default:"-" }}</td>
+                                                <td>{{ p.tipo_pratica.name|default:"-" }}</td>
+                                                <td class="text-right"><a href="{% url 'protocollo:pratica_detail_url' p.id %}" class="btn btn-sm btn-primary">Dettaglio</a></td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% if totale_p > pratiche_area|length %}
+                            <div class="px-2 py-1 small text-muted border-top">
+                                Mostrate le prime {{ pratiche_area|length }} di {{ totale_p }} pratiche OPENGEOPROT.
+                            </div>
+                            {% endif %}
+                            {% else %}
+                            <div class="area-empty">Nessuna pratica OPENGEOPROT interseca l'area selezionata.</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="tab-pane fade" id="tab-archivio" role="tabpanel">
+                            {% if pratiche_edilizia_area %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped mb-0">
+                                    <thead class="thead-light">
+                                        <tr><th>ID</th><th>Richiedente</th><th>Oggetto</th><th>Tipo</th><th>Data</th><th></th></tr>
+                                    </thead>
+                                        <tbody>
+                                            {% for p in pratiche_edilizia_area %}
+                                            <tr data-feature="archivio-{{ p.id }}">
+                                                <td>{{ p.id }}</td><td>{{ p.richiedente|truncatechars:30|default:"-" }}</td><td>{{ p.oggetto|truncatechars:40|default:"-" }}</td><td>{{ p.tipo|truncatechars:30|default:"-" }}</td><td>{{ p.data_prot_gen|date:"d/m/Y"|default:"-" }}</td><td class="text-right"><a href="{% url 'gest_edilizia:pratica_edit' p.id %}" class="btn btn-sm btn-success">Dettaglio</a></td></tr>
+                                            {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% if totale_ed > pratiche_edilizia_area|length %}
+                            <div class="px-2 py-1 small text-muted border-top">
+                                Mostrate le prime {{ pratiche_edilizia_area|length }} di {{ totale_ed }} pratiche ARCHIVIO.
+                            </div>
+                            {% endif %}
+                            {% else %}
+                            <div class="area-empty">Nessuna pratica ARCHIVIO interseca l'area selezionata.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Colonna destra: mappa e comandi di ricerca sull'area -->
+        <div class="col-7 col-mappa">
+            <div id="map"></div>
+            <div class="area-toolbar">
+                <div class="d-flex flex-wrap align-items-center">
+                    <button id="btn-search-area" class="btn btn-primary" disabled>
+                        <i class="fa fa-search"></i> Cerca pratiche nell'area selezionata
+                    </button>
+                    <button id="btn-clear-area" class="btn btn-secondary ml-2">
+                        <i class="fa fa-trash"></i> Cancella area
+                    </button>
+                    <div class="form-check ml-3">
+                        <input class="form-check-input" type="checkbox" id="toggle-risultati" checked>
+                        <label class="form-check-label small" for="toggle-risultati">Mostra risultati sulla mappa</label>
+                    </div>
+                    <small class="text-muted ml-auto">
+                        <i class="fa fa-info-circle"></i>
+                        Cliccando sulla mappa (fuori dalla modalità nota) si apre in una finestra l'elenco delle pratiche del punto.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form id="form-area" method="POST" action="{% url 'protocollo:mappa_area_sviluppo_url' %}">
+        {% csrf_token %}
+        <input type="hidden" name="area_geojson" id="area-geojson">
+    </form>
+
+    {{ area_geojson_obj|json_script:"id-area-geojson" }}
+</div>
+
+<!-- Modal Pratiche del punto (nessuna nuova scheda del browser) -->
+<div class="modal fade" id="modalPunto" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title">Pratiche nel punto selezionato</h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Chiudi"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body p-0">
+                <iframe id="iframe-punto" title="Pratiche nel punto" style="width:100%; height:75vh; border:0;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ricerca particella -->
+<div class="modal fade" id="modalRicerca" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Ricerca particella</h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Chiudi"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-particella">
+                    <div class="form-group">
+                        <label for="foglio">Foglio</label>
+                        <input type="text" class="form-control form-control-sm" id="foglio" name="foglio" placeholder="Foglio" required>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label for="mappale">Mappale</label>
+                        <input type="text" class="form-control form-control-sm" id="mappale" name="mappale" placeholder="Mappale" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm mt-3 btn-block">Cerca particella</button>
+                    <button type="button" id="btn-clear-particella" class="btn btn-secondary btn-sm mt-2 btn-block">Cancella</button>
+                </form>
+                <div id="particella-info" class="mt-3 small"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nota -->
+<div class="modal fade" id="modalNota" tabindex="-1" role="dialog" data-backdrop="false" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Nota (layer NOTE)</h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Chiudi"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Attiva la modalità, clicca un punto sulla mappa e salva la nota. Lo stato consente di distinguere quelle già definite (pronte per JOSM) dalle bozze.</p>
+                <button type="button" id="btn-nota-mode" class="btn btn-outline-warning btn-sm btn-block mb-2">Modalità nota: OFF</button>
+                <div id="nota-pos" class="small text-info mb-2">Nessuna posizione selezionata</div>
+                <form id="form-nota">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="nota-testo">Testo nota</label>
+                        <textarea class="form-control form-control-sm" id="nota-testo" name="nota-testo" rows="4" placeholder="Descrivi la segnalazione..."></textarea>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label for="nota-allegato">Allegato (file / jpeg)</label>
+                        <input type="file" class="form-control-file form-control-sm" id="nota-allegato" name="allegato">
+                    </div>
+                    <input type="hidden" id="nota-stato" name="nota-stato" value="bozza">
+                    <button type="submit" id="btn-nota-salva" class="btn btn-warning btn-sm btn-block mt-2" disabled>Salva nota</button>
+                </form>
+            </div>
+    </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script>
+// Patch for Leaflet 1.9.x compatibility
+(function() {
+    if (L && L.Map && !L.Map.prototype.pm) {
+        if (!L.Map.prototype._initPathRoot && L.Map.prototype._initPathLayer) {
+            L.Map.prototype._initPathRoot = L.Map.prototype._initPathLayer;
+        }
+    }
+})();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var map = L.map('map').setView([44.077, 10.096], 14);
+    var username = '{{ user.username|default:"anonimo"|escapejs }}';
+    var isStaff = '{{ user.is_staff|lower }}' == 'true' || '{{ user.is_superuser|lower }}' == 'true';
+
+    L.tileLayer("{% static 'tiles/' %}{z}/{x}/{y}.png", {
+        attribution: 'Comune di Carrara: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ',
+        maxZoom: 19
+    }).addTo(map);
+
+    // La mappa vive in un contenitore flex: serve un invalidateSize perche'
+    // le tile riempiano correttamente l'area dopo il layout.
+    setTimeout(function() { map.invalidateSize(); }, 0);
+    window.addEventListener('resize', function() { map.invalidateSize(); });
+
+    // Altezza della riga principale calcolata su tutto cio' che sta sopra
+    // (navbar, titolo, messaggi di sistema): la pagina resta alta esattamente
+    // una schermata, senza scroll; a scorrere e' solo la colonna di sinistra.
+    function margineInferiore() {
+        // spazio riservato sotto il contenuto: il margin-bottom del body
+        // (50px) e, se piu' alta, la barra fissa in basso
+        var barra = document.querySelector('.fixed-bottom');
+        var alto = barra ? barra.getBoundingClientRect().height : 0;
+        return Math.max(50, alto);
+    }
+    function allineaAltezza() {
+        var row = document.querySelector('.page-row');
+        if (!row) return;
+        var contenitore = row.closest('.container-fluid') || row.parentElement;
+        var stile = window.getComputedStyle(contenitore);
+        var padBottom = parseFloat(stile.paddingBottom) || 0;
+        row.style.height = '';
+        var top = row.getBoundingClientRect().top;
+        var alto = window.innerHeight - top - margineInferiore() - padBottom;
+        row.style.height = Math.max(300, Math.floor(alto)) + 'px';
+        map.invalidateSize();
+    }
+    allineaAltezza();
+    window.addEventListener('resize', allineaAltezza);
+    window.addEventListener('load', allineaAltezza);
+    setTimeout(allineaAltezza, 3500);   // dopo l'auto-dismiss dei messaggi
+    if (window.ResizeObserver) {
+        var osservatore = new ResizeObserver(function() { allineaAltezza(); });
+        var messaggi = document.getElementById('django-messages');
+        if (messaggi) { osservatore.observe(messaggi); }
+        var intestazione = document.querySelector('.page-row');
+        if (intestazione && intestazione.previousElementSibling) {
+            osservatore.observe(intestazione.previousElementSibling);
+        }
+    }
+
+    var drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+    var disegnoInCorso = false;
+    // Momento dell'ultimo evento di disegno: i click che chiudono la
+    // geometria arrivano dopo il CREATED e non devono essere interpretati
+    // come clic sulla mappa.
+    var ultimoDisegno = 0;
+    var FINESTRA_DISEGNO = 600;
+
+    function updateSearchButton() {
+        document.getElementById('btn-search-area').disabled = drawnItems.getLayers().length === 0;
+    }
+
+    if (typeof L.Control.Draw !== 'undefined') {
+        var drawControl = new L.Control.Draw({
+            position: 'topright',
+            draw: {
+                polyline: false,
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                polygon: {
+                    allowIntersection: false,
+                    showArea: true
+                },
+                rectangle: {
+                    showArea: true
+                }
+            },
+            edit: {
+                featureGroup: drawnItems,
+                remove: true
+            }
+        });
+        map.addControl(drawControl);
+    }
+
+    map.on(L.Draw.Event.DRAWSTART, function() {
+        disegnoInCorso = true;
+        ultimoDisegno = Date.now();
+    });
+    map.on(L.Draw.Event.DRAWSTOP, function() {
+        disegnoInCorso = false;
+        ultimoDisegno = Date.now();
+    });
+    map.on(L.Draw.Event.CREATED, function(e) {
+        drawnItems.clearLayers();
+        drawnItems.addLayer(e.layer);
+        document.getElementById('area-geojson').value = '';
+        risultatiLayer.clearLayers();
+        updateSearchButton();
+        disegnoInCorso = false;
+        ultimoDisegno = Date.now();
+    });
+
+    map.on(L.Draw.Event.DELETED, function() {
+        setTimeout(updateSearchButton, 0);
+    });
+
+    map.on(L.Draw.Event.EDITED, function() {
+        updateSearchButton();
+    });
+
+    document.getElementById('btn-clear-area').addEventListener('click', function() {
+        drawnItems.clearLayers();
+        document.getElementById('area-geojson').value = '';
+        risultatiLayer.clearLayers();
+        updateSearchButton();
+    });
+
+    document.getElementById('btn-search-area').addEventListener('click', function() {
+        var layers = drawnItems.getLayers();
+        if (layers.length === 0) return;
+        var feature = layers[0].toGeoJSON();
+        var geojson = feature.geometry || feature;
+        document.getElementById('area-geojson').value = JSON.stringify(geojson);
+        document.getElementById('form-area').submit();
+    });
+
+    // ---------- Ripristino dell'area disegnata e dei risultati ----------
+    function leggiJson(id) {
+        var el = document.getElementById(id);
+        if (!el) return null;
+        try { return JSON.parse(el.textContent); } catch (e) { return null; }
+    }
+
+    // Area ricercata (dal server): viene ridisegnata sulla mappa
+    var areaGeojson = leggiJson('id-area-geojson');
+    if (areaGeojson) {
+        L.geoJSON(areaGeojson).eachLayer(function(layer) {
+            drawnItems.addLayer(layer);
+        });
+        try {
+            document.getElementById('area-geojson').value = JSON.stringify(areaGeojson);
+        } catch (e) { /* area non serializzabile: si lascia il campo vuoto */ }
+        if (drawnItems.getBounds().isValid()) {
+            map.fitBounds(drawnItems.getBounds(), { padding: [20, 20] });
+        }
+        updateSearchButton();
+        caricaRisultati();
+    }
+
+    // Risultati della ricerca: poligoni/marker evidenziati sulla mappa.
+    // Il GeoJSON viene richiesto in modo asincrono cosi' la pagina resta leggera.
+    var risultatiLayer = L.featureGroup();
+    var risultatiCaricati = false;
+    // Mappa "fonte-id" -> layer per l'evidenziazione al passaggio sulle righe elenco.
+    var highlightById = {};
+    var lastHighlightKey = null;
+
+    function stileRisultato(feature) {
+        var fonte = (feature.properties || {}).fonte;
+        var colore = fonte === 'archivio' ? '#17a2b8' : '#28a745';
+        return { color: colore, weight: 1, fillOpacity: 0.25 };
+    }
+
+    function ripristinaStile(layer) {
+        if (!layer || !layer._originalStyle) return;
+        layer.setStyle(layer._originalStyle);
+        layer._originalStyle = null;
+    }
+
+    function evidenziaFeature(key) {
+        if (lastHighlightKey === key) return;
+        if (lastHighlightKey) {
+            ripristinaStile(highlightById[lastHighlightKey]);
+        }
+        lastHighlightKey = key;
+        if (!key) return;
+        var layer = highlightById[key];
+        if (!layer) return;
+        layer._originalStyle = JSON.parse(JSON.stringify(layer.options || {}));
+        layer.setStyle({ color: '#d63384', weight: 4, fillOpacity: 0.6 });
+        if (layer.bringToFront) { layer.bringToFront(); }
+        try {
+            if (layer.getBounds && layer.getBounds().isValid()) {
+                map.fitBounds(layer.getBounds(), { padding: [20, 20], maxZoom: 17 });
+            }
+        } catch (e) { /* fitBounds fallito: si ignora */ }
+    }
+
+    function disegnaRisultati(risultatiGeojson) {
+        if (!risultatiGeojson || !risultatiGeojson.features || !risultatiGeojson.features.length) return;
+        highlightById = {};
+        lastHighlightKey = null;
+        L.geoJSON(risultatiGeojson, {
+            style: stileRisultato,
+            pointToLayer: function(feature, latlng) {
+                var fonte = (feature.properties || {}).fonte;
+                var colore = fonte === 'archivio' ? '#17a2b8' : '#28a745';
+                return L.circleMarker(latlng, {
+                    radius: 5, color: colore, fillColor: colore, fillOpacity: 0.7, weight: 2
+                });
+            },
+            onEachFeature: function(feature, layer) {
+                var props = feature.properties || {};
+                var key = (props.fonte || '') + '-' + (props.id || '');
+                highlightById[key] = layer;
+                var html = '<div class="popup-risultato"><div class="risultato-etichetta">' +
+                           escapeHtml(props.etichetta) + '</div>' +
+                           '<small>' + (props.fonte === 'archivio' ? 'ARCHIVIO' : 'OPENGEOPROT') + '</small>';
+                if (props.url) {
+                    html += '<br><a href="' + escapeHtml(props.url) + '" target="_blank">Apri dettaglio</a>';
+                }
+                html += '</div>';
+                layer.bindPopup(html);
+            }
+        }).addTo(risultatiLayer);
+        if (document.getElementById('toggle-risultati').checked) {
+            map.addLayer(risultatiLayer);
+        }
+    }
+
+    function caricaRisultati() {
+        var area = document.getElementById('area-geojson').value;
+        if (!area || risultatiCaricati) return;
+        risultatiCaricati = true;
+        var formArea = document.getElementById('form-area');
+        var token = formArea.querySelector('[name=csrfmiddlewaretoken]');
+        fetch('{% url "protocollo:mappa_area_sviluppo_risultati_url" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': token ? token.value : '',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: 'area_geojson=' + encodeURIComponent(area)
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) { disegnaRisultati(data); })
+        .catch(function() { /* overlay non disponibile: la tabella resta valida */ });
+    }
+
+    document.getElementById('toggle-risultati').addEventListener('change', function() {
+        if (this.checked) { map.addLayer(risultatiLayer); }
+        else { map.removeLayer(risultatiLayer); }
+    });
+
+    // Evidenzia la geometria in mappa al passaggio del mouse su una riga elenco
+    // (entrambe le tabelle: OPENGEOPROT e ARCHIVIO).
+    var areaRisultati = document.getElementById('area-risultati');
+    if (areaRisultati) {
+        areaRisultati.addEventListener('mouseover', function(e) {
+            var row = e.target.closest('tr[data-feature]');
+            if (row) { evidenziaFeature(row.getAttribute('data-feature')); }
+        });
+        areaRisultati.addEventListener('mouseout', function(e) {
+            var row = e.target.closest('tr[data-feature]');
+            if (row && lastHighlightKey === row.getAttribute('data-feature')) {
+                ripristinaStile(highlightById[lastHighlightKey]);
+                lastHighlightKey = null;
+            }
+        });
+    }
+
+    //L.marker([44.077, 10.096]).addTo(map).bindPopup('Carrara');
+
+    var STATI = { bozza: 'Bozza', definita: 'Definita', inviata: 'Inviata' };
+    var notaMode = false;
+    var notaLatLng = null;
+    var notaMarker = null;
+    var noteLayer = L.featureGroup();
+    var noteMarkers = {};
+    var allNotes = [];
+
+    function disegnaMarkerNote(items) {
+        noteLayer.clearLayers();
+        noteMarkers = {};
+        items.forEach(function(n) {
+            if (!n.id || n.id === '?') return;
+            var colore = n.stato === 'definita' ? '#28a745' : (n.stato === 'inviata' ? '#17a2b8' : '#ec0f0fff');
+            var m = L.circleMarker([n.lat, n.lng], {
+                radius: 6, color: colore, fillColor: colore, fillOpacity: 0.7, weight: 2
+            });
+            var popup = '<strong>#' + n.id + ' ' + (STATI[n.stato] || n.stato) + '</strong><br>' +
+                        escapeHtml(n.testo) + (n.utente ? '<br><small>' + escapeHtml(n.utente) + ' ' + (n.data || '') + '</small>' : '') +
+                        (n.allegato ? '<br><a href="' + n.allegato + '" target="_blank"><i class="fa fa-paperclip"></i> allegato</a>' : '') +
+                        ((isStaff || username === n.utente) ? '<br><a href="#" onclick="return eliminaNotaOSM(' + n.id + ')" class="lnk-elimina-nota" data-id="' + n.id + '">Elimina nota</a>' : '');
+            m.bindPopup(popup);
+            m.addTo(noteLayer);
+            noteMarkers[n.id] = m;
+        });
+    }
+
+    document.getElementById('toggle-note').addEventListener('change', function() {
+        if (this.checked) { map.addLayer(noteLayer); }
+        else { map.removeLayer(noteLayer); }
+    });
+
+    map.on('click', function(e) {
+        // I click che fanno parte del disegno (incluso quello che chiude la
+        // geometria) non devono aprire l'elenco delle pratiche del punto.
+        if (disegnoInCorso || (Date.now() - ultimoDisegno) < FINESTRA_DISEGNO) return;
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+        if (notaMode) {
+            notaLatLng = e.latlng;
+            if (notaMarker) { map.removeLayer(notaMarker); notaMarker = null; }
+            document.getElementById('nota-pos').textContent = 'Posizione: ' + lat.toFixed(6) + ', ' + lng.toFixed(6);
+            document.getElementById('btn-nota-salva').disabled = false;
+            return;
+        }
+        // L'elenco delle pratiche del punto si apre in una finestra interna:
+        // non viene aperta alcuna nuova scheda del browser.
+        var url = '{% url "protocollo:pratiche_punto_lista_url" %}?lat=' + lat + '&lng=' + lng;
+        document.getElementById('iframe-punto').src = url;
+        $('#modalPunto').modal('show');
+    });
+
+    // Nella finestra interna la barra di navigazione del sito non serve.
+    document.getElementById('iframe-punto').addEventListener('load', function() {
+        try {
+            var doc = this.contentDocument;
+            if (!doc) return;
+            var stile = doc.createElement('style');
+            stile.textContent = '.navbar{display:none !important;} body{margin-top:0 !important; margin-bottom:0 !important;}';
+            doc.head.appendChild(stile);
+        } catch (e) { /* frame non accessibile: si lascia com'e' */ }
+    });
+
+    map.on('moveend', filtraListaNote);
+
+    document.getElementById('btn-nota-mode').addEventListener('click', function() {
+        notaMode = !notaMode;
+        this.textContent = 'Modalità nota: ' + (notaMode ? 'ON' : 'OFF');
+        this.classList.toggle('btn-warning', !notaMode);
+        this.classList.toggle('btn-success', notaMode);
+        if (!notaMode) {
+            if (notaMarker) { map.removeLayer(notaMarker); notaMarker = null; }
+            notaLatLng = null;
+            document.getElementById('nota-pos').textContent = 'Nessuna posizione selezionata';
+            document.getElementById('btn-nota-salva').disabled = true;
+        }
+    });
+
+    document.getElementById('btn-apri-nota').addEventListener('click', function() {
+        if (!notaMode) { document.getElementById('btn-nota-mode').click(); }
+    });
+
+    var notaForm = document.getElementById('form-nota');
+    var csrfToken = notaForm.querySelector('[name=csrfmiddlewaretoken]').value;
+    var notaInfo = document.getElementById('nota-info');
+    var notaLista = document.getElementById('nota-lista');
+    var QUEUE_KEY = 'nota_osm_queue';
+
+    function getCoda() {
+        try { return JSON.parse(localStorage.getItem(QUEUE_KEY)) || []; }
+        catch (e) { return []; }
+    }
+    function setCoda(arr) {
+        localStorage.setItem(QUEUE_KEY, JSON.stringify(arr));
+        caricaLista();
+    }
+
+    function escapeHtml(s) {
+        return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function(c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    window.eliminaNotaOSM = function(id) {
+        if (!confirm('Eliminare la nota #' + id + '?')) return false;
+        fetch('{% url "protocollo:nota_osm_elimina_url" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'pk=' + encodeURIComponent(id)
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(d) {
+            if (d.ok) {
+                notaInfo.innerHTML = '<span class="text-success">Nota ' + id + ' eliminata</span>';
+                caricaLista();
+            } else {
+                notaInfo.innerHTML = '<span class="text-danger">' + (d.error || 'Errore') + '</span>';
+            }
+        })
+        .catch(function() {
+            notaInfo.innerHTML = '<span class="text-warning">Offline: impossibile eliminare</span>';
+        });
+        return false;
+    };
+
+    function renderCoda() {
+        var coda = getCoda();
+        if (!coda.length) return;
+        var html = '<div class="small font-weight-bold">In attesa di invio (' + coda.length + '):</div>';
+        coda.forEach(function(n) {
+            html += '<div class="nota-item stato-' + n.stato + '"><div class="small">' + escapeHtml(n.testo) + '</div>' +
+                    '<div class="small text-muted">[' + n.lat.toFixed(5) + ', ' + n.lng.toFixed(5) + '] - ' + (STATI[n.stato] || n.stato) + '</div></div>';
+        });
+        notaLista.innerHTML = html;
+    }
+
+    function notaItemHtml(n) {
+        var allegato = n.allegato ? '<div class="mt-1"><a href="' + n.allegato + '" target="_blank" class="small"><i class="fa fa-paperclip"></i> allegato</a></div>' : '';
+        var canEdit = isStaff || (username === n.utente);
+        var clickable = (canEdit && String(n.id).indexOf('tmp_') !== 0) ? ' style="cursor: pointer;"' : '';
+        return '<div class="nota-item stato-' + n.stato + '" data-id="' + n.id + '"' + clickable + '>' +
+            '<div class="small">' + escapeHtml(n.testo) + '</div>' + allegato +
+            '<div class="mt-1">' +
+                '<span class="badge ' + (n.stato === 'bozza' ? 'badge-stato-bozza' : (n.stato === 'definita' ? 'badge-success' : (n.stato === 'inviata' ? 'badge-info' : 'badge-secondary'))) + '">' + (STATI[n.stato] || n.stato) + '</span>' +
+            '</div>' +
+            '<div class="small text-muted">#' + n.id + ' ' + n.data + ' - ' + escapeHtml(n.utente) + '</div>' +
+        '</div>';
+    }
+
+    function filtraListaNote() {
+        if (!allNotes.length) {
+            notaLista.innerHTML = '';
+            return;
+        }
+        var bounds = map.getBounds();
+        var visibili = allNotes.filter(function(n) {
+            return bounds.contains([n.lat, n.lng]);
+        });
+        var html = '<div class="small font-weight-bold">Note nella vista (' + visibili.length + '/' + allNotes.length + '):</div>';
+        visibili.forEach(function(n) { html += notaItemHtml(n); });
+        notaLista.innerHTML = html;
+        collegaHoverLista();
+    }
+
+    function aggiornaTutto(notes) {
+        allNotes = notes || allNotes;
+        disegnaMarkerNote(allNotes);
+        filtraListaNote();
+    }
+
+    function caricaLista() {
+        var coda = getCoda();
+        if (!navigator.onLine) {
+            aggiornaTutto(coda);
+            return;
+        }
+        fetch('{% url "protocollo:nota_osm_lista_url" %}')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                aggiornaTutto(data.note.concat(coda));
+            })
+            .catch(function() {
+                aggiornaTutto(coda);
+            });
+    }
+
+    function collegaHoverLista() {
+        notaLista.querySelectorAll('.nota-item[data-id]').forEach(function(el) {
+            var id = el.getAttribute('data-id');
+            el.addEventListener('mouseenter', function() {
+                var mk = noteMarkers[id];
+                if (mk) { mk.setStyle({ radius: 10, fillOpacity: 1 }); }
+            });
+            el.addEventListener('mouseleave', function() {
+                var mk = noteMarkers[id];
+                if (mk) { mk.setStyle({ radius: 6, fillOpacity: 0.7 }); }
+            });
+        });
+    }
+
+    notaLista.addEventListener('click', function(e) {
+        var item = e.target.closest('.nota-item[data-id]');
+        if (!item) return;
+        var id = item.getAttribute('data-id');
+        var notaObj = (allNotes || []).find(function(n){ return String(n.id) === String(id); });
+        var canEdit = isStaff || (notaObj && notaObj.utente === username);
+        if (!canEdit) return;
+        if (!id || String(id).indexOf('tmp_') === 0) return;
+        var url = '{% url "protocollo:nota_modifica_url" pk=0 %}'.replace('/0/', '/' + id + '/');
+        window.location.href = url;
+    });
+
+    document.addEventListener('click', function(e) {
+        var link = e.target.closest('.lnk-elimina-nota');
+        if (!link) return;
+        e.preventDefault();
+        var id = link.getAttribute('data-id');
+        if (!confirm('Eliminare la nota #' + id + '?')) return;
+        fetch('{% url "protocollo:nota_osm_elimina_url" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'pk=' + encodeURIComponent(id)
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(d) {
+            if (d.ok) {
+                notaInfo.innerHTML = '<span class="text-success">Nota ' + id + ' eliminata</span>';
+                caricaLista();
+            } else {
+                notaInfo.innerHTML = '<span class="text-danger">' + (d.error || 'Errore') + '</span>';
+            }
+        })
+        .catch(function() {
+            notaInfo.innerHTML = '<span class="text-warning">Offline: impossibile eliminare</span>';
+        });
+    });
+
+    function inviaNota(item) {
+        return fetch('{% url "protocollo:nota_osm_salva_url" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'lat=' + encodeURIComponent(item.lat) + '&lng=' + encodeURIComponent(item.lng) +
+                  '&testo=' + encodeURIComponent(item.testo) + '&stato=' + encodeURIComponent(item.stato)
+        }).then(function(res) { return res.json(); });
+    }
+
+    function accodaNota(item) {
+        var coda = getCoda();
+        coda.push(item);
+        setCoda(coda);
+    }
+
+    function sincronizzaCoda() {
+        var coda = getCoda();
+        if (!coda.length || !navigator.onLine) return;
+        var item = coda[0];
+        inviaNota(item).then(function(data) {
+            if (data.ok) {
+                coda.shift();
+                setCoda(coda);
+                notaInfo.innerHTML = '<span class="text-success">Nota ' + data.id + ' salvata (coda ' + coda.length + ')</span>';
+                caricaLista();
+                if (coda.length) { sincronizzaCoda(); }
+            } else {
+                notaInfo.innerHTML = '<span class="text-danger">' + (data.error || 'Errore salvataggio') + '</span>';
+            }
+        }).catch(function() {
+            notaInfo.innerHTML = '<span class="text-warning">Offline: nota accodata, invio rimandato</span>';
+        });
+    }
+
+    notaForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!notaLatLng) return;
+        var testo = document.getElementById('nota-testo').value.trim();
+        var stato = document.getElementById('nota-stato').value;
+        var fileInput = document.getElementById('nota-allegato');
+        var hasFile = fileInput.files && fileInput.files.length > 0;
+        if (!testo) {
+            notaInfo.innerHTML = '<span class="text-danger">Inserisci il testo della nota</span>';
+            return;
+        }
+
+        if (!navigator.onLine) {
+            if (hasFile) {
+                notaInfo.innerHTML = '<span class="text-warning">Offline: gli allegati richiedono la connessione. Salva senza file o riprova online.</span>';
+                return;
+            }
+            accodaNota({ id: 'tmp_' + Date.now(), lat: notaLatLng.lat, lng: notaLatLng.lng, testo: testo, stato: stato, ts: Date.now() });
+            notaInfo.innerHTML = '<span class="text-warning">Offline: nota accodata, verrà inviata al ritorno della connessione</span>';
+            document.getElementById('nota-testo').value = '';
+            return;
+        }
+
+        var fd = new FormData(notaForm);
+        fd.append('lat', notaLatLng.lat);
+        fd.append('lng', notaLatLng.lng);
+        fd.append('testo', testo);
+        fd.append('stato', stato);
+
+        notaInfo.innerHTML = '<span class="text-info">Salvataggio in corso...</span>';
+        fetch('{% url "protocollo:nota_osm_salva_url" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken },
+            body: fd
+        })
+        .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.ok) {
+                    notaInfo.innerHTML = '<span class="text-success">Nota ' + data.id + ' salvata (' + (STATI[data.stato] || data.stato) + ')</span>';
+                    document.getElementById('nota-testo').value = '';
+                    fileInput.value = '';
+                    document.getElementById('nota-pos').textContent = 'Nessuna posizione selezionata';
+                    document.getElementById('btn-nota-salva').disabled = true;
+                    if (notaMarker) { map.removeLayer(notaMarker); notaMarker = null; }
+                    notaLatLng = null;
+                    caricaLista();
+                    $('#modalNota').modal('hide');
+                } else {
+                    notaInfo.innerHTML = '<span class="text-warning">' + (data.error || 'Errore') + '</span>';
+                }
+            })
+        .catch(function() {
+            notaInfo.innerHTML = '<span class="text-warning">Offline: nota non salvata</span>';
+        });
+    });
+
+    window.addEventListener('online', function() { sincronizzaCoda(); caricaLista(); });
+    caricaLista();
+    if (navigator.onLine) { sincronizzaCoda(); }
+
+    var particelleLayer = L.featureGroup().addTo(map);
+
+    document.getElementById('form-particella').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var foglio = document.getElementById('foglio').value.trim();
+        var mappale = document.getElementById('mappale').value.trim();
+        if (!foglio || !mappale) return;
+
+        var infoDiv = document.getElementById('particella-info');
+        infoDiv.innerHTML = '<span class="text-info">Ricerca in corso...</span>';
+
+        fetch('{% url "protocollo:particella_geojson_url" %}?foglio=' + encodeURIComponent(foglio) + '&mappale=' + encodeURIComponent(mappale))
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                particelleLayer.clearLayers();
+                if (data.features && data.features.length > 0) {
+                    L.geoJSON(data, {
+                        style: { color: '#ff0000', weight: 2, fillOpacity: 0.3 },
+                        onEachFeature: function(feature, layer) {
+                            var props = feature.properties || {};
+                            var pk = feature.id || props.id;
+                            var foglioDisplay = String(props.foglio || '').replace(/^0+/, '');
+                            var visuraUrl = 'http://appsrvgis/ubucomu/catasto/nctr_results_ana.php?f=' + encodeURIComponent(foglioDisplay) + '&m=' + encodeURIComponent(props.mappale);
+                            var precedentiUrl = '/protocollo/search/protocollo/?cognome=&nome=&prot_gen=&anno=&stato=*&tp=*&foglio=' + encodeURIComponent(foglioDisplay) + '&mappale=' + encodeURIComponent(props.mappale) + '&street_id=*&civico=&oggetto=&origine_id=&atto=&tecnico=&tab=opengeoprot';
+                            var popupHtml = '<strong>ID:</strong> ' + pk + '<br>' +
+                                            '<strong>Foglio:</strong> ' + foglioDisplay + '<br>' +
+                                            '<strong>Mappale:</strong> ' + props.mappale + '<br>' +
+                                            '<strong>Utente:</strong> ' + username + '<br>' +
+                                            '<a href="' + visuraUrl + '" target="_blank">visura</a><br>' +
+                                            '<a href="' + precedentiUrl + '">Precedenti edilizi</a><br>' +
+                                            '<a href="#" class="lnk-informativa" data-pk="' + pk + '">informativa di piano</a>';
+                            layer.bindPopup(popupHtml);
+                        }
+                    }).addTo(particelleLayer);
+                    map.fitBounds(particelleLayer.getBounds(), { padding: [20, 20] });
+                    infoDiv.innerHTML = '<span class="text-success">Trovata ' + data.features.length + ' particella/e</span>';
+                } else {
+                    infoDiv.innerHTML = '<span class="text-danger">Nessuna particella trovata</span>';
+                }
+            })
+            .catch(function() {
+                infoDiv.innerHTML = '<span class="text-danger">Errore nella ricerca</span>';
+            });
+    });
+
+    document.getElementById('btn-clear-particella').addEventListener('click', function() {
+        particelleLayer.clearLayers();
+        document.getElementById('foglio').value = '';
+        document.getElementById('mappale').value = '';
+        document.getElementById('particella-info').innerHTML = '';
+    });
+
+    document.getElementById('map').addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('lnk-informativa')) {
+            e.preventDefault();
+            var pk = e.target.getAttribute('data-pk');
+            var url = '{% url "protocollo:particella_informativa_url" 0 %}'.replace('/0/', '/' + pk + '/');
+            fetch(url)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.url) {
+                        window.open(data.url, '_blank');
+                    }
+                })
+                .catch(function() {
+                    // silent fail
+                });
+        }
+    });
+});
+</script>
+{% endblock js %}

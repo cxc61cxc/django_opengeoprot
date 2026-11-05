@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tipi di Pratica{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 px-md-5">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-white px-0 py-2 mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home:index' %}">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Tipi di Pratica</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Tipi di Pratica</h2>
+    {% if user.is_staff %}
+      <a class="btn btn-success" href="{% url 'protocollo:add_tipopratica_view_url' %}">
+        <i class="fa fa-plus me-1"></i> Nuovo Tipo Pratica
+      </a>
+    {% endif %}
+  </div>
+
+  {% if tipo %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="text-center" style="width: 6%"></th>
+            <th class="text-center" style="width: 6%"></th>
+            <th class="text-left" style="width: 18%">Tipo di pratica</th>
+            <th style="width: 20%">Descrizione</th>
+            <th style="width: 36%">Settore / Servizio / U.O.</th>
+            <th class="text-center" style="width: 6%">Protetto</th>
+            <th class="text-end" style="width: 8%">Azioni</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in tipo %}
+            <tr>
+              <td class="text-center">
+                <a title="Vedi tutte le pratiche {{ p.name }}"
+                   class="btn btn-outline-success btn-sm d-inline-flex align-items-center justify-content-center"
+                   style="width:30px; height:30px"
+                   href="{% url 'protocollo:search_pratica_tipo_url' p.id %}">
+                  <div class="small text-center text-muted">{{p.tipo_pratiche.all|length}}</div>
+                </a>
+              </td>
+              <td class="text-center">
+                <a title="Vedi distribuzione geografica" href="{% url 'protocollo:mappa_tipo_pratica_url' p.id %}">
+                  <img class="img-fluid" src="{% static 'img/writing-fluently-svgrepo-com.svg' %}" width="32" height="32">
+                </a>
+              </td>
+              <td class="text-left"><b>{{ p.name }}</b></td>
+              <td>{{ p.description|truncatechars:60|default:'—' }}</td>
+              <td>
+                {% if p.settore or p.servizio or p.u_o %}
+                  {% if p.settore %}{{ p.settore.codice }}{% endif %}
+                  {% if p.servizio %}
+                    {% if p.settore %} - {% endif %}{{ p.servizio.codice }} - {{ p.servizio.nome|truncatechars:25 }}
+                  {% endif %}
+                  {% if p.u_o %}
+                    - U.O. {{ p.u_o.nome|truncatechars:25 }}
+                  {% endif %}
+                {% else %}
+                  <span class="text-muted small">—</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {% if p.visibile_solo_uo %}
+                  <span class="badge bg-warning text-dark" title="Visibile solo a U.O. specifiche">Protetto</span>
+                {% else %}
+                  <span class="text-muted small">—</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                {% if user.is_staff %}
+                  <div class="btn-group btn-group-sm">
+                    <a title="Modifica" href="{% url 'protocollo:tipopratica_edit_url' p.id %}">
+                      <img class="img-fluid" src="{% static 'img/icons8-edit.svg' %}" width="24" height="24">
+                    </a>
+                    {% if p.tipo_pratiche.all|length == 0 %}
+                      <a class="btn-delete-tipopratica" data-name="{{ p.name|escapejs }}" title="Elimina" href="{% url 'protocollo:tipopratica_delete_url' p.id %}">
+                        <img class="img-fluid" src="{% static 'img/icons8-trash.svg' %}" width="24" height="24">
+                      </a>
+                    {% else %}
+                      <span title="Impossibile eliminare: esistono pratiche collegate" style="cursor:not-allowed; opacity:0.4;">
+                        <img class="img-fluid" src="{% static 'img/icons8-trash.svg' %}" width="24" height="24">
+                      </span>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      <i class="fa fa-info-circle me-2"></i> Nessun tipo pratica presente.
+    </div>
+  {% endif %}
+</div>
+
+<script src="{% static 'js/jquery.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+  $('#settore').on('change', function() {
+    var settoreId = $(this).val();
+    $('#servizio, #u_o').prop('disabled', true);
+    if (settoreId) {
+      $.ajax({
+        url: '{% url "protocollo:ajax_servizi_by_settore" settore_id=0 %}'.replace('/0/', '/' + settoreId + '/'),
+        type: 'GET',
+        success: function(response) {
+          $('#servizio').empty();
+          $('#servizio').append('<option value="">Select Servizio</option>');
+          $.each(response, function(index, item) {
+            $('#servizio').append($('<option>', {
+              value: item.id,
+              text: item.nome
+            }));
+          });
+          $('#servizio').prop('disabled', false);
+        }
+      });
+    }
+  });
+
+  $('#servizio').on('change', function() {
+    var servizioId = $(this).val();
+    $('#u_o').prop('disabled', true);
+    if (servizioId) {
+      $.ajax({
+        url: '{% url "protocollo:ajax_uo_by_servizio" servizio_id=0 %}'.replace('/0/', '/' + servizioId + '/'),
+        type: 'GET',
+        success: function(response) {
+          $('#u_o').empty();
+          $('#u_o').append('<option value="">Select U.O.</option>');
+          $.each(response, function(index, item) {
+            $('#u_o').append($('<option>', {
+              value: item.id,
+              text: item.nome
+            }));
+          });
+          $('#u_o').prop('disabled', false);
+        }
+      });
+    }
+  });
+  $('.btn-delete-tipopratica').on('click', function(e) {
+    var name = $(this).data('name');
+    if (!confirm('Eliminare il tipo pratica "' + name + '"?')) {
+      e.preventDefault();
+      return false;
+    }
+  });
+});
+</script>
+{% endblock %}

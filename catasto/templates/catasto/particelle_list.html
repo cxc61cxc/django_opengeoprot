@@ -1,0 +1,60 @@
+# pratiche_list.html
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+     
+        <h2>Particelle</h2>
+        {% if tot_res %}
+        <p>Trovate {{ tot_res }} particelle</p>
+        {% else %}
+        <p> Effettua la ricerca!</p>
+        {% endif %}
+      <form method="post" style="text-align: center;">
+          {% csrf_token %}
+          <input type="text" autofocus  name="foglio" size="30" placeholder="Foglio" >
+          <input type="text" name="mappale" size="25" placeholder="mappale" >
+          
+          <input type="submit"  value="cerca">
+      <form/>
+    </div>
+</div>
+    <div class="container p-6">
+        <div class="row">
+            <div class="col-8 offset-1">
+                {% if tot_res %}
+                <table class="table table-hover table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Foglio</th>
+                            <th scope="col">Mappale</th>
+                            {% comment %} <th scope="col">Geom</th> {% endcomment %}
+                            
+                        </tr>
+                    </thead>
+                    {% for r in residents %}
+
+                    <tbody >
+                        <tr class="my-3">
+                            <th class="col-2" scope="row">{% if can_write %}<a class="btn btn-outline-success" href="{% url 'catasto:particella_edit_url' id=r.id %}">{{ r.id }}</a>{% endif %}</th>
+                            
+                            <td class="col-1">{{ r.foglio | upper }}</td>
+                            <td class="col-1">{{ r.mappale | title }}</td>
+                            {% comment %} <td>{{ r.geom }} </td> {% endcomment %}
+                            
+                        </tr>
+                    </tbody>
+                {% endfor %}
+
+                </table>
+            </div>
+        </div>
+                {% endif %}
+    </div>
+
+{% endblock %}

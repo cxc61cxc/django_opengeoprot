@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<h1>{{ action }} Scadenza</h1>
+<form method="POST" action="">
+    {% csrf_token %}
+    <div class="container p-1 ">
+        <div class="row ">
+           
+             <div class="col-2">
+               data scadenza
+            </div>
+            <div class="col-2">
+                importo
+            </div>
+            <div class="col-2">
+            </div>
+            <div class="col-2">
+               data pagamento
+            </div>
+            <div class="col-2">
+               importo pagamento
+            </div>
+            <div class="col-2">
+               iuv
+            </div>
+        </div>
+        <div class="row ">
+            
+             <div class="col-2">
+                {{ form.data_scadenza  }}
+            </div>
+            <div class="col-2">
+                {{ form.importo_rata }}
+            </div>
+            <div class="col-2">
+            </div>
+            <div class="col-2">
+                {{ form.data_pagamento }}
+            </div>
+            <div class="col-2">
+                {{ form.importo_pagamento }}
+            </div>
+            <div class="col-2">
+                {{ form.iuv }}
+            </div>
+        </div>
+    </div>
+     <button type="submit">{{ action }}</button>
+    {% comment %} <a href="{% url 'coop:scadenze_update' id %}">Aggiorna</a> {% endcomment %}
+    <a href="{% url 'coop:edit_accettazione_view_url' id=pk %}">Torna alla lista</a>
+</form>
+{% endblock %}

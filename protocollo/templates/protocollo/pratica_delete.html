@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% include 'protocollo/protocollo_base.html' %}
+
+<div class="container bg-light">
+    
+   
+    <div class="col-3">
+      <input type=button class="btn btn-success btn-sm" value="Indietro" onClick="javascript:history.go(-1);">
+    </div> 
+    <div class="col-3">
+      ELIMINA pratica ( id={{pratica.id}} )
+    </div> 
+    <br>
+      <div class="row align-items-start">
+        
+        <div class=" h6 col">
+          Tipo pratica : {{ pratica.tipo_pratica | upper}}
+        </div>
+      </div>
+      <div class="row align-items-start">
+        <div class="h5 col">
+          Prot. Gen. : {{ pratica.prot_gen }}
+        </div>
+        <div class="h5 col">
+          Data Prot. Gen : {{pratica.data_prot_gen|date:"d/m/Y"}}
+        </div>
+      </div>
+      <div class="row align-items-start">
+        <div class=" h6 col">
+          oggetto : {{ pratica.oggetto}}
+        </div>
+      </div>
+     
+<br><hr>   
+<div class="row align-items-end">
+  <div class=" col">
+    <p style="color:crimson"><b>Sei sicuro di volere elimare la pratica? </b></p>
+  </div>
+  <div class="text-right col">
+    <form action="" method="post">
+      {% csrf_token %}
+      <input class = "btn btn-outline-danger btn-sm" type="submit" value="Elimina">
+    </form>
+  </div>
+</div>
+
+
+
+</div>
+{% endblock %}
+		

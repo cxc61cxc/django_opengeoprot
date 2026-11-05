@@ -1,0 +1,479 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load l10n %}
+
+{% block title %}Mappa risultati ricerca{% endblock %}
+
+{% block css %}
+<style>
+  #mapResultsTab #opengeoprot-tab.active,
+  #mapResultsTab #archivio-tab.active {
+    font-size: 1.15rem;
+    font-weight: bold;
+    letter-spacing: 0.3px;
+  }
+  #mapResultsTab #opengeoprot-tab.active {
+    color: #0d6efd !important;
+  }
+  #mapResultsTab #archivio-tab.active {
+    color: #0d6efd !important;
+  }
+</style>
+{% endblock css %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <span class="mb-0 h5">Risultati ricerca sulla mappa</span>
+            <a href="{% url 'protocollo:search_protocollo_url' %}" class="btn btn-sm btn-light">Torna alla ricerca</a>
+        </div>
+        {% if nessun_risultato %}
+        <div class="alert alert-warning m-3" role="alert">
+            <i class="fa fa-exclamation-triangle"></i>
+            <strong>Nessun risultato</strong> per la ricerca effettuata. Prova a modificare i filtri.
+        </div>
+        {% endif %}
+        <ul class="nav nav-tabs mt-3 px-3" id="mapResultsTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link {% if default_tab == 'opengeoprot' %}active{% endif %}" id="opengeoprot-tab" data-toggle="tab" href="#opengeoprot" role="tab" aria-controls="opengeoprot" aria-selected="{% if default_tab == 'opengeoprot' %}true{% else %}false{% endif %}">
+                    <i class="fa fa-globe"></i> OPENGEOPROT
+                </a>
+            </li>
+            <li class="nav-item">
+            <a class="nav-link {% if default_tab != 'opengeoprot' %}active{% endif %}" id="archivio-tab" data-toggle="tab" href="#archivio" role="tab" aria-controls="archivio" aria-selected="{% if default_tab != 'opengeoprot' %}true{% else %}false{% endif %}">
+                ARCHIVIO
+            </a>
+            </li>
+        </ul>
+        <div class="card-body p-0">
+            <div class="row h-100">
+            <div class="col-md-4 col-lg-3 sidebar">
+                <div class="sidebar-content p-3 overflow-auto">
+                    <div class="tab-content" id="mapResultsTabContent">
+                        <div class="tab-pane fade {% if default_tab == 'opengeoprot' %}show active{% endif %}" id="opengeoprot" role="tabpanel" aria-labelledby="opengeoprot-tab">
+                            <div id="practice-list-prot" class="list-group"></div>
+                        </div>
+                        <div class="tab-pane fade {% if default_tab != 'opengeoprot' %}show active{% endif %}" id="archivio" role="tabpanel" aria-labelledby="archivio-tab">
+                            <div id="practice-list-edil" class="list-group"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                <!-- <div class="col-md-9 col-lg-10">
+                    <div id="map" style="height: 75vh; width: 100%;"></div>
+                </div> -->
+                <div class="col-md-8 col-lg-9">
+                    <div id="map" style="height: 100%; width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var map = L.map('map').setView([44.077, 10.096], 14);
+    L.tileLayer("{% static 'tiles/' %}{z}/{x}/{y}.png", {
+          attribution: 'Comune di Carrara: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ',
+          maxZoom: 19
+          }).addTo(map);
+
+    var allPraticheDataProt = [
+        {% for p in pratiche_protocollo %}
+        {
+            id: {{ p.id }},
+            prot: "{{ p.prot_gen|escapejs }}",
+            data: "{{ p.data_prot_gen|date:'d/m/Y'|escapejs }}",
+            anno: "{{ p.data_prot_gen|date:'Y'|escapejs }}",
+            oggetto: "{{ p.oggetto|truncatechars:150|escapejs|lower }}",
+            soggetti: "{{ p.soggetti|escapejs }}",
+            matricola: "{{ p.matricola|default:''|escapejs }}",
+            url: "{{ p.url|escapejs }}",
+            tipo_id: {{ p.tipo_id|default:0 }},
+            tipo: "{{ p.tipo|default:'N/D'|escapejs }}",
+            stato: "{{ p.stato|escapejs }}",
+            street: "{{ p.street_display|default:''|escapejs }}",
+            civico: "{{ p.civico|default:''|escapejs }}",
+            osm_url: "{{ p.osm_url|escapejs }}",
+            geojson: {% if p.mpoly_pratica %}{{ p.mpoly_pratica.json|safe }}{% else %}null{% endif %},
+            particelle: [
+                {% for cp in p.particelle_list %}
+                {
+                    foglio: "{{ cp.foglio|default:''|escapejs }}",
+                    mappale: "{{ cp.mappale|default:''|escapejs }}",
+                    subalterno: "{{ cp.subalterno|default:'-'|escapejs }}",
+                    visura_url: "{{ cp.visura_url|escapejs }}"
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            lat: {{ p.lat|unlocalize|default:'null' }},
+            lng: {{ p.lng|unlocalize|default:'null' }}
+        },
+        {% endfor %}
+    ];
+
+    var allPraticheDataEdil = [
+        {% for p in pratiche_edilizia %}
+        {
+            id: {{ p.id }},
+            prot: "{{ p.prot_gen|escapejs }}",
+            data: "{{ p.data_prot_gen|date:'d/m/Y'|escapejs }}",
+            anno: "{{ p.data_prot_gen|date:'Y'|escapejs }}",
+            oggetto: "{{ p.oggetto|truncatechars:150|escapejs|lower }}",
+            soggetti: "{{ p.soggetti|escapejs }}",
+            matricola: "{{ p.matricola|default:''|escapejs }}",
+            url: "{{ p.url|escapejs }}",
+            tipo_id: {{ p.tipo_id|default:0 }},
+            tipo: "{{ p.tipo|default:'N/D'|escapejs }}",
+            stato: "{{ p.stato|escapejs }}",
+            street: "{{ p.street_display|default:''|escapejs }}",
+            civico: "{{ p.civico|default:''|escapejs }}",
+            osm_url: "{{ p.osm_url|escapejs }}",
+            geojson: {% if p.mpoly_pratica %}{{ p.mpoly_pratica.json|safe }}{% else %}null{% endif %},
+            particelle: [
+                {% for cp in p.particelle_list %}
+                {
+                    foglio: "{{ cp.foglio|default:''|escapejs }}",
+                    mappale: "{{ cp.mappale|default:''|escapejs }}",
+                    subalterno: "{{ cp.subalterno|default:'-'|escapejs }}",
+                    visura_url: "{{ cp.visura_url|escapejs }}"
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            lat: {{ p.lat|unlocalize|default:'null' }},
+            lng: {{ p.lng|unlocalize|default:'null' }}
+        },
+        {% endfor %}
+    ];
+
+    var featureGroupProt = L.featureGroup();
+    var featureGroupEdil = L.featureGroup();
+    var markersByPracticeId = {};
+    var markerDataProt = {};
+    var markerDataEdil = {};
+    var areaDataProt = {};
+    var areaDataEdil = {};
+
+    var statusLabels = {
+        'a': 'attiva', 'i': 'in corso', 's': 'sospesa', 'ic': 'inviata comunicazione',
+        'ri': 'richiesta integrazione', 'ai': 'accettato importo', 'bd': 'bozza determina',
+        'df': 'determina firmata', 'ia': 'inviata ad amministrativi', 'af': 'alla firma',
+        'np': 'improcedibile', 'dn': 'Determina inviata a notaio', 'eo': 'emessa Ordinanza', 'c': 'chiusa', 'aa': 'archiviata'
+    };
+
+    function coloreStato(stato) {
+        if (stato === 'c') return '#27ae60';       // verde - chiusa
+        if (stato === 'aa') return '#95a5a6';      // grigio - archiviata
+        return '#e74c3c';                          // rosso - tutto il resto
+    }
+
+    function makeIcon(color) {
+        return L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div style='background-color:" + color + "; width:14px; height:14px; border-radius:50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5);'></div>",
+            iconSize: [14, 14],
+            iconAnchor: [7, 14],
+            popupAnchor: [0, -14]
+        });
+    }
+
+    if (!allPraticheDataProt.length && !allPraticheDataEdil.length) {
+        document.querySelector('.card-header').insertAdjacentHTML('beforeend', '<span class="ml-3 text-warning">Nessuna pratica georeferenziata tra i risultati.</span>');
+        return;
+    }
+
+    function escapeHtml(value) {
+        var div = document.createElement('div');
+        div.textContent = value || '';
+        return div.innerHTML;
+    }
+
+    function popupHtmlFor(items, isArea) {
+        var popupHtml = '';
+        var groupHasMatricola = items.some(i => i.tipo_id === 38 && i.matricola);
+        var groupSvincoloChiuso = items.some(i => i.tipo_id === 36 && (i.stato === 'c' || i.stato === 'aa'));
+
+        if (items.length > 1) {
+            popupHtml = '<h6>' + items.length + ' pratiche in quest\'area:</h6><hr><div style="max-height:200px; overflow-y:auto;">';
+            items.forEach(function(pratica) {
+                var particelleHtml = '';
+                if (pratica.particelle && pratica.particelle.length) {
+                    particelleHtml = '<ul style="margin:4px 0 6px 16px; padding:0;">';
+                    pratica.particelle.forEach(function(particella) {
+                        particelleHtml += '<li>Fg ' + escapeHtml(particella.foglio) + ' Map ' + escapeHtml(particella.mappale) + ' sub. ' + escapeHtml(particella.subalterno) +
+                            ' <a href="' + escapeHtml(particella.visura_url) + '" target="_blank">visura catastale</a></li>';
+                    });
+                    particelleHtml += '</ul>';
+                }
+
+                popupHtml += '<b>' + escapeHtml(pratica.prot) + '/' + escapeHtml(pratica.anno) + '</b> (' + escapeHtml(pratica.data) + ')<br>' +
+                    '<small><i>Tipo: ' + escapeHtml(pratica.tipo) + ' | Stato: ' + (statusLabels[pratica.stato] || pratica.stato) + '</i></small><br>' +
+                    'Ubicazione: ' + escapeHtml(pratica.street) + ' ' + escapeHtml(pratica.civico) + '<br>' +
+                    'Soggetti: <i>' + (escapeHtml(pratica.soggetti) || 'N/D') + '</i><br>' +
+                    (escapeHtml(pratica.matricola) ? 'Matricola: ' + escapeHtml(pratica.matricola) + '<br>' : '') +
+                    particelleHtml +
+                    escapeHtml(pratica.oggetto) + '<br>' +
+                    '<br><a href="' + escapeHtml(pratica.url) + '">Apri pratica</a><hr style="margin:5px 0">';
+            });
+            popupHtml += '</div>';
+        } else {
+            var p = items[0];
+            var particelleHtml = '';
+            if (p.particelle && p.particelle.length) {
+                particelleHtml = '<ul style="margin:4px 0 6px 16px; padding:0;">';
+                p.particelle.forEach(function(particella) {
+                    particelleHtml += '<li>Fg ' + escapeHtml(particella.foglio) + ' Map ' + escapeHtml(particella.mappale) + ' sub. ' + escapeHtml(particella.subalterno) +
+                        ' <a href="' + escapeHtml(particella.visura_url) + '" target="_blank">visura catastale</a></li>';
+                });
+                particelleHtml += '</ul>';
+            }
+
+            popupHtml = '<b>Pratica ' + escapeHtml(p.prot) + '/' + escapeHtml(p.anno) + '</b> (' + escapeHtml(p.data) + ')<br>' +
+                '<i>Tipo: ' + escapeHtml(p.tipo) + ' | Stato: ' + (statusLabels[p.stato] || p.stato) + '</i><br>' +
+                '<b>Ubicazione: </b>' + escapeHtml(p.street) + ' ' + escapeHtml(p.civico) + '<br>' +
+                'Soggetti: <i>' + (escapeHtml(p.soggetti) || 'N/D') + '</i><br>' +
+                (escapeHtml(p.matricola) ? '<b>Matricola: </b>' + escapeHtml(p.matricola) + '<br>' : '') +
+                '<b>Oggetto: </b>' + escapeHtml(p.oggetto) + '<br>' +
+                '<br><a href="' + escapeHtml(p.url) + '">Apri pratica</a>';
+        }
+
+        return popupHtml;
+    }
+
+    function processPraticheData(praticheData, featureGroup, markerData, areaData) {
+        praticheData.forEach(function(pratica) {
+            if (!pratica.lat || !pratica.lng) return;
+
+            if (pratica.geojson) {
+                var geomKey = JSON.stringify(pratica.geojson);
+                if (!areaData[geomKey]) {
+                    areaData[geomKey] = [];
+                }
+                areaData[geomKey].push(pratica);
+            }
+
+            var key = pratica.lat.toFixed(6) + ',' + pratica.lng.toFixed(6);
+            if (!markerData[key]) {
+                markerData[key] = { items: [] };
+            }
+            markerData[key].items.push(pratica);
+        });
+
+        Object.keys(areaData).forEach(function(geomStr) {
+            var items = areaData[geomStr];
+            var geom = JSON.parse(geomStr);
+            var popupHtml = popupHtmlFor(items, true);
+            var colore = coloreStato(items[0].stato);
+
+            L.geoJSON(geom, {
+                style: {
+                    color: colore,
+                    weight: 2,
+                    fillOpacity: 0.12
+                }
+            }).bindPopup(popupHtml).addTo(featureGroup);
+        });
+
+        Object.keys(markerData).forEach(function(key) {
+            var coords = key.split(',');
+            var items = markerData[key].items;
+            var popupHtml = popupHtmlFor(items, false);
+            var colore = coloreStato(items[0].stato);
+            var markerIcon = makeIcon(colore);
+
+            var marker = L.marker([parseFloat(coords[0]), parseFloat(coords[1])], { icon: markerIcon })
+                .bindPopup(popupHtml)
+                .addTo(featureGroup);
+            items.forEach(function(item) {
+                markersByPracticeId[item.id] = { marker: marker, color: colore, originalIcon: markerIcon };
+            });
+        });
+    }
+
+    processPraticheData(allPraticheDataProt, featureGroupProt, markerDataProt, areaDataProt);
+    processPraticheData(allPraticheDataEdil, featureGroupEdil, markerDataEdil, areaDataEdil);
+
+    function populateSidebar(praticheData, elementId, featureGroup) {
+        var practiceListElement = document.getElementById(elementId);
+        practiceListElement.innerHTML = '';
+
+        var filteredPratiche = praticheData.filter(function(p) {
+            return p.lat && p.lng;
+        });
+
+        filteredPratiche.forEach(function(p) {
+            var listItem = document.createElement('a');
+            listItem.href = '#';
+            listItem.className = 'list-group-item list-group-item-action';
+            var statoText = statusLabels[p.stato] || p.stato;
+            var coloreSt = coloreStato(p.stato);
+            if (p.stato === 'c') coloreSt = '#27ae60'; // chiusa = verde nell'elenco a sinistra
+            listItem.innerHTML =
+                '<div class="d-flex justify-content-between"><strong>' + p.prot + '</strong><small class="text-muted">' + p.data + '</small></div>' +
+                '<div class="d-flex justify-content-between" style="font-size:0.85em;"><span class="badge bg-ligth">' + (p.tipo || 'N/D').toUpperCase() + '</span></div>' +
+                '<div class="text-primary d-flex justify-content-between" style="font-size:0.75em;">' + (p.oggetto || '').toLowerCase() + '</div>' +
+                '<div class="small text-muted" style="font-size:0.8em;"><i>' + (p.soggetti || '').toLowerCase() + '</i></div>' +
+                '<div class="small" style="color:' + coloreSt + '; font-size:0.8em;"><small>' + statoText.toUpperCase() + '</small></div>';
+            listItem.onclick = function(e) {
+                e.preventDefault();
+                var hasLocation = p.lat && p.lng;
+                if (hasLocation) {
+                    map.setView([parseFloat(p.lat), parseFloat(p.lng)], 18);
+                } else if (p.geojson) {
+                    var geoJsonLayer = L.geoJSON(p.geojson);
+                    var bounds = geoJsonLayer.getBounds();
+                    map.fitBounds(bounds, {padding: [10, 10]});
+                }
+            };
+            listItem.addEventListener('mouseenter', function() {
+                enlargeMarker(p.id);
+            });
+            listItem.addEventListener('mouseleave', function() {
+                resetMarker(p.id);
+            });
+            practiceListElement.appendChild(listItem);
+        });
+
+        if (filteredPratiche.length === 0) {
+            practiceListElement.innerHTML = '<div class="text-muted p-3 text-center">Nessuna pratica disponibile</div>';
+        }
+    }
+
+    updateSidebarFromBounds();
+
+    function enlargeMarker(practiceId) {
+        var data = markersByPracticeId[practiceId];
+        if (!data) return;
+        data.marker.enlarged = true;
+        var enlargedIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div style='background-color:" + data.color + "; width:24px; height:24px; border-radius:50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.5);'></div>",
+            iconSize: [24, 24],
+            iconAnchor: [12, 24],
+            popupAnchor: [0, -24]
+        });
+        data.marker.setIcon(enlargedIcon);
+    }
+
+    function resetMarker(practiceId) {
+        var data = markersByPracticeId[practiceId];
+        if (!data) return;
+        data.marker.enlarged = false;
+        data.marker.setIcon(data.originalIcon);
+    }
+
+    function isPracticeInBounds(pratica, bounds) {
+        if (pratica.lat && pratica.lng) {
+            return bounds.contains([pratica.lat, pratica.lng]);
+        }
+        if (pratica.geojson) {
+            try {
+                var geomBounds = L.geoJSON(pratica.geojson).getBounds();
+                if (geomBounds && bounds.intersects(geomBounds)) {
+                    return true;
+                }
+            } catch(e) {}
+        }
+        return false;
+    }
+
+    function updateSidebarFromBounds() {
+        var bounds = map.getBounds();
+        var filteredProt = allPraticheDataProt.filter(function(p) {
+            return isPracticeInBounds(p, bounds);
+        });
+        var filteredEdil = allPraticheDataEdil.filter(function(p) {
+            return isPracticeInBounds(p, bounds);
+        });
+        populateSidebar(filteredProt, 'practice-list-prot', featureGroupProt);
+        populateSidebar(filteredEdil, 'practice-list-edil', featureGroupEdil);
+    }
+
+    var sidebarUpdateTimeout;
+    map.on('moveend', function() {
+        clearTimeout(sidebarUpdateTimeout);
+        sidebarUpdateTimeout = setTimeout(updateSidebarFromBounds, 150);
+    });
+
+    function applyTabVisibility() {
+        var activeTab = $('#mapResultsTab a.active').attr('href');
+        var showProt = (activeTab === '#opengeoprot');
+        if (showProt) {
+            if (featureGroupProt.getLayers().length) map.addLayer(featureGroupProt);
+            if (featureGroupEdil.getLayers().length) map.removeLayer(featureGroupEdil);
+        } else {
+            if (featureGroupEdil.getLayers().length) map.addLayer(featureGroupEdil);
+            if (featureGroupProt.getLayers().length) map.removeLayer(featureGroupProt);
+        }
+        var grp = showProt ? featureGroupProt : featureGroupEdil;
+        if (grp.getLayers().length > 0) {
+            map.fitBounds(grp.getBounds(), { padding: [30, 30] });
+        }
+    }
+
+    if (featureGroupProt.getLayers().length > 0 || featureGroupEdil.getLayers().length > 0) {
+        applyTabVisibility();
+    }
+
+    $('#mapResultsTab a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+        applyTabVisibility();
+    }).on('click', function(e) {
+        // fallback immediato nel caso l'evento Bootstrap non scatti
+        setTimeout(applyTabVisibility, 0);
+    });
+});
+</script>
+
+<style>
+.sidebar {
+    height: calc(75vh - 60px);
+    background-color: #f8f9fa;
+}
+.sidebar-content {
+    max-height: calc(100% - 60px);
+    overflow-y: auto;
+}
+.list-group-item {
+    padding: 14px 16px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+.list-group-item:hover {
+    background-color: #e9ecef;
+}
+.list-group-item.active {
+    background-color: #0d6efd;
+    color: white;
+}
+.list-group-item.active small {
+    color: rgba(255,255,255,0.8);
+}
+.list-group-item .badge {
+    font-size: 0.8em;
+}
+</style>
+</style>
+</style>
+
+{% if nessun_risultato %}
+<script>
+  setTimeout(function() {
+    // Torna alla pagina precedente (la maschera di ricerca) conservando
+    // i valori gia' inseriti grazie allo stato del browser (bfcache).
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = "{% url 'protocollo:search_protocollo_url' %}";
+    }
+  }, 3000);
+</script>
+{% endif %}
+{% endblock js %}

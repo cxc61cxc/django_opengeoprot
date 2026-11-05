@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Elimina Settore{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 600px;">
+  <div class="card border-danger shadow-sm">
+    <div class="card-header bg-danger text-white">Elimina Settore</div>
+    <div class="card-body">
+      <p>Sei sicuro di voler eliminare il settore <strong>{{ settore.codice }} - {{ settore.nome }}</strong> e tutte le sue U.O.?</p>
+      <form method="post">
+        {% csrf_token %}
+        <div class="text-right">
+          <a href="{% url 'struttura_ente:settore_list' %}" class="btn btn-outline-secondary">Annulla</a>
+          <button type="submit" class="btn btn-danger">Elimina</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

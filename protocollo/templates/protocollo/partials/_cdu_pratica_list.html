@@ -1,0 +1,73 @@
+{% load static %}
+
+  <div class="row">
+    
+    
+    {% if tot_cdu %} 
+      <!-- Se è presente almeno un cdu NON mostra il tasto aggiungi -->
+    {% else %}
+        <div class="col-sm-5">
+          {% if is_editor == True %}
+            {% if pratica.stato != 'c' and pratica.stato != 'aa' or user.is_superuser %}
+              <a style="color:green;" class="nav-link " href="{% url 'prg:cerdesurb_add_url' pk %}"><img class="img-fluid" 
+                src="{% static 'img/icons8-plus.svg' %}" 
+                width="25" height="25" >-Aggiungi/Edita cdu
+              </a>
+            {% endif %}
+          {% endif %}
+        </div>
+    {% endif %}
+        
+        
+    
+  </div>    
+
+  <!-- {% if cdu %}  -->
+  {% if tot_cdu %} 
+  <table class="table table-hover table-sm" style="font-size:.9em;">
+            
+    <thead>
+      <tr class="text-muted" style="font-size:.9em;">
+        
+        <th scope="col">#</th>
+        <th scope="col">#</th>
+        <th scope="col">Numero</th>
+        <th scope="col">Data</th>
+        
+      
+      </tr>
+    </thead>
+  <!-- {% endif %}  -->
+
+    <tbody>
+      <p>cdu</p>
+      {% for c in cdu %}
+      <tr style="vertical-align:bottom;">
+        <th scope="row">
+          <a title="Vai al CDU" class="btn btn-outline-info btn-sm" style="height:20px; width:20px;" href="{% url 'prg:cerdesurb_detail_url' c.id %}">
+          
+          </a>
+        </th>
+        <td>
+          CDU
+        </td>
+      
+        <td style="font-size:1.1em">
+          {{ c.cdu_number }}
+        </td>
+        
+        <td>{{ c.cdu_date| date:"d/m/Y"  }}</td>
+
+        <td>
+         {% if  pratica.stato != 'c' and pratica.stato != 'aa' or user.is_superuser %}
+          <a title="Modifica dati del CDU" class="btn btn-warning btn-sm" style="height:20px; width:20px;" href="{% url 'prg:cerdesurb_edit_url' c.id %}"></a>
+          {% endif %}
+        </td>
+      </tr>
+      
+    </tbody>
+  {% endfor %}
+  </table>
+{% endif %}
+ 
+    

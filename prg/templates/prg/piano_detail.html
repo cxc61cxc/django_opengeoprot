@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static%}
+{% block content %}
+
+  
+<div class="container">
+    <div class="row">
+      <div class="form-group col-md-1 mb-0" >
+          <input type=button class="btn btn-outline-success btn-sm" value="Indietro" onClick="javascript:history.go(-1);">
+      </div>  
+      <div class="form-group col-md-11 mb-0" >
+          <h5>Dettaglio piano</h5>
+      </div>  
+    </div>
+      
+</div>
+  
+<div class="container p-2 my-2 border" style="font-size:0.9em;">
+    <br><hr>
+  
+    <div class="row align-items-start">
+        <div class="col h5">
+          Piano : {{ piano.name | upper}}
+        </div>
+        <div class="col h6">
+         Descrizione : {{ piano.description }} 
+        </div>
+    </div>
+</div>
+<div class="container p-2 my-2 border" style="font-size:0.9em;">
+    <div class="row my-2">
+        <div class="col-3 offset-9">
+            <a class="btn btn-sm btn-outline-success" href="{% url 'prg:add_destinazione_url' id=piano.id %}">
+                Aggiungi
+            </a>
+
+        </div>
+    </div>
+    {% if destinazioni  %}      
+            <table class="table table-hover table-sm" >
+                <thead>
+                <tr>
+                    <th scope="col"></th>
+                    
+                    <th scope="col">Nome</th>
+                    <th scope="col">Descrizione</th>
+                    <th scope="col">Norma</th>
+                    <th></th>
+                    <th></th>
+                    
+                </tr>
+                </thead>
+                <tbody>
+                {% for d in destinazioni %}
+                <tr>
+                    <td >
+                    </td>
+                    <td><b>{{ d.name|upper }}</b></td>
+                    <td>{{ d.description }}</td>
+                    <td class="text-center">{{ d.norma }}</td>
+                    <td></td>
+                    <!-- <a href="#"><img class="img-fluid" 
+                        src="{% static 'img/book.svg' %}" 
+                        width="20" height="20" ></a> -->
+                    <td>
+                        <a title="Modifica" 
+                            href="{{ d.get_absolute_url }}"
+                            style="width:35px;height:35px" class="btn btn-sm btn-outline-info">
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            
+            </table>
+    {% else %}
+    <h4 class="font-weight-bold">Nessun riscontro!</h4>
+
+    {% endif %}
+    </div>  
+
+
+
+{% endblock %}

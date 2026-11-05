@@ -1,0 +1,212 @@
+{% load static %}
+{% if pratica_list %}
+    <p class="text-left">
+      {% if totale_p > 0 and protocollo_ids %}
+      <a class="btn btn-outline-primary btn-sm" href="{% url 'protocollo:mappa_results_url' %}?ids={{ protocollo_ids|join:',' }}&tab=opengeoprot" target="_blank">
+        Mostra in mappa
+      </a>
+      {% endif %}
+      {% if edilizia_tot > 0 and edilizia_ids %}
+      <a class="btn btn-outline-primary btn-sm" href="{% url 'protocollo:mappa_archivio' %}?ids={{ edilizia_ids|join:',' }}" target="_blank">
+        Mostra in mappa (archivio)
+      </a>
+      {% endif %}
+    </p>
+    <div class="row font-weight-bold h6">
+        <div class="col-1">Origine</div>
+        <div class="col-1">Prot.Gen.</div>
+        <div class="col-2">Richiedente</div>
+        <div class="col-2">ubicazione</div>
+        <div class="col-2">Oggetto</div>
+        <div class="col-1">Atto</div>
+        <div class="col-1">Istruttoria</div>
+        <div class="col-2">Catastale</div>
+    </div>    
+        {% for item in pratiche_with_particelle %}
+        <div class="row m-1 small" data-pratica-id="{{ item.pratica.id }}">
+            <div class="col-1">
+                <a class="btn btn-outline-warning text-dark btn-sm"  href="{% url 'gest_edilizia:pratica_edit' item.pratica.id%}">{{ item.pratica.origine }}</a>
+            </div>
+            <div class="col-1">
+                {{ item.pratica.prot_gen }} - {{ item.pratica.data_prot_gen|date:"d/m/Y"}}
+            </div>
+            <div class="col-2">
+                {{ item.pratica.richiedente|title }}
+            </div>
+            <div class="col-2">
+                {{ item.pratica.ubicazione|title }}
+                    {% if item.pratica.ubicazione %}
+                        <a  href="https://nominatim.openstreetmap.org/ui/search.html?q= carrara+{{item.pratica.ubicazione |lower}}"  
+                            title="individua su OpenStreetMap"  
+                            target="self"> 
+                            <img src="https://www.openstreetmap.org/assets/osm_logo-4b074077c29e100f40ee64f5177886e36b570d4cc3ab10c7b263003d09642e3f.svg" 
+                            width="18px"></a>
+                    {% endif %}
+            </div>
+            <div class="col-2">
+                {{ item.pratica.oggetto|truncatechars:50 }}
+            </div>
+            <div class="col-1">
+                {{ item.pratica.atto }} {{item.pratica.num_atto}}   
+            </div>
+            <div class="col-1">
+                {{ item.pratica.istruttoria }}   
+            </div>
+            
+            <div class="col-2">
+                {% if item.particelle %}
+                    {% for part in item.particelle %}
+                        <span class="badge badge-light border">Fg {{ part.foglio }} - Map {{ part.mappale }}</span>{% if not forloop.last %} {% endif %}
+                    {% endfor %}
+                {% elif item.pratica.fg or item.pratica.mapp %}
+                    {{ item.pratica.fg }} - {{item.pratica.mapp}}
+                {% else %}
+                    <span class="text-muted">-</span>
+                {% endif %}
+            </div>
+            
+            
+        </div>
+        <hr>
+        {% empty %}
+            <p>No results found.</p>
+        {% endfor %}
+
+
+        {% if pratica_list.has_other_pages %}
+            <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+
+                <!-- Pulsante Precedente -->
+                {% if pratica_list.has_previous %}
+                <li class="page-item">
+                <a class="page-link" href="?{% for key, value in request.GET.items %}{{ key }}={{ value }}&{% endfor %}{{ page_param|default:'page' }}={{ pratica_list.previous_page_number }}" aria-label="Precedente">
+                    « Precedente
+                </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                <span class="page-link" aria-disabled="true">« Precedente</span>
+                </li>
+                {% endif %}
+
+                <!-- Pagina corrente -->
+                <!-- Mostra il numero totale di pagine -->
+            <p class="text-center mt-2"> {{ pratica_list.number }}/{{ pratica_list.paginator.num_pages }} </p>
+
+                <!-- Pulsante Successivo -->
+                {% if pratica_list.has_next %}
+                <li class="page-item">
+                <a class="page-link" href="?{% for key, value in request.GET.items %}{{ key }}={{ value }}&{% endfor %}{{ page_param|default:'page' }}={{ pratica_list.next_page_number }}" aria-label="Successivo">
+                    Successivo »
+                </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                <span class="page-link" aria-disabled="true">Successivo »</span>
+                </li>
+                {% endif %}
+
+            </ul>
+            </nav>
+
+            
+        {% endif %}
+        
+    {% else %}
+    <div class="row text-center h6">
+        <div class="col-6 offset-3">Nessun risultato !</div>
+    </div>
+    {% endif %}
+
+    <div id="hover-map-popup" style="display:none; position:fixed; z-index:9999; background:white; border:1px solid #ccc; border-radius:4px; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+        <div id="hover-map" style="height:340px; width:440px;"></div>
+    </div>
+
+    <script>
+    var geojsonData = {};
+    {% for item in pratiche_with_particelle %}
+    geojsonData[{{ item.pratica.id }}] = {{ item.particelle_geojson|safe }};
+    {% endfor %}
+    </script>
+
+    <script>
+    (function() {
+        var popup = document.getElementById('hover-map-popup');
+        var mapContainer = document.getElementById('hover-map');
+        var map = null;
+        var geojsonLayer = null;
+
+        function showPopup(geojson, x, y) {
+            if (!map) {
+                map = L.map(mapContainer).setView([44.07721, 10.09636], 17);
+                L.tileLayer("{% static 'tiles/' %}{z}/{x}/{y}.png", {
+                    attribution: 'Comune di Carrara',
+                    maxZoom: 19
+                }).addTo(map);
+            }
+
+            if (geojsonLayer) {
+                map.removeLayer(geojsonLayer);
+            }
+
+            var features = geojson.features || [];
+            if (features.length > 0) {
+                geojsonLayer = L.geoJSON(geojson, {
+                    style: {color: '#ff3333', weight: 2, fillOpacity: 0.2}
+                }).addTo(map);
+                map.fitBounds(geojsonLayer.getBounds(), {padding: [60, 60]});
+            }
+
+            var popupWidth = 440;
+            var popupHeight = 340;
+            var halfWidth = window.innerWidth / 2;
+            var halfHeight = window.innerHeight / 2;
+            var posLeft = (x > halfWidth) ? (x - popupWidth - 10) : (x + 15);
+            posLeft = Math.max(5, Math.min(posLeft, window.innerWidth - popupWidth - 5));
+            var posTop = (y > halfHeight) ? (y - popupHeight - 10) : (y + 15);
+            posTop = Math.max(5, Math.min(posTop, window.innerHeight - popupHeight - 5));
+
+            popup.style.left = posLeft + 'px';
+            popup.style.top = posTop + 'px';
+            popup.style.display = 'block';
+
+            setTimeout(function() { map.invalidateSize(); }, 50);
+        }
+
+        function hidePopup() {
+            popup.style.display = 'none';
+        }
+
+        document.querySelectorAll('div[data-pratica-id]').forEach(function(row) {
+            row.addEventListener('mouseenter', function(e) {
+                var praticaId = row.getAttribute('data-pratica-id');
+                var geojson = geojsonData[praticaId];
+                if (!geojson || !geojson.features || geojson.features.length === 0) {
+                    hidePopup();
+                    return;
+                }
+                showPopup(geojson, e.clientX, e.clientY);
+            });
+
+            row.addEventListener('mousemove', function(e) {
+                if (popup.style.display === 'block') {
+                    var popupWidth = 320;
+                    var popupHeight = 240;
+                    var halfWidth = window.innerWidth / 2;
+                    var halfHeight = window.innerHeight / 2;
+                    var posLeft = (e.clientX > halfWidth) ? (e.clientX - popupWidth - 10) : (e.clientX + 15);
+                    posLeft = Math.max(5, Math.min(posLeft, window.innerWidth - popupWidth - 5));
+                    var posTop = (e.clientY > halfHeight) ? (e.clientY - popupHeight - 10) : (e.clientY + 15);
+                    posTop = Math.max(5, Math.min(posTop, window.innerHeight - popupHeight - 5));
+                    popup.style.left = posLeft + 'px';
+                    popup.style.top = posTop + 'px';
+                }
+            });
+
+            row.addEventListener('mouseleave', function() {
+                hidePopup();
+            });
+        });
+    })();
+    </script>

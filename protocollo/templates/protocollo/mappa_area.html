@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+<style>
+    html, body { height: 100%; }
+    #map { height: 70vh; width: 100%; }
+    .map-row { height: 70vh; }
+    .toolbar { margin: 10px 0; }
+</style>
+{% endblock css %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-2">
+        <div class="col-12">
+            <h4>Ricerca pratiche per area</h4>
+            <p>Utilizza gli strumenti di disegno (rettangolo o poligono) sulla mappa per selezionare un'area, poi clicca "Cerca pratiche" per visualizzare tutte le pratiche che intersecano l'area selezionata.</p>
+        </div>
+    </div>
+    <div class="row map-row">
+        <div class="col-12">
+            <div id="map"></div>
+        </div>
+    </div>
+    <div class="row toolbar">
+        <div class="col-12">
+            <button id="btn-search" class="btn btn-primary" disabled>
+                <i class="fa fa-search"></i> Cerca pratiche nell'area selezionata
+            </button>
+            <button id="btn-clear" class="btn btn-secondary">
+                <i class="fa fa-trash"></i> Cancella area
+            </button>
+        </div>
+    </div>
+</div>
+
+<form id="form-area" method="POST" action="{% url 'protocollo:mappa_area_url' %}">
+    {% csrf_token %}
+    <input type="hidden" name="area_geojson" id="area-geojson">
+</form>
+{% endblock %}
+
+{% block js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script>
+// Patch for Leaflet 1.9.x compatibility
+(function() {
+    if (L && L.Map && !L.Map.prototype.pm) {
+        // Fix for missing _initPathRoot method
+        if (!L.Map.prototype._initPathRoot && L.Map.prototype._initPathLayer) {
+            L.Map.prototype._initPathRoot = L.Map.prototype._initPathLayer;
+        }
+    }
+})();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var map = L.map('map').setView([44.077, 10.096], 14);
+    
+    L.tileLayer("{% static 'tiles/' %}{z}/{x}/{y}.png", {
+        attribution: 'Comune di Carrara: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ',
+        maxZoom: 19
+    }).addTo(map);
+    
+    L.marker([44.077, 10.096]).addTo(map).bindPopup('Carrara');
+    
+    var drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+    
+    function updateSearchButton() {
+        document.getElementById('btn-search').disabled = drawnItems.getLayers().length === 0;
+    }
+    
+    // Check if Leaflet.Draw is available
+    if (typeof L.Control.Draw !== 'undefined') {
+        var drawControl = new L.Control.Draw({
+            position: 'topright',
+            draw: {
+                polyline: false,
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                polygon: {
+                    allowIntersection: false,
+                    showArea: true
+                },
+                rectangle: {
+                    showArea: true
+                }
+            },
+            edit: {
+                featureGroup: drawnItems,
+                remove: true
+            }
+        });
+        map.addControl(drawControl);
+    }
+    
+    map.on(L.Draw.Event.CREATED, function(e) {
+        drawnItems.clearLayers();
+        drawnItems.addLayer(e.layer);
+        document.getElementById('area-geojson').value = '';
+        updateSearchButton();
+    });
+    
+    map.on(L.Draw.Event.DELETED, function() {
+        setTimeout(updateSearchButton, 0);
+    });
+    
+    map.on(L.Draw.Event.EDITED, function() {
+        updateSearchButton();
+    });
+    
+    document.getElementById('btn-clear').addEventListener('click', function() {
+        drawnItems.clearLayers();
+        document.getElementById('area-geojson').value = '';
+        updateSearchButton();
+    });
+    
+    document.getElementById('btn-search').addEventListener('click', function() {
+        var layers = drawnItems.getLayers();
+        if (layers.length === 0) return;
+        var feature = layers[0].toGeoJSON();
+        var geojson = feature.geometry || feature;
+        document.getElementById('area-geojson').value = JSON.stringify(geojson);
+        document.getElementById('form-area').submit();
+    });
+});
+</script>
+{% endblock js %}

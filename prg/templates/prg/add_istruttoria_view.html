@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block css %}
+<style>
+    :root {
+      --form-control-color: #d9534f; /* Rosso come i bottoni danger del tuo form */
+    }
+
+    /* Applichiamo il tuo stile personalizzato alle checkbox */
+    input[type="checkbox"].select_check_value, 
+    input[type="checkbox"].parte_check_value {
+      appearance: none; /* Rimuove l'aspetto predefinito del browser */
+      background-color: #fff;
+      margin: 0;
+      font: inherit;
+      color: currentColor;
+      width: 1em;
+      height: 1em;
+      border: 0.15em solid currentColor;
+      border-radius: 0.15em;
+      display: grid;
+      place-content: center;
+      transition: 120ms border-color ease-in-out;
+    }
+
+    input[type="checkbox"]::before {
+      content: "";
+      width: 0.6em;
+      height: 0.6em;
+      transform: scale(0);
+      transition: 120ms transform ease-in-out;
+      box-shadow: inset 1em 1em var(--form-control-color);
+    }
+
+    input[type="checkbox"]:checked::before {
+      transform: scale(1);
+    }
+</style>
+{% endblock css %}
+
+{% block content %}
+{% load static %}
+
+
+
+<div class="container">
+    <div class="row ">
+      <div class="form-group col-md-2" >
+        
+          <input type=button class="btn btn-outline-success btn-sm" value="Indietro" onClick="javascript:history.go(-1);">
+      </div>  
+      <div class="form-group col-md-8 mb-0" >
+          <h5>Aggiunge destinazione</h5>
+          <p class="h3">{{ piano|upper }} </p>
+      </div> 
+      
+    </div>  
+
+      {% if destinazioni %}
+      <div class="container mt-3">
+          <form method="POST" name="dest_urb"  action="{% url 'prg:add_destinazioni_url' cataprat %}">
+              {% csrf_token %}
+              
+              <!-- Header di controllo compatto reso fisso (sticky) sotto la navbar -->
+              <div class="row sticky-top bg-white py-2 mb-3 border-bottom shadow-sm" style="top: 70px; z-index: 1020;">
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-danger btn-sm btn-block">Conferma Selezione</button>
+                </div>
+                <div class="col-md-5">
+                    <div class="input-group input-group-sm">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text bg-primary text-white">ID selezionati</span>
+                        </div>
+                        <input type="text" readonly name="selected" id="select_checked" class="form-control small light">
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="input-group input-group-sm">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text bg-danger text-white">ID parte</span>
+                        </div>
+                        <input type="text" readonly name="selected_parte" id="select_parte" class="form-control small light">
+                    </div>
+                </div>
+              </div>
+
+              <!-- Area inferiore scrollabile per le destinazioni -->
+              <div style="max-height: calc(90vh - 280px); overflow-y: auto; overflow-x: hidden; padding: 5px;">
+                <div class="row mx-0">
+                    {% for d in destinazioni %}
+                    <div class="col-6 col-md-4 col-lg-3 col-xl-2 mb-2 px-1">
+                        <div class="card h-100 shadow border-secondary destinazione-card" style="background-color: #ffffff;">
+                        <div class="card-body p-2 d-flex flex-column">
+                            <p class="card-title text-primary font-weight-bold mb-2 small" style="line-height: 1.1;">
+                            {{ d.name|title }}
+                            </p>
+                            
+                            <div class="mt-auto pt-2 border-top">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="select_check_value" id="sel_{{d.id}}" name="select" value="{{d.id}}" style="cursor:pointer;">
+                                        <label class="mb-0 light small" for="sel_{{d.id}}">Sel.</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox text-danger font-weight-bold">
+                                        <input type="checkbox" class="parte_check_value" id="pt_{{d.id}}" name="select_parte" value="{{d.id}}" style="cursor:pointer;">
+                                        <label class="mb-0 light small" for="pt_{{d.id}}">Parte</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+              </div>
+          </form>
+      {% endif %}
+      </div>
+
+</div>
+{% endblock content %}
+
+{% block js %}
+<script>
+    $(document).ready(function() {
+        // Quando viene selezionata la casella "Parte", spunta automaticamente anche "Sel."
+        // Sincronizza lo stato di "Sel." in base a "Parte"
+        $('.parte_check_value').on('change', function() {
+            var val = $(this).val();
+            var $selCheckbox = $('.select_check_value[value="' + val + '"]');
+            
+            if ($(this).is(':checked')) {
+                var val = $(this).val();
+                var $selCheckbox = $('.select_check_value[value="' + val + '"]');
+                // Se seleziono "Parte", deve essere spuntato anche "Sel."
+                if (!$selCheckbox.is(':checked')) {
+                    $selCheckbox.click();
+                }
+            } else {
+                // Se deseleziono "Parte", deseleziona automaticamente anche "Sel."
+                if ($selCheckbox.is(':checked')) {
+                    $selCheckbox.click();
+                }
+            }
+        });
+
+        // Se deseleziono manualmente "Sel.", rimuovi anche la spunta da "Parte"
+        $('.select_check_value').on('change', function() {
+            if (!$(this).is(':checked')) {
+                var val = $(this).val();
+                var $parteCheckbox = $('.parte_check_value[value="' + val + '"]');
+                if ($parteCheckbox.is(':checked')) {
+                    $parteCheckbox.click();
+                }
+            }
+        });
+    });
+</script>
+{% endblock js %}

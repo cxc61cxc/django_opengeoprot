@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block content %}
+<div class="container my-3">
+  <div class="row">
+    <h5>Certificati di Destinazione urbanistica </h5>
+  </div>
+
+
+  {% if lista %} 
+      <table class="table table-hover table-sm" style="font-size:.9em;">
+            
+        <thead>
+          <tr class="text-muted" style="font-size:.9em;">
+            <th scope="col">#</th>
+            <th scope="col">Numero</th>
+            <th scope="col">Data</th>
+            <th scope="col">Tipo</th>
+
+            
+          
+          </tr>
+        </thead>
+      
+        <tbody>
+          {% for c in lista %}
+          <tr style="vertical-align:bottom;">
+            <td>
+              <a title="Vedi la pratica" 
+                  href="{% url 'protocollo:pratica_detail_url' c.pratica_id %}"
+                  style="width:35px;height:35px" class="btn btn-sm btn-outline-success"><span class="small">{{ c.pratica_id }}</span>
+              </a>
+              
+            </td>
+          
+            <td style="font-size:1.1em">
+              <b>{{ c.cdu_number }}</b>/{{ c.cdu_date| date:"Y"  }}
+            </td>
+            
+            <td>{{ c.cdu_date| date:"d-m-Y"  }}</td>
+            <td>{{ c.uso  }}</td>
+            
+
+            
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+      {% endif %} 
+    </div>   
+{% endblock%}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if servizio %}Modifica{% else %}Nuovo{% endif %} Servizio{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 700px;">
+  <div class="card shadow-sm">
+    <div class="card-header bg-success text-white">
+      {% if servizio %}Modifica Servizio{% else %}Nuovo Servizio per {{ settore.codice }}{% endif %}
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label>Codice</label>
+          <input class="form-control" type="text" name="codice" required maxlength="20" value="{{ servizio.codice|default_if_none:'' }}">
+        </div>
+        <div class="form-group">
+          <label>Nome</label>
+          <input class="form-control" type="text" name="nome" required value="{{ servizio.nome|default_if_none:'' }}">
+        </div>
+        <div class="form-group">
+          <label>Descrizione</label>
+          <textarea class="form-control" name="descrizione" rows="3">{{ servizio.descrizione|default_if_none:'' }}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Ordine</label>
+          <input class="form-control" type="number" name="ordine" value="{{ servizio.ordine|default_if_none:'0' }}">
+        </div>
+        <div class="form-group">
+          <label>Atto di riferimento (opzionale)</label>
+          <input class="form-control" type="text" name="atto_riferimento" placeholder="Es. Delibera n.123 del 2025-09-01">
+        </div>
+        <div class="text-right">
+          <a href="{% url 'struttura_ente:settore_list' %}" class="btn btn-outline-secondary">Annulla</a>
+          <button type="submit" class="btn btn-success">Salva</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifica Gruppi - {{ user_to_edit.username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-white px-0 py-2 mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home:index' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'accounts:user_management_url' %}">Gestione Utenti</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Modifica Gruppi - {{ user_to_edit.username }}</li>
+    </ol>
+  </nav>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-header bg-light d-flex align-items-center">
+      <div>
+        <h4 class="mb-0">Assegna Gruppi a <strong>{{ user_to_edit.username }}</strong></h4>
+        <small class="text-muted">
+          {% if user_to_edit.get_full_name %}
+            {{ user_to_edit.get_full_name }}
+          {% endif %}
+          {% if user_to_edit.is_superuser %}
+            <span class="badge bg-danger ms-2">superuser</span>
+          {% elif user_to_edit.is_staff %}
+            <span class="badge bg-warning text-dark ms-2">staff</span>
+          {% endif %}
+        </small>
+      </div>
+    </div>
+
+    <form method="POST">
+      {% csrf_token %}
+
+      <div class="card-body">
+
+        <!-- SETTORI -->
+        {% if settore_groups %}
+          <h5 class="mb-3 text-secondary">
+            <i class="fa fa-building me-2"></i>Gruppi per Settore
+          </h5>
+          <p class="text-muted small mb-3">
+            I gruppi <code>user_settore_N</code> concedono accesso in sola lettura,
+            i gruppi <code>editor_settore_N</code> includono anche i permessi di modifica.
+          </p>
+
+          <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mb-4">
+            {% for sg in settore_groups %}
+              <div class="col">
+                <div class="card h-100 border-secondary-subtle">
+                  <div class="card-header bg-light py-2">
+                    <strong>{{ sg.settore.codice }}</strong>
+                    <span class="text-muted small d-block">{{ sg.settore.nome }}</span>
+                  </div>
+                  <ul class="list-group list-group-flush">
+                    {% if sg.user_group %}
+                      <li class="list-group-item d-flex align-items-center">
+                        <input class="form-check-input me-2 mt-0" type="checkbox"
+                               name="groups" value="{{ sg.user_group.id }}" id="g{{ sg.user_group.id }}"
+                               {% if sg.user_group.id in user_groups_ids %}checked{% endif %}>
+                        <label class="form-check-label flex-grow-1" for="g{{ sg.user_group.id }}">
+                          <span class="badge bg-info text-dark me-1">user</span>
+                          {{ sg.user_group.name }}
+                        </label>
+                        <span class="badge bg-light text-muted" title="Permessi">
+                          {{ sg.user_group.permissions.count }}p
+                        </span>
+                      </li>
+                    {% endif %}
+                    {% if sg.editor_group %}
+                      <li class="list-group-item d-flex align-items-center">
+                        <input class="form-check-input me-2 mt-0" type="checkbox"
+                               name="groups" value="{{ sg.editor_group.id }}" id="g{{ sg.editor_group.id }}"
+                               {% if sg.editor_group.id in user_groups_ids %}checked{% endif %}>
+                        <label class="form-check-label flex-grow-1" for="g{{ sg.editor_group.id }}">
+                          <span class="badge bg-success me-1">editor</span>
+                          {{ sg.editor_group.name }}
+                        </label>
+                        <span class="badge bg-light text-muted" title="Permessi">
+                          {{ sg.editor_group.permissions.count }}p
+                        </span>
+                      </li>
+                    {% endif %}
+                    {% if not sg.user_group and not sg.editor_group %}
+                      <li class="list-group-item text-muted small fst-italic">
+                        Nessun gruppo associato
+                      </li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- STAFF A / STAFF B -->
+        {% if staff_groups %}
+          <h5 class="mb-3 text-secondary mt-4">
+            <i class="fa fa-user-shield me-2"></i>Gruppi Staff
+          </h5>
+          <p class="text-muted small mb-3">
+            Settori speciali di staff: <code>user_staff_X</code> (lettura) e
+            <code>editor_staff_X</code> (lettura + modifica).
+          </p>
+
+          <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mb-4">
+            {% for sg in staff_groups %}
+              <div class="col">
+                <div class="card h-100 border-primary-subtle">
+                  <div class="card-header bg-light py-2">
+                    <strong>{{ sg.settore.codice }}</strong>
+                    <span class="text-muted small d-block">{{ sg.settore.nome }}</span>
+                  </div>
+                  <ul class="list-group list-group-flush">
+                    {% if sg.user_group %}
+                      <li class="list-group-item d-flex align-items-center">
+                        <input class="form-check-input me-2 mt-0" type="checkbox"
+                               name="groups" value="{{ sg.user_group.id }}" id="g{{ sg.user_group.id }}"
+                               {% if sg.user_group.id in user_groups_ids %}checked{% endif %}>
+                        <label class="form-check-label flex-grow-1" for="g{{ sg.user_group.id }}">
+                          <span class="badge bg-info text-dark me-1">user</span>
+                          {{ sg.user_group.name }}
+                        </label>
+                        <span class="badge bg-light text-muted" title="Permessi">
+                          {{ sg.user_group.permissions.count }}p
+                        </span>
+                      </li>
+                    {% endif %}
+                    {% if sg.editor_group %}
+                      <li class="list-group-item d-flex align-items-center">
+                        <input class="form-check-input me-2 mt-0" type="checkbox"
+                               name="groups" value="{{ sg.editor_group.id }}" id="g{{ sg.editor_group.id }}"
+                               {% if sg.editor_group.id in user_groups_ids %}checked{% endif %}>
+                        <label class="form-check-label flex-grow-1" for="g{{ sg.editor_group.id }}">
+                          <span class="badge bg-success me-1">editor</span>
+                          {{ sg.editor_group.name }}
+                        </label>
+                        <span class="badge bg-light text-muted" title="Permessi">
+                          {{ sg.editor_group.permissions.count }}p
+                        </span>
+                      </li>
+                    {% endif %}
+                    {% if not sg.user_group and not sg.editor_group %}
+                      <li class="list-group-item text-muted small fst-italic">
+                        Nessun gruppo associato
+                      </li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- COMMISSIONI -->
+        {% if commissioni_groups %}
+          <h5 class="mb-3 text-secondary mt-4">
+            <i class="fa fa-gavel me-2"></i>Commissioni
+          </h5>
+          <p class="text-muted small mb-3">
+            Gruppi associati alle commissioni consiliari attive.
+          </p>
+
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-2 mb-3">
+            {% for group in commissioni_groups %}
+              <div class="col">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox"
+                         name="groups" value="{{ group.id }}" id="g{{ group.id }}"
+                         {% if group.id in user_groups_ids %}checked{% endif %}>
+                  <label class="form-check-label" for="g{{ group.id }}">
+                    {{ group.name }}
+                    <span class="badge bg-light text-muted ms-1">{{ group.permissions.count }}p</span>
+                  </label>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- ALTRI GRUPPI -->
+        {% if other_groups %}
+          <h5 class="mb-3 text-secondary mt-4">
+            <i class="fa fa-tag me-2"></i>Altri gruppi
+          </h5>
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-2 mb-3">
+            {% for group in other_groups %}
+              <div class="col">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox"
+                         name="groups" value="{{ group.id }}" id="g{{ group.id }}"
+                         {% if group.id in user_groups_ids %}checked{% endif %}>
+                  <label class="form-check-label" for="g{{ group.id }}">
+                    {{ group.name }}
+                    <span class="badge bg-light text-muted ms-1">{{ group.permissions.count }}p</span>
+                  </label>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+      </div>
+
+      <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+        <small class="text-muted">
+          <i class="fa fa-info-circle me-1"></i> Le modifiche hanno effetto al prossimo login.
+        </small>
+        <div>
+          <a href="{% url 'accounts:user_management_url' %}" class="btn btn-link text-secondary">Annulla</a>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa fa-save me-1"></i> Salva Modifiche
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

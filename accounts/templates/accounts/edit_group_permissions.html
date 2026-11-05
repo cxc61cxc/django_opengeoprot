@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifica Permessi - {{ group.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-white px-0 py-2 mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home:index' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'accounts:user_management_url' %}">Gestione Utenti</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'accounts:group_management_url' %}">Gestione Gruppi</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Permessi: {{ group.name }}</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Permessi: <code>{{ group.name }}</code></h2>
+    <span class="badge bg-secondary">{{ group.permissions.count }} permessi attivi</span>
+  </div>
+
+  <form method="POST">
+    {% csrf_token %}
+    <div class="accordion" id="permAccordion">
+      {% for app, perms in perms_by_app.items %}
+        <div class="card mb-2">
+          <div class="card-header bg-light" id="heading{{ app|slugify }}">
+            <h2 class="mb-0">
+              <button class="btn btn-link btn-block text-left collapsed px-0" type="button"
+                      data-toggle="collapse" data-target="#app{{ app|slugify }}"
+                      aria-expanded="false" aria-controls="app{{ app|slugify }}">
+                <i class="fa fa-caret-right me-2 text-muted"></i>
+                Applicazione: <strong>{{ app|upper }}</strong>
+                <span class="badge bg-light text-muted ms-2">{{ perms|length }}</span>
+              </button>
+            </h2>
+          </div>
+          <div id="app{{ app|slugify }}" class="collapse"
+               aria-labelledby="heading{{ app|slugify }}" data-parent="#permAccordion">
+            <div class="card-body">
+              <div class="row row-cols-md-2 row-cols-lg-3 g-2">
+                {% for p in perms %}
+                  <div class="col">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="permissions"
+                             value="{{ p.id }}" id="p{{ p.id }}"
+                             {% if p.id in group_permissions_ids %}checked{% endif %}>
+                      <label class="form-check-label small" for="p{{ p.id }}">
+                        {{ p.name }}
+                        <code class="text-muted">({{ p.codename }})</code>
+                      </label>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="mt-4 d-flex justify-content-between">
+      <a href="{% url 'accounts:group_management_url' %}" class="btn btn-outline-secondary">
+        <i class="fa fa-arrow-left me-1"></i> Torna alla lista gruppi
+      </a>
+      <button type="submit" class="btn btn-success">
+        <i class="fa fa-save me-1"></i> Salva Permessi
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

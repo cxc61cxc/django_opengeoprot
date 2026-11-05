@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="container">
+  <div class="row">
+    <div class="form-group col-md-1 mb-0" >
+        <input type=button class="btn btn-outline-success btn-sm" value="Indietro" onClick="javascript:history.go(-1);">
+    </div>  
+    <div class="form-group col-md-11 mb-0" >
+        {% if pratica.tipo_pratica_id == 7 %}
+        <h5>Crea Certificato</h5>
+        <p class="h6">Il numero proposto per il NUOVO cdu è <b>{{cdu_proposto}}</b></p>
+        {% else %}
+        <h5>Crea Informativa</h5>
+        <p class="h6">Il numero proposto per l'informativa è <b>{{pratica.prot_gen}}</b></p>
+
+        {% endif %}
+    </div>  
+    
+  </div>
+{% if submitted%}
+   <h4>
+      Il Certificato è stato registrato!
+   </h4>
+{% else %}
+<div class="container p-2 my-2 border" style="font-size:0.9em;">
+    <form action="" method="POST">
+    
+        {% csrf_token %}
+
+                <div class="form-row">
+                    <div class="form-group col-md-3 mb-0" >
+                        <label>NUMERO cdu/informativa</label>
+                        {% if pratica.tipo_pratica_id == 7 %}
+                            <input class="form-control" type="number" name="cdu_number" value={{ cdu_proposto }}>
+                        {% else %}
+                            <input class="form-control" type="number" name="cdu_number" value={{ pratica.prot_gen}}>
+                        {% endif %}
+                    </div>         
+                    
+                        
+                    <div class="form-group col-md-3 mb-0" >
+                       
+                        <label>data di rilascio</label>
+                        {% comment %} <input class="form-control" type="date" name="cdu_date" value="{{pratica.data_prot_gen|date:'Y-m-d'}}"> {% endcomment %}
+                        <input class="form-control" type="date" name="cdu_date" value="{{today|date:'Y-m-d'}}">
+
+                    
+                    </div>   
+                    <div class="form-group col-md-3 mb-0" >
+                   
+                        <label>data di riferimento urbanistico</label>
+                        <input class="form-control" type="date" name="data_riferimento" value="{{pratica.data_prot_gen|date:'Y-m-d'}}">
+                            
+                    </div>      
+                
+
+                   
+                    <div class="form-group col-md-3 mb-0" >
+                        <!-- <label>Uso</label> -->
+                        {% if pratica.tipo_pratica_id == 7 %}
+                        {{ form.uso  | as_crispy_field  }}
+                        {% else %}
+                        
+                        <input class="form-control" type="text" name="uso" value="Informativa">
+                        {% endif %}
+                    </div>      
+                </div>
+                <div class="form-row">
+                    
+                    <div class="form-group col-md-10 mb-0" >
+                    </div>         
+                    <div class="form-group col-md-1 mb-0" >
+                        {% if can_write %}<input type="submit" value="Salva" class="btn btn-outline-danger btn-sm">{% endif %}
+                    </div> 
+                        
+                </div>
+                
+        
+    </form>
+{% endif %}
+</div>
+{% endblock content %}

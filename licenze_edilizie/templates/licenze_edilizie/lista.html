@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Licenze Edilizie</h1>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+        {% for r in registri %}
+        <a href="{% url 'licenze_edilizie:download' r.pk %}" target="_blank" class="btn btn-outline-primary">
+            {{ r.periodo }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

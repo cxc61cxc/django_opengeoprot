@@ -1,0 +1,63 @@
+{% load static %}
+
+  <div class="row">
+    
+    
+   
+      <!-- Se è presente almeno un pau NON mostra il tasto aggiungi -->
+    
+        <div class="col-sm-5">
+          <a style="color:green;" class="nav-link " href="{% url 'suap:pau_add_url' %}"><img class="img-fluid" 
+            src="{% static 'img/icons8-plus.svg' %}" 
+            width="25" height="25" > Aggiungi PAU
+          </a>
+        </div>
+        
+        
+    
+  </div>    
+
+  <!-- {% if pau %}  -->
+  {% if tot_pau %} 
+  <table class="table table-hover table-sm" style="font-size:.9em;">
+            
+    <thead>
+      <tr class="text-muted" style="font-size:.9em;">
+        
+        <th scope="col">#</th>
+        <th scope="col">#</th>
+        <th scope="col">Numero</th>
+        <th scope="col">Data</th>
+        
+      
+      </tr>
+    </thead>
+  <!-- {% endif %}  -->
+
+    <tbody>
+      {% for c in pau %}
+      <tr style="vertical-align:bottom;">
+        <th scope="row">
+          <a title="Vai al PAU" class="btn btn-outline-info btn-sm" style="height:20px; width:20px;" href="{% url 'suap:pau_detail_url' c.id %}">
+          
+          </a>
+        </th>
+        <td>
+          PAU
+        </td>
+      
+        <td style="font-size:1.1em">
+          {{ c.pau_number }}
+        </td>
+        
+        <td>{{ c.pau_date| date:"d/m/Y"  }}</td>
+
+        <td>
+          <a title="Modifica dati del PAU" class="btn btn-warning btn-sm" style="height:20px; width:20px;" href="{% url 'suap:pau_edit_url' c.id %}"></a>
+        </td>
+      </tr>
+      
+    </tbody>
+  {% endfor %}
+  </table>
+{% endif %}

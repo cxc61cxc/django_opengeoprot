@@ -1,0 +1,37 @@
+
+
+<div class="container p-2 my-2 border" style="font-size:0.9em;">
+<p>{{ pk }}
+{% if cataprat %} 
+<table class="table table-hover">
+  
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Parte</th>
+      <th scope="col">Foglio</th>
+      <th scope="col">Mappale</th>
+      <th scope="col">Subalterno</th>
+      <th scope="col"></th>
+    </tr>
+  </thead>
+  {% for p in cataprat %}
+  <tbody>
+    <tr>
+      <th scope="row">{{ forloop.counter }}</th>
+      <td>{{ p.parte | upper}}</td>
+      <td>{{ p.foglio | upper }}</td>
+      <td>{{ p.mappale }}</td>
+      <td>{{ p.subalterno }}</td>
+      <td><a href="#">Dettaglio</a></td>
+      <td><a href="#">Modifica</a></td>
+    </tr>
+  </tbody>
+  {% endfor %}
+
+</table>
+{% endif %} 
+
+</div>
+  
+

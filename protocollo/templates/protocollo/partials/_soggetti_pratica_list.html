@@ -1,0 +1,150 @@
+{% load static %}
+
+<div class="row col-12">
+  {% if pratica.stato != 'c' and pratica.stato != 'aa' or user.is_staff %}
+  <div class="col-2">
+   
+      <a style="color:green;" title="Aggiungi soggetto"
+          href="{% url 'protocollo:soggetti_list_url' pk %}">
+        <img class="img"
+              src="{% static 'img/icons8-plus.svg' %}"
+              width="30px" height="30px">
+      </a>
+    
+  </div>
+  {% endif %}
+
+  <div class="col-8">
+    <span class="h5"> Soggetti</span> <span class="small">( {{ anaprat|length}} )</span>
+  </div>
+
+ 
+
+</div>
+
+{% if anaprat %}
+
+<style>
+.table-container {
+  max-height: 350px;
+  overflow-y: auto;
+  border: 1px solid #dee2e6;
+}
+
+.table-fixed {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.table-fixed thead th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 2;
+  border-bottom: 2px solid #dee2e6;
+}
+
+/* opzionale: migliora leggibilità */
+.table-fixed td, .table-fixed th {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>
+
+<div class="table-container" style="max-height:180px;">
+    <table class="table table-hover table-sm table-fixed" >
+
+    <!-- controllo larghezze colonne -->
+    <colgroup>
+      <col style="width: 10%;">
+      <col style="width: 25%;">
+      <col style="width: 15%;">
+      <col style="width: 20%;">
+      <col style="width: 25%;">
+      <col style="width: 5%;">
+    </colgroup>
+
+    <thead>
+      <tr class="text-muted small">
+        <th></th>
+        <th>Nominativo</th>
+        <th>Codice fiscale</th>
+        <th>Indirizzo</th>
+        <th>Comune di residenza</th>
+        <th></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for p in anaprat %}
+      <tr>
+
+        <!-- EDIT -->
+        <td>
+          <a href="{% url 'protocollo:soggetto_edit_url' p.id pk %}"  
+                  title="Modifica soggetto!" 
+                  style="width:40%;height:80%" class="btn btn-sm btn-outline-info">
+            <small class="text-muted" style="font-size:0.6em; color:red">{{ forloop.counter }}</small> 
+          </a>
+        </td>
+
+        <!-- NOMINATIVO -->
+        <td>
+          <b>{{ p.cognome|upper }} {{ p.nome|title }}</b><br>
+          <small class="text-muted">{{ p.tipo }}</small>
+        </td>
+
+        <!-- CF -->
+        <td>{{ p.codice_fiscale|upper }}</td>
+
+        <!-- INDIRIZZO -->
+        <td>{{ p.addr|title }}</td>
+
+        <!-- COMUNE -->
+        <td>
+          {{ p.comune_residenza|title }}<br>
+          {% if p.addr_sede %}
+            <small>SEDE: {{ p.addr_sede|title }}</small>
+          {% endif %}
+        </td>
+
+        <!-- DELETE -->
+        <td>
+          {% if user.is_superuser %}
+          
+          <a title="Elimina"
+             href="{% url 'protocollo:soggetto_pratica_delete_url' p.id pk %}"
+             style="width:20px;height:20px" class="btn btn-sm btn-outline-danger">
+          </a>
+          <br>
+          {% elif not is_user and pratica.stato != 'c' and pratica.stato != 'aa' %}
+          <a title="Elimina"
+             href="{% url 'protocollo:soggetto_pratica_delete_url' p.id pk %}"
+             style="width:20px;height:20px" class="btn btn-sm btn-outline-danger">
+          </a>
+          {% endif %}
+          
+          {% if user.is_superuser %}
+          <br>
+          <a title="Sostituisci"
+             href="{% url 'protocollo:soggetto_pratica_sostituisci_url' id=p.id %}"
+             style="width:20px;height:20px" class="btn btn-sm btn-outline-warning">
+          </a>
+          {% elif not is_user and pratica.stato != 'c' and pratica.stato != 'aa' %}
+          <br>
+          <a title="Sostituisci"
+             href="{% url 'protocollo:soggetto_pratica_sostituisci_url' id=p.id %}"
+             style="width:20px;height:20px" class="btn btn-sm btn-outline-warning">
+          </a>
+          {% endif %}
+        </td>
+
+      </tr>
+      {% endfor %}
+    </tbody>
+
+  </table>
+</div>
+
+{% endif %}

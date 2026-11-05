@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Modifica Profilo{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-white px-0 py-2 mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home:index' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'accounts:profile_view_url' %}">Il mio profilo</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Modifica Profilo</li>
+    </ol>
+  </nav>
+
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <h4 class="mb-0"><i class="fa fa-user-pen me-2"></i>Modifica Profilo</h4>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            {{ form.first_name | as_crispy_field }}
+            {{ form.last_name | as_crispy_field }}
+            {{ form.email | as_crispy_field }}
+            {{ form.settore | as_crispy_field }}
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label>Servizio</label>
+                <select id="id_servizio" name="servizio" class="form-control">
+                  <option value="">---------</option>
+                </select>
+              </div>
+              <div class="form-group col-md-6">
+                <label>Attivita U.O.</label>
+                <select id="id_u_o" name="u_o" class="form-control">
+                  <option value="">---------</option>
+                </select>
+              </div>
+            </div>
+            <div class="d-flex justify-content-between mt-3">
+              <a href="{% url 'accounts:profile_view_url' %}" class="btn btn-outline-secondary">Annulla</a>
+              <button type="submit" class="btn btn-primary">
+                <i class="fa fa-save me-1"></i> Salva Modifiche
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+    var url = "{% url 'accounts:struttura_choices_api' %}";
+    var $settore = document.getElementById('id_settore');
+    var $servizio = document.getElementById('id_servizio');
+    var $uo = document.getElementById('id_u_o');
+    var initialServizio = "{{ form.servizio.value|default:'' }}";
+    var initialUo = "{{ form.u_o.value|default:'' }}";
+
+    function rebuild(select, items, emptyLabel, currentValue) {
+        select.innerHTML = '';
+        var opt0 = document.createElement('option');
+        opt0.value = '';
+        opt0.text = emptyLabel;
+        select.appendChild(opt0);
+        items.forEach(function(it) {
+            var o = document.createElement('option');
+            o.value = it.id;
+            o.text = it.label;
+            if (String(it.id) === String(currentValue)) o.selected = true;
+            select.appendChild(o);
+        });
+    }
+
+    function reload(preserveCurrent) {
+        var s = $settore.value || '';
+        var srv = preserveCurrent ? ($servizio.value || '') : (initialServizio || '');
+        fetch(url + '?settore=' + encodeURIComponent(s) + '&servizio=' + encodeURIComponent(srv))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                rebuild($servizio, data.servizi, '---------', initialServizio);
+                rebuild($uo, data.uo, '---------', initialUo);
+            });
+    }
+
+    if ($settore) {
+        $settore.addEventListener('change', function() { reload(false); });
+        if ($settore.value) reload(true);
+    }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container p-2 my-2 border" style="background-color: #F5FFFA; font-size:0.9em;">
+    <div class="row">
+        <div class="col-6">
+            <h4 class="font-weight-bold">Modifica nota #{{ nota.id }}</h4>
+        </div>
+        <div class="col-6 text-right">
+            <input type="button" class="btn btn-secondary btn-sm" value="Chiudi" onclick="window.location.href='{% url 'protocollo:mappa_area_sviluppo_url' %}';">
+        </div>
+    </div>
+
+    {% if saved %}
+    <div class="alert alert-success">Nota aggiornata. Tornando alla mappa...</div>
+    <script>
+        setTimeout(function() { window.location.href = '{% url "protocollo:mappa_area_sviluppo_url" %}'; }, 800);
+    </script>
+    {% endif %}
+
+    {% if deleted %}
+    <div class="alert alert-success">Nota eliminata. Tornando alla mappa...</div>
+    <script>
+        setTimeout(function() { window.location.href = '{% url "protocollo:mappa_area_sviluppo_url" %}'; }, 800);
+    </script>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="testo">Testo nota</label>
+            <textarea class="form-control form-control-sm" id="testo" name="testo" rows="4">{{ nota.testo }}</textarea>
+        </div>
+        {% if user.is_staff or user.is_superuser %}
+        <div class="form-group mt-2">
+            <label for="stato">Stato</label>
+            <select class="form-control form-control-sm" id="stato" name="stato">
+                {% for valore, etichetta in STATO_NOTA %}
+                <option value="{{ valore }}"{% if nota.stato == valore %} selected{% endif %}>{{ etichetta }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% else %}
+        <input type="hidden" name="stato" value="{{ nota.stato }}">
+        {% endif %}
+        <div class="d-flex right-content-between mt-3" style="justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary btn-sm">Salva modifiche</button>
+        </div>
+    </form>
+    
+    {% if user.is_staff or user.is_superuser or nota.utente == user.username %}
+    {% if not deleted %}
+    <form method="POST" action="{% url 'protocollo:nota_elimina_url' pk=nota.pk %}" onsubmit="return confirm('Eliminare la nota #{{ nota.id }}?');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger btn-sm">Elimina nota</button>
+    </form>
+    {% endif %}
+    {% endif %}
+
+    <hr>
+    <div class="row">
+        <div class="col-7">
+            <div class="small text-muted">
+                <strong>ID:</strong> {{ nota.id }}<br>
+                <strong>Utente:</strong> {{ nota.utente }}<br>
+                <strong>Data:</strong> {{ nota.data|date:"d/m/Y H:i" }}<br>
+                <strong>Coordinate:</strong> {{ nota.lat }}, {{ nota.lng }}<br>
+            </div>
+        </div>
+        {% if nota.allegato %}
+        <div class="col-5">
+            <div class="small text-muted">
+                <strong>Allegato:</strong> <a href="{{ nota.allegato.url }}" target="_blank">visualizza</a><br>
+                {% if nota.allegato.url|lower|slice:"-4:" != ".pdf" %}
+                <img src="{{ nota.allegato.url }}" style="max-height: 220px; max-width: 100%; border: 1px solid #dee2e6; border-radius: .25rem; margin-top: .5rem;">
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

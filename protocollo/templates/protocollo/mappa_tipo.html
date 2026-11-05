@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load l10n %}
+
+{% block title %}Mappa {{ tipo.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Distribuzione Geografica: {{ tipo.name }} ({{ pratiche|length }})</h5>
+            <div class="d-flex align-items-center">
+               
+                <select id="status-filter" class="form-select form-select-sm me-2" style="width: auto;">
+                    <option value="all">Tutti gli stati</option>
+                    <!-- Gli stati verranno popolati via JS -->
+                </select>
+                <select id="year-filter" class="form-select form-select-sm me-2" style="width: auto;">
+                    <option value="all">Tutti gli anni</option>
+                    <!-- Gli anni verranno popolati via JS -->
+                </select>
+                <a href="{% url 'protocollo:manager_dashboard' %}" class="btn btn-sm btn-light">Torna alla lista</a>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="row h-100">
+                <div class="col-md-3 col-lg-2 sidebar" style="background-color: #f8f9fa; border-right: 1px solid #dee2e6;">
+                    <div class="sidebar-header p-3">
+                        <h6 class="mb-0">Elenco Pratiche</h6>
+                    </div>
+                    <div class="sidebar-content p-3 overflow-auto">
+                        <div id="practice-list" class="list-group"></div>
+                    </div>
+                </div>
+                <div class="col-md-9 col-lg-10">
+                    <div id="map" style="height: 100%; width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+        .sidebar {
+            height: calc(75vh - 10px);
+        }
+        .sidebar-content {
+            max-height: calc(100% - 60px);
+        }
+        .list-group-item {
+            padding: 8px 12px;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+        .list-group-item:hover {
+            background-color: #e9ecef;
+        }
+        .list-group-item.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .list-group-item.active small {
+            color: rgba(255,255,255,0.8);
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        // Inizializzazione mappa su Carrara
+        var map = L.map('map').setView([44.077, 10.096], 14);
+        
+        var osm = L.tileLayer("{% static 'tiles/' %}{z}/{x}/{y}.png", {
+                  attribution: 'Comune di Carrara: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ',
+                  maxZoom: 19
+                  }).addTo(map);
+
+        var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Esri World Imagery'
+        });
+
+        var baseMaps = { "Mappa": osm, "Satellite": satellite };
+        var featureGroup = L.featureGroup().addTo(map);
+        var markersByPracticeId = {};
+
+        // Caricamento di tutti i dati in un array JS
+        var allPraticheData = [
+            {% for p in pratiche %}
+            {
+                id: {{ p.id }},
+                prot: "{{ p.prot_gen }}",
+                data: "{{ p.data_prot_gen|date:'d/m/Y' }}",
+                anno: "{{ p.data_prot_gen|date:'Y' }}",
+                oggetto: "{{ p.oggetto|truncatechars:70|escapejs|lower }}",
+                soggetto_richiedente: "{% for s in p.soggetto_pratica.all %}{{ s.cognome|title|escapejs }} {{ s.nome|title|escapejs }}{% if not forloop.last %}, {% endif %}{% endfor %}",
+                matricola: "{{ p.matricola|default:''|escapejs }}",
+                url: "{% url 'protocollo:pratica_detail_url' p.id %}",
+                tipo_id: {{ p.tipo_pratica_id|default:0 }},
+                stato: "{{ p.stato|escapejs }}",
+                {% if p.mpoly_pratica %}
+                geojson: {{ p.mpoly_pratica.json|safe }},
+                {% else %}
+                geojson: null,
+                {% endif %}
+                {% if p.posizione %}
+                lat: {{ p.posizione.y|unlocalize }},
+                lng: {{ p.posizione.x|unlocalize }}
+                {% else %}
+                lat: null,
+                lng: null
+                {% endif %}
+            },
+            {% endfor %}
+        ];
+
+        // Popolamento dinamico del filtro anni
+        var yearFilter = document.getElementById('year-filter');
+        var availableYears = [...new Set(allPraticheData.map(p => p.anno))].sort((a, b) => b - a);
+        availableYears.forEach(year => {
+            var option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearFilter.appendChild(option);
+        });
+
+        // Popolamento dinamico del filtro stati
+        var statusFilter = document.getElementById('status-filter');
+        var statusLabels = {
+            'a': 'attiva', 'i': 'in corso', 's': 'sospesa', 'ic': 'inviata comunicazione',
+            'ri': 'richiesta integrazione', 'ai': 'accettato importo', 'bd': 'bozza determina',
+            'df': 'determina firmata', 'ia': 'inviata ad amministrativi', 'af': 'alla firma',
+            'np': 'improcedibile', 'dn': 'Determina inviata a notaio', 'eo': 'emessa Ordinanza', 'c': 'chiusa', 'aa': 'archiviata'
+        };
+        var availableStatuses = [...new Set(allPraticheData.map(p => p.stato))].filter(st => st).sort();
+        availableStatuses.forEach(st => {
+            var option = document.createElement('option');
+            option.value = st;
+            option.textContent = statusLabels[st] || st;
+            statusFilter.appendChild(option);
+        });
+
+        function coloreStato(stato) {
+            if (stato === 'c') return '#27ae60';       // verde - chiusa
+            if (stato === 'aa') return '#95a5a6';      // grigio - archiviata
+            return '#e74c3c';                          // rosso - tutto il resto
+        }
+
+        // Popolazione della barra laterale
+        function populateSidebar() {
+            var practiceListElement = document.getElementById('practice-list');
+            practiceListElement.innerHTML = '';
+            
+            var filteredPratiche = allPraticheData.filter(function(p) {
+                var filterYear = yearFilter.value;
+                var filterStatus = statusFilter.value;
+                if (filterYear !== 'all' && p.anno !== filterYear) return false;
+                if (filterStatus !== 'all' && p.stato !== filterStatus) return false;
+                return true;
+            });
+            
+            filteredPratiche.forEach(function(p) {
+                var listItem = document.createElement('a');
+                listItem.href = '#';
+                listItem.className = 'list-group-item list-group-item-action';
+                var coloreSt = coloreStato(p.stato);
+                listItem.innerHTML = 
+                    '<div class="d-flex justify-content-between"><strong>' + p.prot + '</strong><small class="text-muted">' + p.data + '</small></div>' +
+                    '<div class="d-flex justify-content-between" style="font-size:0.85em;">' + p.oggetto + '</div>' +
+                    '<div class="small text-muted" style="font-size:0.8em;">' + p.soggetto_richiedente + '</div>' +
+                    '<div class="small" style="color:' + coloreSt + '; font-size:0.8em;"><small>' + (statusLabels[p.stato] || p.stato) + '</small></div>';
+                listItem.onclick = function(e) {
+                    e.preventDefault();
+                    var hasLocation = p.lat && p.lng;
+                    if (hasLocation) {
+                        map.setView([parseFloat(p.lat), parseFloat(p.lng)], 18);
+                        featureGroup.eachLayer(function(layer) {
+                            if (layer instanceof L.Marker) {
+                                var markerLat = layer.getLatLng().lat;
+                                var markerLng = layer.getLatLng().lng;
+                                if (Math.abs(markerLat - parseFloat(p.lat)) < 0.0001 && Math.abs(markerLng - parseFloat(p.lng)) < 0.0001) {
+                                    layer.openPopup();
+                                }
+                            }
+                        });
+                    } else if (p.geojson) {
+                        var geoJsonLayer = L.geoJSON(p.geojson);
+                        var bounds = geoJsonLayer.getBounds();
+                        map.fitBounds(bounds, {padding: [10, 10]});
+                    }
+                };
+                listItem.addEventListener('mouseenter', function() {
+                    enlargeMarker(p.id);
+                });
+                listItem.addEventListener('mouseleave', function() {
+                    resetMarker(p.id);
+                });
+                practiceListElement.appendChild(listItem);
+            });
+            
+            if (filteredPratiche.length === 0) {
+                practiceListElement.innerHTML = '<div class="text-muted p-3 text-center">Nessuna pratica disponibile</div>';
+            }
+        }
+
+        function renderPratiche() {
+            var filterYear = yearFilter.value;
+            var filterStatus = statusFilter.value;
+            featureGroup.clearLayers();
+            markersByPracticeId = {};
+            var markerData = {}; // Per raggruppare i punti (marker)
+            var areaData = {};   // Per raggruppare le geometrie areali (poligoni)
+
+            allPraticheData.forEach(function(p) {
+                if (filterYear !== 'all' && p.anno !== filterYear) return;
+                if (filterStatus !== 'all' && p.stato !== filterStatus) return;
+
+                // Gestione Aree (Raggruppamento per geometria identica)
+                if (p.geojson) {
+                    var geomKey = JSON.stringify(p.geojson);
+                    if (!areaData[geomKey]) areaData[geomKey] = [];
+                    areaData[geomKey].push(p);
+                }
+
+                // Gestione Punti (Raggruppamento per coordinate)
+                if (p.lat && p.lng) {
+                    var key = p.lat.toFixed(6) + "," + p.lng.toFixed(6);
+                    if (!markerData[key]) {
+                        markerData[key] = { items: [], tipo_id: p.tipo_id };
+                    }
+                    markerData[key].items.push(p);
+                }
+            });
+
+            // Creazione Geometrie Areali raggruppate
+            for (var geomStr in areaData) {
+                var items = areaData[geomStr];
+                var geom = JSON.parse(geomStr);
+                var popupHtml = "";
+                
+                var colore = coloreStato(items[0].stato);
+
+                if (items.length > 1) {
+                    popupHtml = "<h6>" + items.length + " Pratiche in quest'area:</h6><hr><div style='max-height:200px; overflow-y:auto;'>";
+                    items.forEach(function(i) {
+                        var matHtml = (i.tipo_id === 38 && i.matricola) ? "<br>Matricola: <b>" + i.matricola.toUpperCase() + "</b>" : "";
+                        popupHtml += "<b>" + i.prot + "</b> (" + i.data + ")" + matHtml + "<br><small><i>" + i.soggetto_richiedente + "</i></small><br>" + i.oggetto + "<br><a href='" + i.url + "'>Dettaglio</a><hr style='margin:5px 0'>";
+                    });
+                    popupHtml += "</div>";
+                } else {
+                    var i = items[0];
+                    var matHtml = (i.tipo_id === 38 && i.matricola) ? "<br>Matricola: <b>" + i.matricola.toUpperCase() + "</b>" : "";
+                    popupHtml = "<b>Pratica " + i.prot + " del " + i.data + "</b>" + matHtml + "<br><i>" + i.soggetto_richiedente + "</i><br>" + i.oggetto + "<br><a href='" + i.url + "'>Apri Pratica</a>";
+                }
+
+                L.geoJSON(geom, {
+                    style: { color: colore, weight: 2, fillOpacity: 0.1 }
+                }).bindPopup(popupHtml).addTo(featureGroup);
+            }
+
+            // Creazione Marker raggruppati
+            for (var pos in markerData) {
+                var coords = pos.split(",");
+                var groupData = markerData[pos];
+                var items = groupData.items;
+                var popupHtml = "";
+                
+                var colore = coloreStato(items[0].stato);
+
+                if (items.length > 1) {
+                    popupHtml = "<h6>" + items.length + " Pratiche in questo punto:</h6><hr><div style='max-height:220px; overflow-y:auto;'>";
+                    items.forEach(function(i) {
+                        var matHtml = (i.tipo_id === 38 && i.matricola) ? "<br>Matricola: <b>" + i.matricola.toUpperCase() + "</b>" : "";
+                        popupHtml += "<b>" + i.prot + "</b> (" + i.data + ")" + matHtml + "<br><small><i>" + i.soggetto_richiedente + "</i></small><br>" + i.oggetto + "<br><a href='" + i.url + "'>Dettaglio</a><hr style='margin:5px 0'>";
+                    });
+                    popupHtml += "</div>";
+                } else {
+                    var i = items[0];
+                    var matHtml = (i.tipo_id === 38 && i.matricola) ? "<br>Matricola: <b>" + i.matricola.toUpperCase() + "</b>" : "";
+                    popupHtml = "<b>Pratica " + i.prot + " del " + i.data + "</b>" + matHtml + "<br><i>" + i.soggetto_richiedente + "</i><br>" + i.oggetto + "<br><a href='" + i.url + "'>Apri Pratica</a>";
+                }
+                
+                var markerColor = colore;
+                var markerIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: "<div style='background-color:" + markerColor + "; width:12px; height:12px; border-radius:50% 50% 50% 0; transform: rotate(-45deg); border: 1px solid white;'></div>",
+                    iconSize: [12, 12],
+                    iconAnchor: [6, 12],
+                    popupAnchor: [0, -12]
+                });
+
+                var marker = L.marker([parseFloat(coords[0]), parseFloat(coords[1])], {icon: markerIcon})
+                 .bindPopup(popupHtml)
+                 .addTo(featureGroup);
+                items.forEach(function(item) {
+                    markersByPracticeId[item.id] = { marker: marker, color: markerColor, originalIcon: markerIcon };
+                });
+            }
+
+            // Centra automaticamente la mappa
+            if (featureGroup.getLayers().length > 0) {
+                map.fitBounds(featureGroup.getBounds(), { padding: [30, 30] });
+            }
+        }
+
+        yearFilter.addEventListener('change', function() {
+            renderPratiche();
+            populateSidebar();
+        });
+        statusFilter.addEventListener('change', function() {
+            renderPratiche();
+            populateSidebar();
+        });
+
+        // Popolamento iniziale
+        renderPratiche();
+        populateSidebar();
+        L.control.layers(baseMaps).addTo(map);
+
+        function enlargeMarker(practiceId) {
+            var data = markersByPracticeId[practiceId];
+            if (!data) return;
+            data.marker.enlarged = true;
+            var enlargedIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div style='background-color:" + data.color + "; width:24px; height:24px; border-radius:50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.5);'></div>",
+                iconSize: [24, 24],
+                iconAnchor: [12, 24],
+                popupAnchor: [0, -24]
+            });
+            data.marker.setIcon(enlargedIcon);
+        }
+
+        function resetMarker(practiceId) {
+            var data = markersByPracticeId[practiceId];
+            if (!data) return;
+            data.marker.enlarged = false;
+            data.marker.setIcon(data.originalIcon);
+        }
+        });
+    </script>
+{% endblock %}

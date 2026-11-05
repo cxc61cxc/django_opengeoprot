@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container-fluid" style="padding: 1rem;">
+  <div class="row mb-3">
+    <div class="col-12 text-center">
+      <span class="title-badge" style="background: linear-gradient(135deg, #17a2b8, #138496);"><i class="fa fa-file-text mr-1"></i> Riepilogo Idoneita' Alloggiative <small>Tipo Pratica: Idoneita' Alloggiative (tp=26)</small></span>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <i class="fa fa-filter mr-1"></i> Filtro anno di riferimento
+        </div>
+        <div class="card-body">
+          <form method="GET" action="{% url 'protocollo:riepilogo_idonall_url' %}" class="form-inline">
+            <label for="anno" class="mr-2 font-weight-bold">Anno:</label>
+            <select id="anno" name="anno" class="form-control form-control-sm mr-2">
+              <option value="" {% if not selected_anno %}selected{% endif %}>Tutti gli anni</option>
+              {% for d in anni_disponibili %}
+              <option value="{{ d.year }}" {% if selected_anno == d.year|stringformat:'s' %}selected{% endif %}>{{ d.year }}</option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary mr-2">Filtra</button>
+            <a href="{% url 'protocollo:riepilogo_idonall_url' %}" class="btn btn-sm btn-outline-secondary mr-2">Tutti gli anni</a>
+            <a href="{% url 'protocollo:riepilogo_idonall_pdf_url' %}{% if selected_anno %}?anno={{ selected_anno }}{% endif %}" class="btn btn-sm btn-outline-success mr-2" target="_blank"><i class="fa fa-file-pdf-o mr-1"></i> Crea PDF</a>
+            <a href="{% url 'protocollo:search_protocollo_url' %}?tp=26" class="btn btn-sm btn-info"><i class="fa fa-arrow-left mr-1"></i> Torna alla ricerca</a>
+          </form>
+          <p class="mt-2 small text-muted">Totale pratiche con Idoneita': <b>{{ total }}</b>{% if selected_anno %} nell' anno <b>{{ selected_anno }}</b>{% endif %}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if righe %}
+  <div class="row">
+    <div class="col-12">
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover table-sm">
+          <thead class="thead-light">
+            <tr>
+              <th style="width: 110px;">Numero Idonall</th>
+              <th style="width: 110px;">Data Idonall</th>
+              <th style="width: 130px;">Prot. Gen.</th>
+              <th style="width: 130px;">Data Prot. Gen.</th>
+              <th style="width: 130px;">Richiedente (primo)</th>
+              <th style="width: 120px;">Ubicazione</th>
+              <th style="width: 60px;">Civico</th>
+              <th style="width: 250px;">Particelle (tutte)</th>
+              <th style="width: 110px;">Stato</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for riga in righe %}
+            <tr>
+              <td>
+                {% if riga.idonall %}<b>{{ riga.idonall.idonall_number }}</b>{% else %}<span class="text-muted">-</span>{% endif %}
+              </td>
+              <td>
+                {% if riga.idonall and riga.idonall.idonall_date %}{{ riga.idonall.idonall_date|date:"d/m/Y" }}{% else %}<span class="text-muted">-</span>{% endif %}
+              </td>
+              <td><b>{{ riga.pratica.prot_gen }}</b></td>
+              <td>{{ riga.pratica.data_prot_gen|date:"d/m/Y" }}</td>
+              <td class="richiedente-col">
+                {% if riga.richiedente %}
+                  <b>{{ riga.richiedente.cognome|upper }}</b> {{ riga.richiedente.nome|title }}
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+              <td class="ubicazione-col">{{ riga.ubicazione|default:"-" }}</td>
+              <td class="civico-col">{{ riga.civico|default:"-" }}</td>
+              <td class="particelle-col">
+                {% if riga.particelle_per_foglio %}
+                  {% for foglio, items in riga.particelle_per_foglio.items %}
+                    fg {{ foglio }} mapp. 
+                    {% for mappale, sub in items %}
+                      {{ mappale }}{% if sub %} sub. {{ sub }}{% endif %}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                    {% if not forloop.last %} - {% endif %}
+                  {% endfor %}
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <span class="badge {{ riga.stato_class }}">{{ riga.stato_label }}</span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-warning mt-3" role="alert">
+    <i class="fa fa-exclamation-triangle"></i>
+    <strong>Nessuna Idoneita' trovata</strong> per i criteri selezionati.
+  </div>
+  {% endif %}
+</div>
+{% endblock content %}
+
+{% block css %}
+<style>
+  .title-badge {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: #fff;
+    padding: 0.3rem 1rem;
+    border-radius: 2rem;
+    font-size: 1rem;
+    font-weight: bold;
+  }
+  .table th, .table td { vertical-align: middle; white-space: nowrap; }
+  td.particelle-col {
+    max-width: 300px;
+    width: 300px;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    vertical-align: top;
+  }
+  td.richiedente-col {
+    max-width: 130px;
+    width: 130px;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    vertical-align: top;
+  }
+  td.ubicazione-col {
+    max-width: 120px;
+    width: 120px;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    vertical-align: top;
+  }
+  td.civico-col {
+    max-width: 60px;
+    width: 60px;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    vertical-align: top;
+  }
+</style>
+{% endblock css %}
+
+{% block js %}
+{% endblock js %}

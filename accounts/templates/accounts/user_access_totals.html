@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container-fluid border mt-3">
+  <div class="row">
+    <div class="col-12">
+      <h2>Report Accessi Utenti</h2>
+
+      <!-- Date filter form -->
+      <form method="get" class="form-inline mb-3">
+        <div class="form-group mr-3">
+          <label for="start_date">Data inizio:</label>
+          <input type="date" class="form-control ml-2" id="start_date" name="start_date" value="{{ start_date }}">
+        </div>
+        <div class="form-group mr-3">
+          <label for="end_date">Data fine:</label>
+          <input type="date" class="form-control ml-2" id="end_date" name="end_date" value="{{ end_date }}">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Filtra</button>
+        {% if start_date or end_date %}
+        <a href="{% url 'accounts:user_access_totals' %}" class="btn btn-secondary btn-sm ml-2">Reset</a>
+        {% endif %}
+      </form>
+
+      <p class="text-muted">
+        Periodo: <strong>{{ start_date|default:"(tutto)" }}</strong> — <strong>{{ end_date|default:"(tutto)" }}</strong>
+        {% if total_accesses %} | Totale accessi nel periodo: <strong>{{ total_accesses }}</strong>{% endif %}
+      </p>
+
+      <table class="table table-bordered table-sm" style="font-family: monospace; font-size: 13px; width: 60%;">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Accessi</th>
+            <th>Weekend</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user, total, weekend, admin_url in user_totals %}
+          <tr>
+            <td>
+              {{ user }}
+            </td>
+            <td>{{ total }}</td>
+            <td>{{ weekend }}</td>
+          </tr>
+          {% endfor %}
+          <tr class="table-secondary font-weight-bold">
+            <td>GRANDE TOTALE</td>
+            <td>{{ total_accesses }}</td>
+            <td>{{ total_weekend }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+     
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.admin-link {
+  color: red;
+  font-weight: bold;
+  text-decoration: none;
+  border: 1px solid red;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.admin-link:hover {
+  background: red;
+  color: white;
+}
+</style>
+{% endblock %}

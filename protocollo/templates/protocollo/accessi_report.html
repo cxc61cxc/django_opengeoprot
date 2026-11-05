@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Report Accessi</h3>
+  <table class="table table-sm table-bordered">
+    <thead>
+      <tr>
+        <th>Nome utente</th>
+        <th>ID utente</th>
+        <th>IP</th>
+        <th>Accessi totali</th>
+        <th>Accessi weekend</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td><a href="{% url 'protocollo:accessi_report_user' r.username %}">{{ r.username }}</a></td>
+        <td>{{ r.user_id|default:'-' }}</td>
+        <td>{{ r.ips }}</td>
+        <td>{{ r.total }}</td>
+        <td>{{ r.weekend }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">Nessun accesso registrato.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

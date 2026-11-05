@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 700px;">
+  <div class="card shadow-sm">
+    <div class="card-header bg-light">
+      <h4 class="mb-0">Registrazione</h4>
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-row">
+          <div class="form-group col-md-12">
+            {{ form.username | as_crispy_field }}
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            {{ form.first_name | as_crispy_field }}
+          </div>
+          <div class="form-group col-md-6">
+            {{ form.last_name | as_crispy_field }}
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-12">
+            {{ form.email | as_crispy_field }}
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-12">
+            <div class="form-check mt-2 mb-3 p-2 border rounded bg-light" id="consigliere-box">
+              {{ form.consigliere }}
+              <label class="form-check-label ml-2" for="{{ form.consigliere.id_for_label }}">
+                <strong>{{ form.consigliere.label }}</strong>
+                <small class="d-block text-muted">{{ form.consigliere.help_text }}</small>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div id="commissione-fields" style="display:none;">
+          <div class="form-row">
+            <div class="form-group col-md-12">
+              {{ form.commissioni | as_crispy_field }}
+            </div>
+          </div>
+        </div>
+        <div id="struttura-fields">
+        <div class="form-row">
+          <div class="form-group col-md-12">
+            {{ form.settore | as_crispy_field }}
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>Servizio</label>
+            <select id="id_servizio" name="servizio" class="form-control">
+              <option value="">---------</option>
+            </select>
+          </div>
+          <div class="form-group col-md-6">
+            <label>Attivita U.O.</label>
+            <select id="id_u_o" name="u_o" class="form-control">
+              <option value="">---------</option>
+            </select>
+          </div>
+        </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            {{ form.password1 | as_crispy_field }}
+          </div>
+          <div class="form-group col-md-6">
+            {{ form.password2 | as_crispy_field }}
+          </div>
+        </div>
+
+        <div class="text-right mt-3">
+          <button class="btn btn-success px-4" type="submit">Registrati</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  var url = "{% url 'accounts:struttura_choices_api' %}";
+  var $settore = document.getElementById('id_settore');
+  var $servizio = document.getElementById('id_servizio');
+  var $uo = document.getElementById('id_u_o');
+  var $consigliere = document.getElementById('{{ form.consigliere.id_for_label }}');
+  var $strutturaFields = document.getElementById('struttura-fields');
+  var $commissioneFields = document.getElementById('commissione-fields');
+  var $settoreField = $settore ? $settore.closest('.form-group') : null;
+
+  function rebuild(select, items, emptyLabel) {
+    select.innerHTML = '';
+    var opt0 = document.createElement('option');
+    opt0.value = '';
+    opt0.text = emptyLabel;
+    select.appendChild(opt0);
+    items.forEach(function(it) {
+      var o = document.createElement('option');
+      o.value = it.id;
+      o.text = it.label;
+      select.appendChild(o);
+    });
+  }
+
+  function reload() {
+    var s = $settore.value || '';
+    var srv = $servizio.value || '';
+    fetch(url + '?settore=' + encodeURIComponent(s) + '&servizio=' + encodeURIComponent(srv))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        rebuild($servizio, data.servizi, '---------');
+        rebuild($uo, data.uo, '---------');
+      });
+  }
+
+  function toggleStruttura() {
+    if ($consigliere && $consigliere.checked) {
+      $strutturaFields.style.display = 'none';
+      $commissioneFields.style.display = '';
+      if ($settore) $settore.value = '';
+      if ($servizio) $servizio.value = '';
+      if ($uo) $uo.value = '';
+    } else {
+      $strutturaFields.style.display = '';
+      $commissioneFields.style.display = 'none';
+    }
+  }
+
+  if ($settore) {
+    $settore.addEventListener('change', reload);
+    if ($settore.value) reload();
+  }
+  if ($consigliere) {
+    $consigliere.addEventListener('change', toggleStruttura);
+    toggleStruttura();
+  }
+})();
+</script>
+{% endblock %}

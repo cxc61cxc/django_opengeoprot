@@ -334,7 +334,7 @@ def AddAccettazione(request, pk):
 
 # edita accettazione
 @login_required
-@user_passes_test(lambda u: u.groups.filter(name__in=['editor_settore_6', 'editor_settore_1',  'editor_settore_5']).count() >= 1, login_url='home:index')
+@user_passes_test(lambda u: u.groups.filter(name__in=['editor_settore_6', 'editor_settore_1', 'editor_settore_5', 'user_settore_6']).count() >= 1 or u.is_staff, login_url='home:index')
 
 def EditAccettazione(request, id):
     # id = id convenzione

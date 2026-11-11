@@ -1,189 +1,1093 @@
-{% extends 'base.html' %}
-{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guida al progetto OpenGeoProt — django_opengeoprot</title>
+<style>
+  :root{
+    --primary:#0b6b4f;
+    --primary-dark:#084c39;
+    --accent:#DAF2E6;
+    --ink:#1f2933;
+    --muted:#52606d;
+    --line:#e4e7eb;
+    --bg:#f7f9f8;
+    --code-bg:#eef2f0;
+    --warn-bg:#fff8e6;
+    --warn-line:#f0c36d;
+    --info-bg:#eaf4ff;
+    --info-line:#9ec6f0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:16px;
+    line-height:1.6;
+    color:var(--ink);
+    background:var(--bg);
+  }
+  .layout{display:flex;min-height:100vh;}
+  /* ---------- sidebar ---------- */
+  nav.toc{
+    width:290px;
+    flex:0 0 290px;
+    background:#fff;
+    border-right:1px solid var(--line);
+    padding:1.4rem 1rem 3rem;
+    position:sticky;
+    top:0;
+    height:100vh;
+    overflow-y:auto;
+  }
+  nav.toc .brand{
+    font-weight:700;
+    font-size:1.05rem;
+    color:var(--primary-dark);
+    display:block;
+    margin-bottom:.15rem;
+  }
+  nav.toc .brand-sub{font-size:.78rem;color:var(--muted);display:block;margin-bottom:1rem;}
+  nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:toc;}
+  nav.toc li{counter-increment:toc;margin:.1rem 0;}
+  nav.toc a{
+    display:block;
+    padding:.32rem .55rem .32rem 1.9rem;
+    position:relative;
+    border-radius:6px;
+    color:#323f4b;
+    text-decoration:none;
+    font-size:.86rem;
+    line-height:1.35;
+  }
+  nav.toc a::before{
+    content:counter(toc);
+    position:absolute;
+    left:.5rem;
+    top:.3rem;
+    font-size:.7rem;
+    background:var(--accent);
+    color:var(--primary-dark);
+    border-radius:4px;
+    min-width:1.15rem;
+    text-align:center;
+    padding:.05rem .2rem;
+    font-weight:600;
+  }
+  nav.toc a:hover{background:var(--accent);color:var(--primary-dark);}
+  nav.toc a.sub{padding-left:2.6rem;font-size:.8rem;color:var(--muted);}
+  nav.toc a.sub::before{content:"•";background:none;color:var(--primary);left:1.1rem;font-size:1rem;padding:0;}
+  /* ---------- main ---------- */
+  main{
+    flex:1;
+    min-width:0;
+    padding:2rem clamp(1rem,4vw,3.5rem) 5rem;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+  header.hero{
+    background:linear-gradient(135deg,var(--primary-dark),var(--primary));
+    color:#fff;
+    border-radius:14px;
+    padding:2rem 2.2rem;
+    margin-bottom:2rem;
+    box-shadow:0 6px 24px rgba(8,76,57,.18);
+  }
+  header.hero h1{margin:.2rem 0 .6rem;font-size:1.9rem;line-height:1.25;}
+  header.hero p{margin:.4rem 0;color:#e6f4ef;font-size:1.02rem;}
+  header.hero .badges{margin-top:1rem;display:flex;flex-wrap:wrap;gap:.5rem;}
+  .badge{
+    background:rgba(255,255,255,.15);
+    border:1px solid rgba(255,255,255,.35);
+    color:#fff;
+    border-radius:999px;
+    padding:.2rem .75rem;
+    font-size:.78rem;
+    white-space:nowrap;
+  }
+  section{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:1.6rem 1.8rem;
+    margin-bottom:1.4rem;
+    scroll-margin-top:1rem;
+  }
+  h2{
+    font-size:1.35rem;
+    margin:.1rem 0 1rem;
+    padding-bottom:.6rem;
+    border-bottom:2px solid var(--accent);
+    color:var(--primary-dark);
+  }
+  h3{font-size:1.06rem;margin:1.4rem 0 .5rem;color:#14532d;}
+  h4{font-size:.98rem;margin:1.1rem 0 .4rem;}
+  p{margin:.55rem 0;}
+  ul,ol{margin:.55rem 0 .55rem 0;padding-left:1.3rem;}
+  li{margin:.28rem 0;}
+  code{
+    background:var(--code-bg);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:.05rem .35rem;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:.87em;
+    word-break:break-word;
+  }
+  pre{
+    background:#0f1b17;
+    color:#d7e7e0;
+    border-radius:8px;
+    padding:1rem 1.1rem;
+    overflow-x:auto;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:.83rem;
+    line-height:1.55;
+  }
+  pre code{background:none;border:none;padding:0;color:inherit;font-size:inherit;}
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:.8rem 0 1rem;
+    font-size:.9rem;
+    display:block;
+    overflow-x:auto;
+  }
+  th,td{
+    border:1px solid var(--line);
+    padding:.5rem .65rem;
+    text-align:left;
+    vertical-align:top;
+    min-width:120px;
+  }
+  th{background:var(--accent);color:var(--primary-dark);font-weight:600;}
+  tbody tr:nth-child(even){background:#fafcfb;}
+  .note,.warn,.info{
+    border-radius:8px;
+    padding:.85rem 1rem;
+    margin:.9rem 0;
+    font-size:.94rem;
+  }
+  .note{background:var(--warn-bg);border:1px solid var(--warn-line);}
+  .info{background:var(--info-bg);border:1px solid var(--info-line);}
+  .note b,.info b{display:inline-block;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.9rem;margin:.9rem 0;}
+  .card{
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:.9rem 1rem;
+    background:#fbfdfc;
+  }
+  .card h4{margin:.1rem 0 .35rem;color:var(--primary-dark);}
+  .card p{font-size:.88rem;margin:.2rem 0;color:var(--muted);}
+  .pill{
+    display:inline-block;
+    background:var(--accent);
+    color:var(--primary-dark);
+    border-radius:999px;
+    font-size:.72rem;
+    font-weight:600;
+    padding:.05rem .55rem;
+    margin-left:.35rem;
+    vertical-align:middle;
+  }
+  .kbd{
+    background:#fff;
+    border:1px solid #adb5bd;
+    border-bottom-width:2px;
+    border-radius:4px;
+    padding:.02rem .35rem;
+    font-family:ui-monospace,Menlo,Consolas,monospace;
+    font-size:.84em;
+  }
+  a{color:#0a5c44;}
+  a:hover{color:var(--primary-dark);}
+  .anchor-list{columns:2;column-gap:2rem;font-size:.9rem;}
+  footer{
+    max-width:960px;
+    margin:2rem auto 0;
+    padding:1.2rem 0 2rem;
+    border-top:1px solid var(--line);
+    color:var(--muted);
+    font-size:.83rem;
+    text-align:center;
+  }
+  @media (max-width:900px){
+    .layout{flex-direction:column;}
+    nav.toc{position:static;width:100%;flex:none;height:auto;border-right:none;border-bottom:1px solid var(--line);}
+    nav.toc ol{columns:2;column-gap:1rem;}
+    .anchor-list{columns:1;}
+    section{padding:1.2rem 1rem;}
+  }
+  @media print{
+    nav.toc{display:none;}
+    body{background:#fff;}
+    section{border:none;padding:0 0 1rem;page-break-inside:avoid;}
+    header.hero{background:none;color:#000;border:2px solid #000;box-shadow:none;}
+    header.hero p,.badge{color:#000;}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
 
-{% block content %}
-<div class="container col-10 mt-4" style="font-size:1.1em;">
+<nav class="toc" aria-label="Indice della guida">
+  <span class="brand">OpenGeoProt — Guida</span>
+  <span class="brand-sub">Progetto django_opengeoprot</span>
+  <ol>
+    <li><a href="#panoramica">Panoramica del sistema</a></li>
+    <li><a href="#stack">Stack tecnologico</a></li>
+    <li><a href="#struttura">Struttura del progetto</a></li>
+    <li><a href="#installazione">Installazione rapida</a>
+      <a class="sub" href="#configurazione">Configurazione (.env e settings)</a>
+      <a class="sub" href="#migrazioni">Migrazioni e primo utente</a>
+    </li>
+    <li><a href="#accesso">Registrazione e accesso</a>
+      <a class="sub" href="#profilo">Profilo e password</a>
+      <a class="sub" href="#sessioni">Sessioni e sicurezza</a>
+    </li>
+    <li><a href="#permessi">Permessi, ruoli e gruppi</a></li>
+    <li><a href="#navigazione">Navigazione del portale</a></li>
+    <li><a href="#pratica">La pratica: anatomia e ciclo di vita</a>
+      <a class="sub" href="#diario">Diario e cambio stato</a>
+      <a class="sub" href="#documenti">Documenti allegati</a>
+      <a class="sub" href="#soggetti">Soggetti e particelle</a>
+    </li>
+    <li><a href="#ricerca">Ricerca integrata e risultati</a></li>
+    <li><a href="#mappa">Cartografia e mappa</a></li>
+    <li><a href="#moduli">Moduli specializzati</a></li>
+    <li><a href="#dashboard">Dashboard e report</a></li>
+    <li><a href="#comandi">Comandi di management</a></li>
+    <li><a href="#env">Variabili d'ambiente</a></li>
+    <li><a href="#produzione">Produzione e deploy</a></li>
+    <li><a href="#problemi">Problemi frequenti</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#riferimenti">Riferimenti e link utili</a></li>
+  </ol>
+</nav>
 
-  <h2 class="mb-3"><i class="fa fa-book"></i> Manuale Utente &mdash; OpenGeoProt</h2>
+<main>
+<div class="wrap">
 
-  <div class="alert alert-primary">
-    <p>Questa guida spiega passo passo come accedere al portale e usare la
-    <b>Ricerca Integrata</b> tra le pratiche del protocollo (OPENGEOPROT) e
-    quelle dell'archivio edilizio (ARCHIVIO).</p>
-    <a class="h6" href ="https://cxc-next.duckdns.org/s/MpfXEN5wcRBEmy9" target=_blank >A questo link un breve video esplicativo, per quanto possibile!</a>
+<header class="hero">
+  <div><strong>Manuale tecnico e d'uso</strong></div>
+  <h1>OpenGeoProt — Guida al progetto</h1>
+  <p>
+    Applicazione web per la <strong>gestione integrata dei procedimenti amministrativi</strong>
+    di un ente comunale: protocollo generale, edilizia, catasto, anagrafe, viario e
+    moduli specializzati, con visualizzazione cartografica (PostGIS + Leaflet).
+    Pensata per il <strong>Comune di Carrara</strong>, replicabile su qualsiasi ente.
+  </p>
+  <div class="badges">
+    <span class="badge">Django 4.1</span>
+    <span class="badge">Python 3.11</span>
+    <span class="badge">PostgreSQL + PostGIS</span>
+    <span class="badge">GeoDjango</span>
+    <span class="badge">Leaflet 1.9.4</span>
+    <span class="badge">Bootstrap 4</span>
+    <span class="badge">Licenza CC BY-NC-SA 4.0</span>
+  </div>
+</header>
+
+<div class="info">
+  <b>Due guide disponibili.</b> Questo file (<code>help.html</code>, alla radice del progetto)
+  è la guida completa per utenti e amministratori. Esiste inoltre il
+  <em>manuale utente</em> integrato nel portale, raggiungibile dal pulsante
+  <b>Aiuto</b> della barra di navigazione oppure all'indirizzo <code>/help/</code>
+  (template <code>templates/home/help.html</code>, visibile solo agli utenti autenticati).
+</div>
+
+<!-- ================================================================ -->
+<section id="panoramica">
+  <h2>1. Panoramica del sistema</h2>
+  <p>
+    OpenGeoProt è il gestionale con cui l'ente raccoglie, protocollla, istruttuisce e
+    archivia le pratiche amministrative. Il <strong>protocollo</strong> è il cuore del sistema:
+    ogni pratica ha un tipo, uno stato, un diario cronologico, soggetti (richiedenti e
+    professionisti), particelle catastali collegate e documenti allegati. Tutti gli altri
+    moduli si agganciano a questa base.
+  </p>
+  <div class="grid">
+    <div class="card">
+      <h4>Protocollo e pratiche</h4>
+      <p>Tipi di pratica, pratiche, soggetti, particelle, diario, documenti, ricerca avanzata, mappa, dashboard e report.</p>
+    </div>
+    <div class="card">
+      <h4>Anagrafiche territoriali</h4>
+      <p>Catasto (particelle su DB dedicato con router), anagrafe civica, viario (civici e strade da OpenStreetMap).</p>
+    </div>
+    <div class="card">
+      <h4>Moduli specializzati</h4>
+      <p>Piano regolatore, paesaggio, cooperative, ascensori, SUAP, passi carrabili, idoneità, fotovoltaico, registri vari.</p>
+    </div>
+    <div class="card">
+      <h4>Cartografia integrata</h4>
+      <p>PostGIS + GeoDjango + Leaflet: mappa delle pratiche, widget particelle, GeoJSON, pratiche vicine.</p>
+    </div>
+    <div class="card">
+      <h4>Permessi granulari</h4>
+      <p>Gruppi per settore (<code>editor_settore_*</code>, <code>user_settore_*</code>), flag sola lettura, viste dedicate ai consiglieri/commissioni.</p>
+    </div>
+    <div class="card">
+      <h4>Traçabilità</h4>
+      <p>Storico modifiche con <code>django-simple-history</code>, log azioni utente su <code>user_actions.log</code>, indicizzazione documenti.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="stack">
+  <h2>2. Stack tecnologico</h2>
+  <table>
+    <thead>
+      <tr><th>Componente</th><th>Versione / scelta</th><th>Nota</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Python</td><td>3.11 (testato anche 3.10)</td><td>ambiente virtuale in <code>venv/</code></td></tr>
+      <tr><td>Django</td><td>4.1.x</td><td>progetto <code>carrara</code></td></tr>
+      <tr><td>Database</td><td>PostgreSQL ≥ 13 + <strong>PostGIS</strong></td><td>obbligatorio (GeoDjango); due DB: <code>default</code> e <code>anagrafe</code></td></tr>
+      <tr><td>Librerie GIS di sistema</td><td>GDAL / GEOS / PROJ</td><td>verifica: <code>gdal-config --version</code></td></tr>
+      <tr><td>Interfaccia</td><td>Bootstrap 4.2.1 (CDN), Font Awesome 4.7, jQuery 3.7</td><td>form con <code>django-crispy-forms</code></td></tr>
+      <tr><td>Mappa</td><td>Leaflet 1.9.4 + <code>django-leaflet</code> + <code>djgeojson</code></td><td>centro default Carrara (44.10, 10.07)</td></tr>
+      <tr><td>Autocomplete / select</td><td>django-autocomplete-light, django-select2</td><td>rotta <code>/select2/</code></td></tr>
+      <tr><td>PDF e documenti</td><td>reportlab / xhtml2pdf, LibreOffice</td><td>LibreOffice serve per l'oscuramento «omissis»</td></tr>
+      <tr><td>Storico / auditing</td><td>django-simple-history, middleware dedicato</td><td>log su <code>user_actions.log</code></td></tr>
+      <tr><td>Server</td><td>gunicorn + nginx</td><td>config in <code>gunicorn_config.py</code>, script in <code>deploy_utilities/</code></td></tr>
+      <tr><td>Redis (opzionale)</td><td>django-redis / django-select2</td><td>solo se configurato</td></tr>
+    </tbody>
+  </table>
+  <div class="note">
+    <b>App opzionali.</b> Le app <code>edilizia/</code>, <code>gest_edilizia/</code> e
+    <code>archivi/</code> (archivio storico) <u>non sono pubblicate nel repository</u>:
+    vengono attivate automaticamente solo se le cartelle esistono. Il file
+    <code>edilizia_compat.py</code> fornisce sostituti vuoti quando mancano, così il
+    progetto funziona comunque (le ricerche in archivio restituiscono zero risultati e la
+    navbar nasconde la relativa voce).
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="struttura">
+  <h2>3. Struttura del progetto</h2>
+<pre><code>django_opengeoprot/
+├── carrara/             # progetto Django (settings.py, urls.py, wsgi.py)
+├── accounts/            # utenti, profili, permessi, commissioni, richieste di accesso
+├── protocollo/          # modulo centrale: pratiche, diario, documenti, ricerche
+├── home/                # pagina iniziale + vista help (manuale /help/)
+├── catasto/             # particelle catastali (DB anagrafe, router dedicato)
+├── anagrafe/            # residenti / anagrafe civica (DB dedicato)
+├── viario/              # civici e strade (sync da OpenStreetMap)
+├── prg/  paesaggio/  coop/  ascensori/
+├── suap/  pascar/  idonall/  fotovoltaico/
+├── grandi_lavori/  piccoli_lavori/  licenze_edilizie/  autorizzazioni/
+├── comunicazioni/  istruttoria_poc/  omissis_documents/
+├── struttura_ente/      # settori, servizi, U.O., tipi commissione, sync gruppi
+├── mailer/              # invio email (SMTP) + modulo "Segnala"
+├── osm_note/  highway/  qwen_map/  istat/
+├── edilizia/  gest_edilizia/  archivi/   # OPZIONALI, non versionate
+├── templates/           # template globali: base.html, navbar.html, home/help.html
+├── static/  media/  docs/  deploy_utilities/  utility_scripts/
+├── edilizia_compat.py   # compatibilità con le app opzionali
+├── manage.py  requirements.txt  .env.example  carrara/settings.example.py
+└── README.md  LICENSE  gunicorn_config.py</code></pre>
+
+  <h3>Rotte URL principali</h3>
+  <table>
+    <thead><tr><th>Prefisso</th><th>App</th><th>Contenuto</th></tr></thead>
+    <tbody>
+      <tr><td><code>/</code></td><td>home</td><td>Dashboard iniziale con riepiloghi; <code>/help/</code> manuale utente</td></tr>
+      <tr><td><code>/accounts/</code></td><td>accounts + auth</td><td>login, registrazione, profilo, password, gestione utenti/gruppi/commissioni</td></tr>
+      <tr><td><code>/protocollo/</code></td><td>protocollo</td><td>pratiche, ricerca, mappa, dashboard, report, diario, documenti</td></tr>
+      <tr><td><code>/catasto/</code>, <code>/anagrafe/</code>, <code>/viario/</code></td><td>anagrafiche</td><td>particelle, residenti, civici</td></tr>
+      <tr><td><code>/prg/</code>, <code>/paesaggio/</code>, <code>/comunicazioni/</code></td><td>urbanistica</td><td>piani/CDU, commissioni paesaggistiche, modelli di lettera</td></tr>
+      <tr><td><code>/suap/</code>, <code>/pascar/</code>, <code>/coop/</code>, <code>/ascensori/</code>, <code>/idonall/</code>, <code>/fotovoltaico/</code></td><td>specializzati</td><td>PAU, passi carrabili, convenzioni, ascensori, idoneità, impianti</td></tr>
+      <tr><td><code>/grandi_lavori/</code>, <code>/piccoli_lavori/</code>, <code>/licenze_edilizie/</code>, <code>/autorizzazioni/</code></td><td>registri</td><td>elenchi per periodo con allegati e stampa PDF</td></tr>
+      <tr><td><code>/omissis/</code>, <code>/istruttoria_poc/</code>, <code>/osm_note/</code>, <code>/highway/</code></td><td>servizi</td><td>oscuramento documenti, istruttorie POC, note e geometrie stradali OSM</td></tr>
+      <tr><td><code>/mailer/</code>, <code>/struttura_ente/</code>, <code>/select2/</code></td><td>supporto</td><td>segnalazioni email, struttura dell'ente, lookup select2</td></tr>
+      <tr><td><code>/admin/</code></td><td>admin Django</td><td>amministrazione dati (solo superuser/staff)</td></tr>
+      <tr><td><code>/archivi/</code>, <code>/edilizia/</code>, <code>/gest_edilizia/</code></td><td>opzionali</td><td>registrate solo se le app sono installate</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ================================================================ -->
+<section id="installazione">
+  <h2>4. Installazione rapida</h2>
+
+  <h3>Requisiti di sistema (Debian/Ubuntu)</h3>
+<pre><code>sudo apt install python3.11 python3.11-venv python3-pip \
+    postgresql postgresql-contrib postgis postgresql-15-postgis-3 \
+    gdal-bin libgdal-dev libgeos-dev libproj-dev \
+    libreoffice        # opzionale, per omissis_documents
+
+gdal-config --version  # deve rispondere, es. 3.6.x</code></pre>
+
+  <h3>Clone e ambiente virtuale</h3>
+<pre><code>git clone https://github.com/cxc61cxc/django_opengeoprot.git
+cd django_opengeoprot
+python3.11 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt</code></pre>
+
+  <h3 id="configurazione">Configurazione (.env e settings)</h3>
+<pre><code>cp .env.example .env
+cp carrara/settings.example.py carrara/settings.py</code></pre>
+  <p>Compilare poi <code>.env</code>:</p>
+<pre><code>DJANGO_SECRET_KEY=&lt;genera-un-secret-key&gt;
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+DJANGO_DB_NAME=carrara_prot_locale
+DJANGO_DB_USER=opengeo
+DJANGO_DB_PASSWORD=&lt;password-db&gt;
+DJANGO_DB_HOST=localhost
+DJANGO_DB_PORT=5432
+DJANGO_ANAGRAFE_DB_NAME=AnagrafeCivica
+DJANGO_EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend</code></pre>
+  <p>Generare la secret key con:</p>
+<pre><code>python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"</code></pre>
+  <div class="note">
+    <b>Attenzione:</b> <code>carrara/settings.py</code> e <code>.env</code> <u>non sono
+    versionati</u> (vedi <code>.gitignore</code>). La versione sanificata da cui partire è
+    <code>carrara/settings.example.py</code>. Il progetto usa <strong>due database</strong>
+    (principale + <code>AnagrafeCivica</code>) entrambi con estensione PostGIS: la vista
+    <code>cxf_in.vw_particelle</code> del DB anagrafe va creata/adattata ai propri dati
+    (il router <code>catasto/db_router.py</code> instrada lì il modello <code>Particelle</code>).
   </div>
 
-  <hr>
-  <h4 id="registrazione">1. Registrazione</h4>
+  <h3 id="migrazioni">Migrazioni, utente admin e dati iniziali</h3>
+<pre><code>python manage.py migrate
+python manage.py createsuperuser
+python manage.py sync_settore_groups      # gruppi di permessi per settore
+python manage.py runserver                # http://127.0.0.1:8000/</code></pre>
   <p>
-    Per ottenere un account vai alla pagina di registrazione (link
-    <i>Registrati</i> in alto a destra, oppure <code>/accounts/signup/</code>).
-    Compila il modulo con:
+    Le app <code>catasto</code> e <code>anagrafe</code> migrano sui database rispettivi
+    grazie al router: <code>migrate</code> va eseguito <strong>una volta sola</strong>.
+    Per popolare i dati di base: residenti dall'ufficio anagrafe, particelle da SISTER
+    (o progetti opencatamap), civici/strade da OpenStreetMap; in alternativa i
+    popolamenti di esempio <code>populate_grandi_lavori</code>,
+    <code>populate_piccoli_lavori</code>, <code>populate_licenze_edilizie</code>,
+    <code>populate_autorizzazioni</code>, <code>import_highways</code>.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<section id="accesso">
+  <h2>5. Registrazione e accesso</h2>
+
+  <h3 id="registrazione">Registrazione</h3>
+  <p>
+    Pagina <code>/accounts/signup/</code>. Il modulo richiede nome, cognome, username,
+    <strong>password</strong>, <strong>settore</strong> di appartenenza e soprattutto una
+    <strong>email istituzionale</strong>: è accettata <u>solo</u> una mailbox
+    <code>@comune.carrara.ms.it</code> (le altre vengono rifiutate dal validatore).
+    I <em>consiglieri</em> spuntano l'apposita casella e devono selezionare almeno una
+    commissione. Al termine l'accesso è automatico.
+  </p>
+  <p>
+    Al primo accesso l'utente viene inserito nel gruppo <code>user_settore_&lt;N&gt;</code>
+    corrispondente al settore scelto (es. <code>user_settore_6</code> per
+    <em>Governo del territorio</em>): sono permessi di <strong>sola lettura</strong> su quel
+    settore. I permessi di scrittura vanno assegnati dall'amministratore.
+  </p>
+
+  <h3 id="login">Accesso (login)</h3>
+  <p>
+    <code>/accounts/login/</code> con username e password. Il redirect dopo il login
+    dipende dal profilo:
   </p>
   <ul>
-    <li><b>Nome</b> e <b>Cognome</b> (obbligatori);</li>
-    <li><b>Username</b> scelto;</li>
-    <li><b>Email istituzionale</b>: &egrave; accettata <u>solo</u> un'email
-        <code>@comune.carrara.ms.it</code> (le altre vengono rifiutate);</li>
-    <li><b>Settore</b> di appartenenza (obbligatorio, dall'elenco);</li>
-    <li><b>Password</b> e conferma password.</li>
+    <li><strong>consigliere</strong> → <code>/accounts/mie-commissioni/</code> (le mie commissioni);</li>
+    <li><strong>profilo incompleto</strong> (manca settore/servizio/U.O.) → verifica
+        <code>/accounts/profile/settore-check/</code>;</li>
+    <li><strong>senza il permesso</strong> <code>protocollo.visualizza_tipo_pratica</code> →
+        pagina del profilo;</li>
+    <li><strong>altrimenti</strong> → <code>/protocollo/search/protocollo/</code>
+        (ricerca integrata). La home <code>/</code> è raggiungibile in ogni momento con il
+        pulsante HOME.</li>
   </ul>
   <p>
-    Al primo accesso l'utente viene inserito automaticamente nel gruppo
-    <code>user_settore_*</code> corrispondente al <b>settore</b> indicato
-    (es. <code>user_settore_6</code> per <i>Governo del territorio</i>):
-    ha permessi di <b>sola lettura</b> su quel settore, quindi pu&ograve;
-    cercare e consultare le pratiche, ma non modificarle.
-    Per i permessi di scrittura rivolgersi all'amministratore.
+    Logout dal menu utente → <em>Log Out</em> (<code>/accounts/logout/</code>, richiesta POST),
+    che riporta alla home. Per gli utenti non autenticati la home mostra i pulsanti
+    <em>Login</em> e <em>Registrati</em>.
   </p>
 
+  <h3 id="profilo">Profilo e password</h3>
+  <table>
+    <thead><tr><th>Azione</th><th>Percorso</th></tr></thead>
+    <tbody>
+      <tr><td>Visualizza profilo</td><td><code>/accounts/profile/</code></td></tr>
+      <tr><td>Modifica profilo (nome, email, settore/servizio/U.O.)</td><td><code>/accounts/profile/edit/</code></td></tr>
+      <tr><td>Cambio password</td><td><code>/accounts/password-change/</code></td></tr>
+      <tr><td>Password dimenticata (reset via email)</td><td><code>/accounts/password_reset/</code></td></tr>
+      <tr><td>Le mie pratiche</td><td><code>/protocollo/mie_pratiche/</code></td></tr>
+      <tr><td>Le mie commissioni (consiglieri)</td><td><code>/accounts/mie-commissioni/</code></td></tr>
+    </tbody>
+  </table>
   <p>
-    Se in seguito modifichi il settore dal menu utente
-    (<i>Modifica profilo</i>), il gruppo viene aggiornato automaticamente:
-    le viste della <b>Home</b> e della <b>Ricerca Integrata</b> si adattano
-    subito al nuovo settore, mostrando prima le pratiche del settore
-    precedente e poi quelle del nuovo.
+    Cambiare il <strong>settore</strong> dal profilo aggiorna <em>automaticamente</em> il
+    gruppo di appartenenza (<code>user_settore_&lt;N&gt;</code>): le viste di home e
+    ricerca si adattano subito ai nuovi permessi. Le modifiche al profilo da parte di
+    utenti non-staff inviano una <strong>email di notifica</strong> allo staff.
+    I consiglieri hanno una vista profilo in sola lettura.
   </p>
 
-  <hr>
-  <h4 id="login">2. Accesso (login)</h4>
-  <p>
-    Usa <i>Accedi</i> in alto a destra con username e password. Una volta
-    dentro, atterri sulla <b>Home</b> del portale con i riepiloghi delle
-    pratiche per tipo e stato.
-  </p>
+  <h3 id="sessioni">Sessioni e sicurezza</h3>
+  <ul>
+    <li>Le sessioni <strong>scadono alla chiusura del browser</strong> (<code>SESSION_EXPIRE_AT_BROWSER_CLOSE = True</code>),
+        con rinnovo a ogni richiesta (<code>SESSION_SAVE_EVERY_REQUEST</code>);</li>
+    <li>ogni richiesta HTTP viene trascritta in <code>user_actions.log</code> dal middleware
+        <code>UserActionLoggingMiddleware</code>;</li>
+    <li>la password deve superare i 4 validatori standard di Django (lunghezza, similarità,
+        comuni, troppo semplice);</li>
+    <li>in produzione: <code>DJANGO_DEBUG=False</code>, <code>DJANGO_ALLOWED_HOSTS</code>
+        valorizzato, HTTPS dietro nginx e <code>CSRF_TRUSTED_ORIGINS</code> aggiornato.</li>
+  </ul>
+</section>
 
-  <hr>
-  <h4 id="profilo">3. Menu utente e Modifica profilo</h4>
+<!-- ================================================================ -->
+<section id="permessi">
+  <h2>6. Permessi, ruoli e gruppi</h2>
   <p>
-    In alto a destra, sotto il tuo username, trovi il menu ad
-    <i>albero a discesa</i>:
+    I permessi sono organizzati in <strong>gruppi per settore</strong>, generati dal
+    comando <code>sync_settore_groups</code> a partire dalla struttura dell'ente
+    (app <code>struttura_ente</code>: Settori → Servizi → Attività U.O., ciascuno con
+    copia storica <code>Storico*</code>).
+  </p>
+  <table>
+    <thead><tr><th>Ruolo / gruppo</th><th>Cosa può fare</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>user_settore_&lt;N&gt;</code><br><span class="pill">sola lettura</span></td>
+        <td>Consultare e cercare le pratiche del proprio settore; <strong>non</strong> può salvare
+            modifiche: ogni POST/PUT/DELETE viene bloccato con <strong>403 — Accesso non
+            consentito</strong> (decoratore <code>block_readonly_write</code>). Vede solo le
+            pratiche della propria U.O./settore.</td>
+      </tr>
+      <tr>
+        <td><code>editor_settore_&lt;N&gt;</code><br><span class="pill">scrittura</span></td>
+        <td>Creare, modificare ed eliminare pratiche, diario, documenti, soggetti e
+            particelle nelle funzionalità del proprio settore.</td>
+      </tr>
+      <tr>
+        <td><code>consiglieri</code> + commissioni</td>
+        <td>Vista dedicata e read-only delle pratiche
+            (<code>/protocollo/pratica_detail_consigliere/&lt;id&gt;/</code>) con pulsante
+            <strong>«Richiedi copia / accesso»</strong>; menu <em>Le mie Commissioni</em>.</td>
+      </tr>
+      <tr>
+        <td><code>readonly</code></td>
+        <td>Gruppo di sola lettura aggiunto a staff/superuser quando serve.</td>
+      </tr>
+      <tr>
+        <td><em>staff</em> / <em>superuser</em></td>
+        <td>Dashboard, report accessi, gestione utenti/gruppi/commissioni, struttura ente,
+            tipi di pratica, admin Django.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="info">
+    <b>Richiesta di accesso.</b> Quando un utente deve aprire una pratica che non può
+    vedere, usa il pulsante «Richiedi copia / accesso»:
+    <code>/accounts/richiesta-accesso/&lt;id&gt;/</code> (variante edilizia
+    <code>/accounts/richiesta-accesso/edilizia/&lt;id&gt;/</code>). Il form chiede una
+    <em>motivazione</em> e invia via email a staff/superuser pratica, soggetti, particelle e
+    commissioni; la risposta arriva per email.
+  </div>
+  <p>
+    Filtri template utili: <code>can_use_protocollo</code> (staff/superuser sempre, altrimenti
+    serve un profilo completo con settore + servizio + U.O.), <code>is_consigliere</code>
+    (gruppo <code>consiglieri</code> o commissione attiva), <code>is_editor</code>,
+    <code>is_manager</code>.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<section id="navigazione">
+  <h2>7. Navigazione del portale</h2>
+  <h3>Barra di navigazione (in alto)</h3>
+  <table>
+    <thead><tr><th>Voce</th><th>Destinazione</th><th>Visibile a</th></tr></thead>
+    <tbody>
+      <tr><td><strong>HOME</strong></td><td><code>/</code> — riepiloghi e statistiche</td><td>tutti</td></tr>
+      <tr><td><strong>Segnala</strong></td><td><code>/mailer/</code> — email a manutentori/staff</td><td>non consiglieri</td></tr>
+      <tr><td><strong>OpenGeoProt</strong> (ultime pratiche)</td><td><code>/protocollo/mie_pratiche/</code></td><td>chi può usare il protocollo</td></tr>
+      <tr><td><strong>Cerca</strong></td><td><code>/protocollo/search/protocollo/</code> — ricerca integrata</td><td>idem</td></tr>
+      <tr><td><strong>Nuova pratica</strong></td><td><code>/protocollo/pratica_add/</code></td><td>editor</td></tr>
+      <tr><td><strong>Riepilogo pratiche</strong></td><td><code>/protocollo/dashboard/</code></td><td>manager/staff</td></tr>
+      <tr><td><strong>Mappa Sviluppo</strong></td><td><code>/protocollo/mappa_area/sviluppo/</code></td><td>chi usa il protocollo</td></tr>
+      <tr><td><strong>Aiuto</strong> (icona libro)</td><td><code>/help/</code> — manuale utente</td><td>autenticati</td></tr>
+      <tr><td><strong>Menu utente</strong></td><td>profilo, le mie pratiche, le mie commissioni, area amministrativa, logout</td><td>in base a ruolo</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Barra di ricerca rapida (in basso)</h3>
+  <p>
+    In fondo a ogni pagina (utenti autenticati) c'è un pannello collassabile con
+    <strong>5 ricerche rapide</strong>, ciascuna con il proprio modulo:
   </p>
   <ul>
-    <li><b>Modifica profilo</b> &mdash; per cambiare nome, cognome, email e
-        soprattutto il <b>settore</b> di appartenenza;</li>
-    <li><b>Le mie pratiche</b> &mdash; per vedere rapidamente le pratiche a te
-        associate;</li>
-    <li>per gli amministratori: <b>Gestione Utenti</b> e <b>Gestione Gruppi</b>;</li>
-    <li><b>Log Out</b> per chiudere la sessione.</li>
+    <li><strong>Stato / tipo pratica / anno</strong> → <code>/protocollo/search/stato_pratica/</code></li>
+    <li><strong>Nominativo</strong> (cognome/nome) → <code>/protocollo/search/</code></li>
+    <li><strong>Particella</strong> (foglio + mappale) → <code>/protocollo/search/particella/</code></li>
+    <li><strong>Protocollo</strong> (numero + anno) → <code>/protocollo/search/protocollo/</code></li>
+    <li><strong>Protocollo allegato / documento</strong> → <code>/protocollo/search/documento/</code></li>
   </ul>
   <p>
-    Quando salvi una modifica al <b>settore</b> (es. da
-    <i>settore 1</i> a <i>settore 6</i>), il sistema aggiorna
-    automaticamente il tuo gruppo di accesso e adatta le viste:
-    la <b>Home</b> e la <b>Ricerca Integrata</b> inizieranno a mostrarti
-    prima le pratiche del settore precedente e poi quelle del nuovo
-    settore, in base ai nuovi permessi.
+    I messaggi di sistema (salvataggi, errori) compaiono come avvisi che spariscono da soli
+    dopo pochi secondi.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<section id="pratica">
+  <h2>8. La pratica: anatomia e ciclo di vita</h2>
+
+  <h3>Creazione</h3>
+  <p>
+    <code>/protocollo/pratica_add/</code> (solo <em>editor</em>). Campi principali:
+    <strong>tipo pratica</strong>, <strong>protocollo generale</strong> e data, progressivo
+    <code>code_p</code>, classe, <strong>stato</strong>, <strong>strada</strong> (autocomplete)
+    e civico, <strong>oggetto</strong>, annotazioni e mappa. Alla creazione il progressivo
+    viene calcolato automaticamente per tipo/anno e la pratica viene geolocalizzata
+    (geocoding Nominatim o centroide delle particelle, in fallback il centro di Carrara);
+    infine si passa al dettaglio.
   </p>
 
-  <hr>
-  <h4 id="ricerca">4. Ricerca Integrata</h4>
+  <h3>Stati della pratica (campo <code>stato</code>)</h3>
+  <table>
+    <thead><tr><th>Codice</th><th>Significato</th><th>Codice</th><th>Significato</th></tr></thead>
+    <tbody>
+      <tr><td><code>a</code></td><td>attiva</td><td><code>ic</code></td><td>inviata comunicazione</td></tr>
+      <tr><td><code>i</code></td><td>in corso</td><td><code>ri</code></td><td>richiesta integrazione</td></tr>
+      <tr><td><code>s</code></td><td>sospesa</td><td><code>ia</code></td><td>inviata ad amministrativi</td></tr>
+      <tr><td><code>c</code></td><td>chiusa</td><td><code>af</code></td><td>alla firma</td></tr>
+      <tr><td><code>aa</code></td><td>archiviata</td><td><code>np</code></td><td>improcedibile</td></tr>
+      <tr><td><code>bd</code></td><td>bozza determina</td><td><code>df</code></td><td>determina firmata</td></tr>
+      <tr><td><code>dn</code></td><td>determina inviata a notaio</td><td><code>eo</code></td><td>emessa ordinanza</td></tr>
+      <tr><td><code>ai</code></td><td>importo accettato</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="diario">Diario e cambio stato</h3>
   <p>
-    Dalla barra superiore apri <b>Ricerca Integrata Pratiche</b>
-    (URL <code>/protocollo/search/protocollo/</code>). Il modulo permette di
-    incrociare pi&ugrave; filtri contemporaneamente:
-  </p>
-  <ul>
-    <li><b>Cognome / Nome</b> del soggetto;</li>
-    <li><b>Protocollo Generale</b> e <b>Anno</b>;</li>
-    <li><b>Stato Pratica</b> e <b>Tipo Pratica</b>;</li>
-    <li><b>Foglio</b> e <b>Mappale</b> catastali;</li>
-    <li><b>Strada</b> (autocomplete) e <b>Civico</b>;</li>
-    <li><b>Oggetto</b> (parole chiave);</li>
-    <li><b>Atto / Istruttoria / Tecnico</b> (campi propri dell'archivio edilizio).</li>
-  </ul>
-  <p>
-    Premi <b>RICERCA INTEGRATA</b> per i risultati in elenco, oppure
-    <b>RISULTATI SU MAPPA</b> per vederli sulla mappa interattiva.
+    Il <strong>diario</strong> è la cronologia operativa della pratica: ogni voce datata e
+    firmata dall'operatore. La vista <code>/protocollo/add_diario/&lt;id&gt;/</code> fa due
+    cose insieme: salva la voce di diario <strong>e</strong> applica l'eventuale nuovo
+    <strong>stato</strong> della pratica (con log e automazioni del CED). Le voci si
+    modificano con <code>/protocollo/edit_diario/&lt;id&gt;/</code> e si stampano con
+    <code>/protocollo/list_diario/&lt;id&gt;/</code> (PDF). Lo storico completo delle
+    modifiche è consultabile in <code>/protocollo/pratica_history/&lt;id&gt;/</code>
+    (django-simple-history).
   </p>
 
-  <hr>
-  <h4 id="tab">5. I due blocchi di risultati: OPENGEOPROT e ARCHIVIO</h4>
-  <p>I risultati sono divisi in due schede (TAB):</p>
+  <h3 id="documenti">Documenti allegati</h3>
+  <p>
+    Upload da <code>/protocollo/pratica_detail/&lt;id&gt;/upload/</code> (postale, documento,
+    protocollo, data, nome file). Ogni allegato genera automaticamente una <strong>voce di
+    diario</strong> al salvataggio. I file finiscono in <code>media/</code> e si aprono con
+    <code>/protocollo/document/&lt;id&gt;/</code>. È disponibile la <strong>ricerca
+    full-text sul contenuto dei documenti</strong>
+    (<code>/protocollo/search/documento/testo/</code>) alimentata dall'indice costruito con
+    <code>python manage.py indicizza_documenti</code>.
+  </p>
+
+  <h3 id="soggetti">Soggetti e particelle</h3>
   <ul>
-    <li>
-      <b>OPENGEOPROT</b> &mdash; le pratiche del <b>protocollo</b> (ufficio
-      istruttorie, pratiche correnti e storiche del Comune).
-    </li>
-    <li>
-      <b>ARCHIVIO</b> &mdash; le pratiche dell'<b>archivio edilizio</b>
-      (edilizia, ricercabili per particella catastale foglio/mappale).
-    </li>
+    <li><strong>Soggetti</strong>: richiedenti, professionisti e altri intestatari collegati
+        alla pratica (aggiunta, modifica, sostituzione, elenco professionisti in
+        <code>/protocollo/soggetti/</code>). Ogni operazione «pratica-specifica» usa il
+        suffisso <code>&lt;id&gt;/&lt;pratica_pk&gt;/</code> per restare nel contesto giusto.</li>
+    <li><strong>Particelle catastali</strong>: foglio/mappale collegati alla pratica, con
+        geometria PostGIS; servono per la mappa, per le pratiche vicine e per i riepiloghi.
+        Ricerca dedicata per particella in <code>/protocollo/search/particella/</code>.</li>
+    <li><strong>Dettaglio pratica</strong> <code>/protocollo/pratica_detail/&lt;id&gt;/</code>:
+        tre colonne — dati/stato/azioni (Edita, Duplica, PDF, Storico), soggetti e moduli per
+        tipo (fotovoltaico, ascensori, paesaggio, cooperative, idoneità…), particelle +
+        modelli di comunicazione + diario, con mappa Leaflet a lato.</li>
+  </ul>
+</section>
+
+<!-- ================================================================ -->
+<section id="ricerca">
+  <h2>9. Ricerca integrata e risultati</h2>
+  <p>
+    La maschera principale è <code>/protocollo/search/protocollo/</code> (pulsante
+    <strong>Cerca</strong>): permette di <strong>incrociare molti filtri</strong> contemporaneamente.
+  </p>
+  <ul>
+    <li>stato pratica, protocollo generale e anno, oggetto e annotazioni;</li>
+    <li>strada (autocomplete) e civico; tipo pratica; cognome/nome soggetto;</li>
+    <li>foglio e mappale catastali; matricola, CDU, impianto, idoneità;</li>
+    <li>origine, atto, tecnico, commissione, range date <em>da/a</em>.</li>
   </ul>
   <p>
-    All'apertura dei risultati viene mostrata automaticamente la TAB con il
-    <b>maggiore numero di pratiche</b> trovate. Clicca sull'altra TAB per
-    vedere l'altro blocco.
+    Pulsanti laterali per le ricerche verticali: <em>Rateizzi PEEP</em>, <em>Soggetti</em>,
+    <em>Grandi Lavori</em>, <em>Piccoli Lavori</em>, <em>Autorizzazioni</em>,
+    <em>Licenze Edilizie</em>, oltre a <strong>RISULTATI SU MAPPA</strong> e
+    <em>Svuota filtri</em>.
   </p>
-  <div class="alert alert-info">
-    Suggerimento: il modo pi&ugrave; diretto per cercare per
-    <b>particella catastale</b> (es. Foglio <code>51</code>, Mappale
-    <code>826</code>) &egrave; compilare i campi <i>Foglio</i> e <i>Mappale</i>
-    e lasciare gli altri vuoti: i risultati appariranno nella TAB
-    <b>ARCHIVIO</b>. Se necessario, puoi comunque combinare
-    foglio/mappale con altri filtri, come <i>Cognome</i> o <i>Oggetto</i>:
-    il sistema restringe l'insieme senza annullare la ricerca per particella.
+  <h3>Le due schede (TAB) dei risultati</h3>
+  <ul>
+    <li><strong>OPENGEOPROT</strong> — le pratiche del protocollo corrente;</li>
+    <li><strong>ARCHIVIO</strong> — le pratiche dell'archivio edilizio storico
+        (app opzionale; se non installata la TAB non produce risultati).</li>
+  </ul>
+  <p>
+    All'apertura viene mostrata automaticamente la TAB con <strong>più risultati</strong>;
+    la paginazione è di <strong>10 pratiche per pagina</strong> e la selezione della TAB
+    resta valida mentre cambi pagina.
+  </p>
+  <div class="info">
+    <b>Suggerimento.</b> Il modo più diretto per cercare per particella catastale (es. Foglio
+    <code>51</code>, Mappale <code>826</code>) è compilare quei due campi da soli: i
+    risultati compariranno nella TAB <strong>ARCHIVIO</strong>. Foglio/mappale si possono
+    comunque combinare con altri filtri (Cognome, Oggetto…): il sistema restringe l'insieme
+    senza annullare la ricerca per particella.
+  </div>
+  <p>
+    Per aprire una pratica usa il pulsante quadrato a sinistra dell'ID: porta a
+    <code>/protocollo/pratica_detail/&lt;id&gt;/</code>.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<section id="mappa">
+  <h2>10. Cartografia e mappa</h2>
+  <ul>
+    <li><strong>Risultati su mappa</strong> — <code>/protocollo/mappa_area/</code>: le pratiche
+        con geometria (particelle) vengono mostrate su mappa interattiva; il bottone
+        <em>Vedi in Mappa</em> nei risultati apre direttamente la selezione;</li>
+    <li><strong>Mappa Sviluppo</strong> — <code>/protocollo/mappa_area/sviluppo/</code>:
+        visione per area di sviluppo;</li>
+    <li><strong>Mappa per tipo pratica</strong> — <code>/protocollo/mappa_tipo/&lt;id&gt;/</code>;</li>
+    <li><strong>Pratiche vicine / catasto</strong> — endpoint <code>pratiche_nearby</code>,
+        <code>catasto_nearby</code>, <code>catasto_bbox</code> e GeoJSON delle particelle
+        (<code>/protocollo/particella/geojson/</code>);</li>
+    <li><strong>Note OSM</strong> — segnalazioni georiferite collegate alle strade
+        (<code>/protocollo/nota_osm/*</code>), con app dedicate <code>/osm_note/</code>
+        (elenco strade da processare) e <code>/highway/</code> (geometrie stradali);</li>
+    <li>widget mappa anche nei form di pratica e nei moduli dedicati; centro default
+        (44.10, 10.07), zoom 10–21, SRID 4326.</li>
+  </ul>
+  <div class="note">
+    <b>Prerequisiti GIS.</b> Serve PostGIS attivo su entrambi i database e le librerie di
+    sistema GDAL/GEOS/PROJ. Le particelle arrivano dalla vista
+    <code>cxf_in.vw_particelle</code> sul database <code>AnagrafeCivica</code>.
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="moduli">
+  <h2>11. Moduli specializzati</h2>
+  <table>
+    <thead><tr><th>Modulo</th><th>Prefisso URL</th><th>Cosa fa</th></tr></thead>
+    <tbody>
+      <tr><td><strong>prg</strong></td><td><code>/prg/</code></td><td>Piano regolatore: piani, destinazioni d'uso, CDU (certificati destinazione urbana) con marche, istruttorie, PDF per particella</td></tr>
+      <tr><td><strong>paesaggio</strong></td><td><code>/paesaggio/</code></td><td>Commissioni paesaggistiche: composizione, iscritti, pareri</td></tr>
+      <tr><td><strong>coop</strong></td><td><code>/coop/</code></td><td>Convenzioni edilizie cooperative: istruttorie convenzionali, scadenze, rateizzazioni, svincoli, accettazione importi, millesimi</td></tr>
+      <tr><td><strong>ascensori</strong></td><td><code>/ascensori/</code></td><td>Impianti e matricole ascensori, ordinanze, pratiche collegate, stampa matricola</td></tr>
+      <tr><td><strong>suap</strong></td><td><code>/suap/</code></td><td>PAU — Provvedimento Unico Autorizzativo, con stampa</td></tr>
+      <tr><td><strong>pascar</strong></td><td><code>/pascar/</code></td><td>Passi carrabili (elenco, inserimento, modifica)</td></tr>
+      <tr><td><strong>idonall</strong></td><td><code>/idonall/</code></td><td>Idoneità alloggiativa: istruttorie, attestati, rinnovi, duplicati, cointestazioni</td></tr>
+      <tr><td><strong>fotovoltaico</strong></td><td><code>/fotovoltaico/</code></td><td>Impianti fotovoltaici collegati alla pratica</td></tr>
+      <tr><td><strong>registri</strong></td><td><code>/grandi_lavori/</code>, <code>/piccoli_lavori/</code>, <code>/licenze_edilizie/</code>, <code>/autorizzazioni/</code></td><td>Registri con elenchi per periodo, allegati e operazioni PDF</td></tr>
+      <tr><td><strong>comunicazioni</strong></td><td><code>/comunicazioni/</code></td><td>Modelli di comunicazione/lettere collegati ai tipi di pratica + generatori documenti (pareri, avvii SUAP, cartelline, ascensori, PdC)</td></tr>
+      <tr><td><strong>istruttoria_poc</strong></td><td><code>/istruttoria_poc/</code></td><td>Istruttorie POC: sezioni Istruttoria / Comunicazione / Consulenza</td></tr>
+      <tr><td><strong>omissis_documents</strong></td><td><code>/omissis/</code></td><td>Oscuramento automatico «omissis» di documenti Office (.doc/.docx/.odt) tramite LibreOffice, max 20 MB</td></tr>
+      <tr><td><strong>catasto</strong></td><td><code>/catasto/</code></td><td>Elenco particelle (foglio/mappale) con geometrie, DB dedicato via router</td></tr>
+      <tr><td><strong>anagrafe</strong></td><td><code>/anagrafe/</code></td><td>Residenti / anagrafe civica (DB <code>AnagrafeCivica</code>)</td></tr>
+      <tr><td><strong>viario</strong></td><td><code>/viario/</code></td><td>Civici e strade, con sincronizzazione da OpenStreetMap</td></tr>
+      <tr><td><strong>struttura_ente</strong></td><td><code>/struttura_ente/</code></td><td>Settori, servizi, attività U.O. e tipi commissione, con storici; genera i gruppi di permessi</td></tr>
+      <tr><td><strong>mailer</strong></td><td><code>/mailer/</code></td><td>Invio email SMTP — usato dal pulsante «Segnala»</td></tr>
+      <tr><td><strong>archivio storico</strong> <span class="pill">opzionale</span></td><td><code>/edilizia/</code>, <code>/gest_edilizia/</code>, <code>/archivi/</code></td><td>Pratiche edilizie storiche, cartelline PDF, archivio generico con origine e dati anagrafici</td></tr>
+    </tbody>
+  </table>
+  <p>
+    Le <strong>comunicazioni</strong> generate (avvii, pareri, integrazioni, cartelline) si
+    trovano nel dettaglio pratica, nella colonna dei modelli collegati al tipo di pratica.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<section id="dashboard">
+  <h2>12. Dashboard e report</h2>
+  <ul>
+    <li><strong>Home</strong> <code>/</code> — riepiloghi per anno: svincoli PEEP, CDU, ascensori,
+        idoneità alloggiativa, card <em>Pianificazione Urbanistica</em>;</li>
+    <li><strong>Dashboard / Riepilogo pratiche</strong> <code>/protocollo/dashboard/</code> —
+        tipi di pratica × stato, tempi medi di istruttoria, volume per settore, carico per
+        istruttore, ratei non pagati (solo <em>manager</em>);</li>
+    <li><strong>Grafici</strong> <code>/protocollo/pratiche-chart/</code> — andamento pratiche;</li>
+    <li><strong>Report accessi</strong> <code>/protocollo/report/accessi/</code> (+ per utente)
+        — da <code>user_actions.log</code>, solo staff;</li>
+    <li><strong>Riepiloghi PDF</strong> — CDU <code>/protocollo/riepilogo-cdu/</code>,
+        idoneità <code>/protocollo/riepilogo-idonall/</code>, report POC
+        <code>/protocollo/report/poc_2022/pdf/</code>;</li>
+    <li><strong>Storico pratica</strong> <code>/protocollo/pratica_history/&lt;id&gt;/</code> —
+        modifiche con utente, data e differenze.</li>
+  </ul>
+</section>
+
+<!-- ================================================================ -->
+<section id="comandi">
+  <h2>13. Comandi di management</h2>
+  <p>Tutti si eseguono dalla radice del progetto con l'ambiente virtuale attivo.</p>
+  <table>
+    <thead><tr><th>Comando</th><th>Scopo</th></tr></thead>
+    <tbody>
+      <tr><td><code>sync_settore_groups [--force]</code></td><td>Crea/aggiorna i gruppi <code>user_settore_N</code> e <code>editor_settore_N</code> per ogni settore</td></tr>
+      <tr><td><code>import_particelle [--shp]</code> / <code>renumber_particelle_id</code></td><td>Import particelle da shapefile / rinumerazione ID</td></tr>
+      <tr><td><code>importa_dati_php</code> / <code>importa_da_db_php</code> / <code>importa_documenti</code></td><td>Migrazione dati e allegati dal vecchio gestionale PHP</td></tr>
+      <tr><td><code>indicizza_documenti [--rebuild]</code></td><td>Indice di ricerca full-text sui documenti</td></tr>
+      <tr><td><code>aggiorna_mpoly_pratiche [--dry-run]</code></td><td>Ricalcola la geometria delle pratiche</td></tr>
+      <tr><td><code>carica_geometrie_particelle [--dry-run]</code></td><td>Carica le geometrie delle particelle di protocollo</td></tr>
+      <tr><td><code>collega_documenti</code> / <code>fix_ubicazioni</code> / <code>show_ubicazioni</code></td><td>Risanamenti dati (file fisici, indirizzi)</td></tr>
+      <tr><td><code>import_highways</code> / <code>import_carrara</code></td><td>Import geometrie OSM / perimetro comunale</td></tr>
+      <tr><td><code>populate_grandi_lavori</code> / <code>populate_piccoli_lavori</code> / <code>populate_licenze_edilizie</code> / <code>populate_autorizzazioni</code></td><td>Popolamento registri di esempio</td></tr>
+      <tr><td><code>migrate</code> / <code>createsuperuser</code> / <code>collectstatic --noinput</code></td><td>Operazioni standard Django</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ================================================================ -->
+<section id="env">
+  <h2>14. Variabili d'ambiente</h2>
+  <p>L'elenco completo è in <code>.env.example</code>. Le più importanti:</p>
+  <table>
+    <thead><tr><th>Variabile</th><th>Descrizione</th></tr></thead>
+    <tbody>
+      <tr><td><code>DJANGO_SECRET_KEY</code></td><td><strong>Obbligatoria.</strong> Chiave segreta Django</td></tr>
+      <tr><td><code>DJANGO_DEBUG</code></td><td><code>True</code> in sviluppo, <code>False</code> in produzione</td></tr>
+      <tr><td><code>DJANGO_ALLOWED_HOSTS</code></td><td>Host consentiti, separati da virgola</td></tr>
+      <tr><td><code>DJANGO_DB_NAME / USER / PASSWORD / HOST / PORT</code></td><td>Database principale PostGIS</td></tr>
+      <tr><td><code>DJANGO_ANAGRAFE_DB_NAME</code></td><td>Database anagrafe/catasto (default <code>AnagrafeCivica</code>)</td></tr>
+      <tr><td><code>DJANGO_EMAIL_BACKEND</code> / <code>DJANGO_EMAIL_PASSWORD</code></td><td>Backend SMTP (o console in sviluppo) e password — usati da mailer, reset password e notifiche</td></tr>
+    </tbody>
+  </table>
+  <p>
+    Impostazioni Django rilevanti in <code>carrara/settings.py</code>:
+    <code>LANGUAGE_CODE='it'</code>, <code>TIME_ZONE='Europe/Rome'</code>,
+    <code>STATIC_ROOT=/var/www/django_opengeoprot/staticfiles/</code>,
+    <code>MEDIA_ROOT=media/</code>, <code>CRISPY_TEMPLATE_PACK='bootstrap4'</code>,
+    <code>LEAFLET_CONFIG</code>, parametri OMISSIS, logger <code>user_actions</code>.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<section id="produzione">
+  <h2>15. Produzione e deploy</h2>
+<pre><code>python manage.py collectstatic --noinput
+gunicorn carrara.wsgi:application -c gunicorn_config.py</code></pre>
+  <ul>
+    <li>nginx serve <code>/static/</code> da <code>STATIC_ROOT</code>
+        (<code>/var/www/django_opengeoprot/staticfiles/</code>) e <code>/media/</code>
+        dalla cartella <code>media/</code>;</li>
+    <li>impostare <code>DJANGO_DEBUG=False</code> e <code>DJANGO_ALLOWED_HOSTS</code>
+        valorizzato, aggiornare <code>CSRF_TRUSTED_ORIGINS</code>;</li>
+    <li>gli script di esempio sono in <code>deploy_utilities/</code>, i log di deploy in
+        <code>deploy_logs/</code>;</li>
+    <li>backup: dump PostgreSQL (es. <code>pg_dump</code>) più la cartella <code>media/</code>
+        (documenti caricati) e <code>.env</code>.</li>
+  </ul>
+</section>
+
+<!-- ================================================================ -->
+<section id="problemi">
+  <h2>16. Problemi frequenti</h2>
+  <table>
+    <thead><tr><th>Sintomo</th><th>Causa probabile / soluzione</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>403 — Accesso non consentito</strong> quando salvo</td>
+        <td>Sei in un gruppo <code>user_settore_*</code> (sola lettura): la scrittura è bloccata
+            per design. Serve un account <em>editor</em> oppure la richiesta di accesso.</td>
+      </tr>
+      <tr>
+        <td>Non vedo la voce <strong>Nuova pratica</strong> / la navbar è ridotta</td>
+        <td>Profilo incompleto: manca settore, servizio o U.O. Completa il profilo
+            (<code>/accounts/profile/edit/</code>); il controllo avviene col filtro
+            <code>can_use_protocollo</code>.</td>
+      </tr>
+      <tr>
+        <td>La registrazione rifiuta la mia email</td>
+        <td>Sono ammesse solo mailbox <code>@comune.carrara.ms.it</code>.</td>
+      </tr>
+      <tr>
+        <td>Mi slogga sempre alla chiusura del browser</td>
+        <td>Comportamento voluto: <code>SESSION_EXPIRE_AT_BROWSER_CLOSE = True</code>.</td>
+      </tr>
+      <tr>
+        <td>TAB <strong>ARCHIVIO</strong> vuota</td>
+        <td>Le app <code>edilizia</code>/<code>archivi</code> non sono installate (cartelle
+            assenti): <code>edilizia_compat.py</code> restituisce risultati vuoti senza errori.</td>
+      </tr>
+      <tr>
+        <td>Errore GIS / «Could not find the GEOS library»</td>
+        <td>Mancano GDAL/GEOS/PROJ di sistema o l'estensione PostGIS sui due database.</td>
+      </tr>
+      <tr>
+        <td>Particelle non visibili in mappa</td>
+        <td>Mancano la vista <code>cxf_in.vw_particelle</code> sul DB anagrafe o le geometrie:
+            esegui <code>carica_geometrie_particelle</code> / <code>aggiorna_mpoly_pratiche</code>.</td>
+      </tr>
+      <tr>
+        <td>Le ricerche sui documenti non trovano nulla</td>
+        <td>Manca l'indice full-text: <code>python manage.py indicizza_documenti --rebuild</code>.</td>
+      </tr>
+      <tr>
+        <td>Gruppi/permessi mancanti o obsoleti</td>
+        <td><code>python manage.py sync_settore_groups --force</code> dopo aver aggiornato la
+            struttura dell'ente.</td>
+      </tr>
+      <tr>
+        <td>Statici 404 in produzione</td>
+        <td>Mancano <code>collectstatic</code> o la root nginx su
+            <code>STATIC_ROOT</code>.</td>
+      </tr>
+      <tr>
+        <td>L'oscuramento «omissis» non parte</td>
+        <td>Servono LibreOffice installato (<code>OMISSIS_LIBREOFFICE_BIN</code>) e file
+            .doc/.docx/.odt entro 20 MB.</td>
+      </tr>
+      <tr>
+        <td>Email non arrivano</td>
+        <td>In sviluppo il backend è «console» (le email finiscono in stdout): configurare
+            SMTP e <code>DJANGO_EMAIL_PASSWORD</code>.</td>
+      </tr>
+      <tr>
+        <td>Errore CSRF / host non consentito</td>
+        <td>Aggiornare <code>DJANGO_ALLOWED_HOSTS</code> e <code>CSRF_TRUSTED_ORIGINS</code>
+            con il dominio usato.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>
+    Per segnalare un problema dal portale usa il pulsante <strong>Segnala</strong>
+    (<code>/mailer/</code>): la richiesta via email arriva a staff e manutentori con browser,
+    indirizzo IP e dettagli della richiesta.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<section id="faq">
+  <h2>17. FAQ</h2>
+
+  <h4>Posso usare il progetto per un altro ente?</h4>
+  <p>
+    Sì: basta configurare database, settori e struttura dell'ente
+    (<code>struttura_ente</code>) e adattare i dati anagrafici. Il codice è generico;
+    Carrara è solo il caso d'uso di partenza.
+  </p>
+
+  <h4>Perché due database?</h4>
+  <p>
+    Il database principale (<code>default</code>) contiene protocollo e moduli, mentre
+    anagrafe e catasto risiedono su <code>AnagrafeCivica</code> (spesso gestiti da sistemi
+    esterni, con vista <code>vw_particelle</code> in schema <code>cxf_in</code>). Il router
+    <code>catasto/db_router.py</code> instrada automaticamente le query.
+  </p>
+
+  <h4>Come funzionano i permessi di scrittura?</h4>
+  <p>
+    Gruppi <code>editor_settore_&lt;N&gt;</code> creati da
+    <code>sync_settore_groups</code>, assegnati dall'area amministrativa
+    (<code>/accounts/management/users/</code>). I gruppi <code>user_settore_&lt;N&gt;</code>
+    sono di sola lettura e vedono solo il proprio settore.
+  </p>
+
+  <h4>Gli utenti possono registrarsi da soli?</h4>
+  <p>
+    Sì, ma solo con email istituzionale <code>@comune.carrara.ms.it</code> e dopo aver
+    scelto un settore (o marcato la casella consigliere con almeno una commissione).
+    Il gruppo di partenza è di sola lettura.
+  </p>
+
+  <h4>Dove finiscono i file caricati?</h4>
+  <p>Nella cartella <code>media/</code> (non versionata), serviti dall'URL <code>/media/</code>.</p>
+
+  <h4>Come si aggiunge un nuovo tipo di pratica?</h4>
+  <p>
+    Dall'area amministrativa → <em>Gestione Tipi Pratica</em>
+    (<code>/protocollo/tipopratiche_list/</code>). Il tipo collega settore/servizio, modelli
+    di comunicazione e visibilità in ricerca.
+  </p>
+
+  <h4>Il progetto è «open source»?</h4>
+  <p>
+    È rilasciato con licenza <strong>CC BY-NC-SA 4.0</strong> (vedi <code>LICENSE</code>):
+    attribuzione obbligatoria (<em>cxc61cxc — github.com/cxc61cxc</em>), uso non commerciale,
+    condivisione a pari condizioni. Essendo una licenza con clausola NonCommercial non è
+    approvata dalla OSI: tecnicamente è <em>source-available</em>.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<section id="riferimenti">
+  <h2>18. Riferimenti e link utili</h2>
+  <div class="grid">
+    <div class="card">
+      <h4>README.md</h4>
+      <p>Documentazione principale: moduli, installazione, comandi, licenza — nella radice del progetto.</p>
+    </div>
+    <div class="card">
+      <h4>docs/user_lifecycle.md</h4>
+      <p>Ciclo di vita dell'utente: registrazione, permessi per ruolo, gestione FK snapshot.</p>
+    </div>
+    <div class="card">
+      <h4>Manuale utente in-app</h4>
+      <p>Pulsante <b>Aiuto</b> in navbar → <code>/help/</code> (template <code>templates/home/help.html</code>), con un breve video esplicativo collegato.</p>
+    </div>
+    <div class="card">
+      <h4>.env.example / settings.example.py</h4>
+      <p>Riferimento per la configurazione pulita di un'installazione nuova.</p>
+    </div>
+    <div class="card">
+      <h4>notaosm.md</h4>
+      <p>Guida tecnica per portare la funzionalità «note OSM» in un altro progetto.</p>
+    </div>
+    <div class="card">
+      <h4>Repository GitHub</h4>
+      <p><a href="https://github.com/cxc61cxc/django_opengeoprot" target="_blank" rel="noopener">github.com/cxc61cxc/django_opengeoprot</a></p>
+    </div>
   </div>
 
-  <hr>
-  <h4 id="paginazione">6. Paginazione e TAB</h4>
+  <h3>Indice delle sezioni</h3>
+  <ul class="anchor-list">
+    <li><a href="#panoramica">1. Panoramica del sistema</a></li>
+    <li><a href="#stack">2. Stack tecnologico</a></li>
+    <li><a href="#struttura">3. Struttura del progetto</a></li>
+    <li><a href="#installazione">4. Installazione rapida</a></li>
+    <li><a href="#accesso">5. Registrazione e accesso</a></li>
+    <li><a href="#permessi">6. Permessi, ruoli e gruppi</a></li>
+    <li><a href="#navigazione">7. Navigazione del portale</a></li>
+    <li><a href="#pratica">8. La pratica: anatomia e ciclo di vita</a></li>
+    <li><a href="#ricerca">9. Ricerca integrata e risultati</a></li>
+    <li><a href="#mappa">10. Cartografia e mappa</a></li>
+    <li><a href="#moduli">11. Moduli specializzati</a></li>
+    <li><a href="#dashboard">12. Dashboard e report</a></li>
+    <li><a href="#comandi">13. Comandi di management</a></li>
+    <li><a href="#env">14. Variabili d'ambiente</a></li>
+    <li><a href="#produzione">15. Produzione e deploy</a></li>
+    <li><a href="#problemi">16. Problemi frequenti</a></li>
+    <li><a href="#faq">17. FAQ</a></li>
+    <li><a href="#riferimenti">18. Riferimenti e link utili</a></li>
+  </ul>
+</section>
+
+<footer>
   <p>
-    Ogni TAB ha la propria paginazione (10 pratiche per pagina). Cliccando
-    <b>Avanti</b> / <b>Indietro</b> resti sulla <b>stessa TAB</b> su cui stavi
-    lavorando: la selezione della TAB viene mantenuta durante la navigazione
-    tra le pagine.
+    <strong>OpenGeoProt</strong> — guida generata dall'analisi del progetto
+    <code>django_opengeoprot</code>.<br>
+    Licenza <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>
+    · Autore: <a href="https://github.com/cxc61cxc" target="_blank" rel="noopener">cxc61cxc</a>
+    · Testi di terze parti (Bootstrap, Leaflet, Django) sotto le rispettive licenze.
   </p>
-
-  <hr>
-  <h4 id="dettaglio">7. Aprire una pratica</h4>
-  <p>
-    In corrispondenza di ogni pratica c'&egrave; il pulsante a forma di
-    <i>quadrato</i> (a sinistra dell'ID): apre il <b>dettaglio della pratica</b>
-    (<code>/protocollo/pratica_detail/&lt;id&gt;/</code>), dove trovi soggetti,
-    particelle, diario, documenti e, se hai i permessi, i pulsanti di modifica
-    ed eliminazione.
-  </p>
-
-  <hr>
-  <h4 id="mappa">8. Risultati su mappa</h4>
-  <p>
-    Con il pulsante <b>RISULTATI SU MAPPA</b> le pratiche con geometria
-    (particelle) vengono mostrate su una mappa interattiva; il pulsante
-    <i>Vedi in Mappa</i> (presente nei risultati OPENGEOPROT) apre direttamente
-    le pratiche selezionate sulla mappa.
-  </p>
-
-   <hr>
-   <h4 id="permessi">9. Permessi e sola lettura</h4>
-   <p>
-     Gli utenti di sola lettura (gruppi <code>user_settore_*</code>) possono
-     consultare tutto ma non salvare modifiche: ogni tentativo di scrittura
-     (POST/PUT/DELETE) viene bloccato con un errore <b>403 &ndash; Accesso non
-     consentito</b>. Per le modifiche occorre un account di tipo
-     <i>editor</i>.
-   </p>
-
-   <hr>
-   <h4 id="segnala">10. Segnala problemi</h4>
-   <p>
-     Il pulsante <b>Segnala</b> nella barra di navigazione consente di
-     inviare una comunicazione diretta agli <b>amministratori</b> e ai
-     <b>manutentori</b> del portale.
-   </p>
-   <p>
-     Usalo per riportare eventuali <b>problematiche</b> riscontrate durante
-     l'uso del sistema: <b>bug</b>, <b>malfunzionamenti</b>, <b>errori</b>
-     nei dati o nella ricerca, <b>lentezza</b> o qualsiasi altra
-     difficolt&agrave; operativa.
-   </p>
-   <p>
-     La segnalazione viene instradata automaticamente allo staff tecnico,
-     che la prender&agrave; in carico per la risoluzione.
-   </p>
-
-   <a href="{% url 'home:index' %}" class="btn btn-outline-secondary mt-3 mb-5">
-    <i class="fa fa-arrow-left"></i> Torna alla Home
-  </a>
+</footer>
 
 </div>
-{% endblock %}
+</main>
+</div>
+</body>
+</html>

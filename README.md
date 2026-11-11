@@ -172,6 +172,10 @@ python manage.py createsuperuser
 
 > Le app `catasto` (modello `Particelle`) e `anagrafe` migrano sui database
 > rispettivi grazie al router: eseguire `migrate` una volta sola.
+>
+> **Al primo avvio su un nuovo sistema**, dopo `migrate`, caricare i dati
+> di base dai CSV (`export_dati_iniziali` / `carica_dati_iniziali`): vedi
+> [5. Dati iniziali](#5-dati-iniziali-opzionale).
 
 ### 5. Dati iniziali (opzionale)
 
@@ -188,6 +192,10 @@ Per popolare i dati di base:
   python manage.py sync_settore_groups
   ```
 
+  Per riportare su un nuovo sistema i gruppi e i permessi già configurati
+  (insieme ai tipi di pratica) vedere *Tipi di pratica e gruppi con
+  permessi* qui sotto.
+
 - **Popolamenti di esempio**:
 
   ```bash
@@ -197,6 +205,68 @@ Per popolare i dati di base:
   python manage.py populate_autorizzazioni
   python manage.py import_highways
   ```
+
+- **Tipi di pratica e gruppi con permessi** (`protocollo.TipoPratica`,
+  `auth.Group`): si esportano sul sistema sorgente e si ricaricano sul nuovo,
+  per non reinserire i dati a mano. Operazioni da effettuare, in ordine:
+
+  1. **Sul sistema sorgente — esporta i CSV:**
+
+     ```bash
+     python manage.py export_dati_iniziali
+     ```
+
+     Scrive `data/tipo_pratica.csv` e `data/gruppi.csv`. La cartella
+     `data/` è versionata: se il repository viene clonato sul nuovo
+     sistema i file ci sono già.
+
+  2. **Trasferisci `data/` sul nuovo sistema** (commit/clone del
+     repository, oppure copia manuale dei due file).
+
+  3. **Sul nuovo sistema — verifica senza scrivere nulla:**
+
+     ```bash
+     python manage.py carica_dati_iniziali --dry-run
+     ```
+
+     Mostra quanti record verrebbero creati (`creati`), quali già
+     presenti e quali avvisi ci sarebbero, senza scrivere nulla. Su un
+     sistema appena migrato `creati` corrisponde al numero di righe dei
+     CSV.
+
+  4. **Sul nuovo sistema — carica i dati:**
+
+     ```bash
+     python manage.py carica_dati_iniziali
+     ```
+
+     Carica prima i gruppi e poi i tipi di pratica, è **ripetibile**
+     (crea soltanto i record mancanti) e stampa un riepilogo con
+     `creati`, `gia presenti`, `aggiornati` e gli eventuali avvisi.
+
+  Opzioni di `carica_dati_iniziali`:
+
+  - `--dry-run`: anteprima, nessuna scrittura;
+  - `--force`: sovrascrive i record già presenti e i permessi dei gruppi;
+  - `--keep-ids`: mantiene gli id originali (colonna `id_orig`);
+  - `--dir PATH`: cartella alternativa ai CSV (default `data/`);
+  - `--help`: riepilogo completo.
+
+  Note:
+
+  - Settore, servizio, U.O., UO visibili e utente sono esportati come
+    chiavi **naturali** (codice/nome): se sul nuovo sistema non esistono
+    ancora, il campo resta vuoto e viene stampato un avviso, senza creare
+    nulla al loro posto — completare la struttura dell'ente e rieseguire
+    il comando.
+  - Un permesso non trovato viene segnalato: controllare di aver eseguito
+    `migrate` (i codici sono `app_label.codename`).
+  - I gruppi `user_settore_N` / `editor_settore_N` vengono ricreati anche
+    dal segnale di `struttura_ente` quando si aggiungono i settori e da
+    `sync_settore_groups`: se hanno già i permessi assegnati dal CSV non
+    vengono sovrascritti (a meno di `sync_settore_groups --force`).
+  - `export_dati_iniziali` accetta `--dir` per scrivere altrove, utile se
+    si esporta da un ambiente in cui `data/` non deve essere modificato.
 
 Tramite vista PGSQL è possibile georeferenziare le pratiche in ambiente GIS.
 
@@ -274,6 +344,8 @@ django_opengeoprot/
 ├── grandi_lavori/ piccoli_lavori/ licenze_edilizie/ autorizzazioni/
 ├── comunicazioni/ mailer/ struttura_ente/ istat/
 ├── osm_note/ highway/ qwen_map/
+├── dati_iniziali/        # export/import CSV dei dati di base (tipi pratica, gruppi)
+├── data/                 # CSV generati da export_dati_iniziali (versionati)
 ├── home/               # homepage e help
 ├── templates/          # template globali (base, navbar)
 ├── static/             # CSS/JS/immagini (in sorgente)
@@ -296,6 +368,7 @@ django_opengeoprot/
 | Comando | Descrizione |
 |---|---|
 | `sync_settore_groups` | Crea/aggiorna i gruppi di permessi per settore |
+| `export_dati_iniziali` / `carica_dati_iniziali` | Esporta/carica da CSV i tipi di pratica e i gruppi con i permessi (primo avvio) |
 | `import_particelle` / `renumber_particelle_id` | Import/rinumerazione particelle |
 | `importa_dati_php` / `importa_da_db_php` / `importa_documenti` | Migrazione dati da vecchio sistema PHP |
 | `indicizza_documenti` | Indice di ricerca documenti |

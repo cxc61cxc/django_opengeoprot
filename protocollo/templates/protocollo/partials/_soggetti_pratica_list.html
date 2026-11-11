@@ -50,6 +50,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.soggetto-pixellato {
+  filter: blur(5px);
+  -webkit-filter: blur(5px);
+  user-select: none;
+}
 </style>
 
 <div class="table-container" style="max-height:180px;">
@@ -90,19 +95,19 @@
         </td>
 
         <!-- NOMINATIVO -->
-        <td>
+        <td {% if is_relatore_commissione %}class="soggetto-pixellato"{% endif %}>
           <b>{{ p.cognome|upper }} {{ p.nome|title }}</b><br>
           <small class="text-muted">{{ p.tipo }}</small>
         </td>
 
         <!-- CF -->
-        <td>{{ p.codice_fiscale|upper }}</td>
+        <td {% if is_relatore_commissione %}class="soggetto-pixellato"{% endif %}>{{ p.codice_fiscale|upper }}</td>
 
         <!-- INDIRIZZO -->
-        <td>{{ p.addr|title }}</td>
+        <td {% if is_relatore_commissione %}class="soggetto-pixellato"{% endif %}>{{ p.addr|title }}</td>
 
         <!-- COMUNE -->
-        <td>
+        <td {% if is_relatore_commissione %}class="soggetto-pixellato"{% endif %}>
           {{ p.comune_residenza|title }}<br>
           {% if p.addr_sede %}
             <small>SEDE: {{ p.addr_sede|title }}</small>

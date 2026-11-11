@@ -25,15 +25,20 @@
    .pratiche-table td:nth-child(6) { width: 22%; }
    .pratiche-table th:nth-child(7),
    .pratiche-table td:nth-child(7) { width: 14%; }
-   .pratiche-table th:nth-child(8),
-   .pratiche-table td:nth-child(8) { width: 50px; text-align: center; }
-   #opengeoprot-tab.active,
-   #archivio-tab.active {
-     font-size: 1.15rem;
-     font-weight: bold;
-     letter-spacing: 0.3px;
-     color: #0d6efd !important;
-   }
+    .pratiche-table th:nth-child(8),
+    .pratiche-table td:nth-child(8) { width: 50px; text-align: center; }
+    #opengeoprot-tab.active,
+    #archivio-tab.active {
+      font-size: 1.15rem;
+      font-weight: bold;
+      letter-spacing: 0.3px;
+      color: #0d6efd !important;
+    }
+    .soggetto-pixellato {
+      filter: blur(5px);
+      -webkit-filter: blur(5px);
+      user-select: none;
+    }
    </style>
 {% endblock css %}
 
@@ -309,7 +314,7 @@
                 <b>{{ p.prot_gen }}</b><br><span >{{ p.data_prot_gen|date:"d/m/Y" }}</span>
               </td>
               
-              <td>
+              <td {% if is_relatore_commissione %}class="soggetto-pixellato"{% endif %}>
 
                 
 

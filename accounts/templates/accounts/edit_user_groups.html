@@ -178,6 +178,29 @@
           </div>
         {% endif %}
 
+        <!-- RELATORE COMMISSIONE -->
+        {% if relatore_group %}
+          <h5 class="mb-3 text-secondary mt-4">
+            <i class="fa fa-eye-slash me-2"></i>Relatore commissione
+          </h5>
+          <p class="text-muted small mb-3">
+            Il gruppo <code>relatore_commissione</code> consente di visualizzare i dati dei soggetti in forma pixellata nel dettaglio pratica.
+          </p>
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-2 mb-3">
+            <div class="col">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox"
+                       name="groups" value="{{ relatore_group.id }}" id="g{{ relatore_group.id }}"
+                       {% if relatore_group.id in user_groups_ids %}checked{% endif %}>
+                <label class="form-check-label" for="g{{ relatore_group.id }}">
+                  {{ relatore_group.name }}
+                  <span class="badge bg-light text-muted ms-1">{{ relatore_group.permissions.count }}p</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
         <!-- ALTRI GRUPPI -->
         {% if other_groups %}
           <h5 class="mb-3 text-secondary mt-4">

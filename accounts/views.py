@@ -411,6 +411,7 @@ def edit_user_groups(request, user_id):
 
     from struttura_ente.models import Settore, TipoCommissione
 
+    Group.objects.get_or_create(name='relatore_commissione')
     settori = list(Settore.objects.all().order_by('codice'))
     all_groups = list(Group.objects.all().order_by('name'))
 
@@ -479,6 +480,10 @@ def edit_user_groups(request, user_id):
             used_group_ids.add(g.id)
             commissioni_groups.append(g)
 
+    relatore_group = next((g for g in all_groups if g.name == 'relatore_commissione'), None)
+    if relatore_group:
+        used_group_ids.add(relatore_group.id)
+
     other_groups = [g for g in all_groups if g.id not in used_group_ids]
 
     user_groups_ids = list(user_to_edit.groups.values_list('id', flat=True))
@@ -488,6 +493,7 @@ def edit_user_groups(request, user_id):
         'settore_groups': settore_groups,
         'staff_groups': staff_groups,
         'commissioni_groups': commissioni_groups,
+        'relatore_group': relatore_group,
         'other_groups': other_groups,
         'user_groups_ids': user_groups_ids,
     })
@@ -511,6 +517,7 @@ def toggle_staff(request, user_id):
 @user_passes_test(_staff_or_superuser)
 def group_management_view(request):
     """Visualizza e gestisce i gruppi e i relativi permessi."""
+    Group.objects.get_or_create(name='relatore_commissione')
     groups = Group.objects.all().prefetch_related('permissions').order_by('name')
     
     if request.method == 'POST':

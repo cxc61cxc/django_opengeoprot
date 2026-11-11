@@ -1,0 +1,99 @@
+﻿id_orig;name;description;settore;servizio;u_o;visibile_solo_uo;uo_visibili;user
+20;abusivismo;Opere eseguite in assenza di titolo o in difformità;Settore 6;Servizio 6.1;U.O. 6.1.2 Sportello unico edilizia (SUEP) e vigilanza abusivismo;0;;django_admin
+99;accertamento_di_conformita;accertamento di conformità;Settore 6;Servizio 6.1;U.O. 6.1.2 Sportello unico edilizia (SUEP) e vigilanza abusivismo;0;;django_admin
+104;accertamento_di_conformita_suap;accertamento_di_conformita_suap;Settore 1;Servizio 1.4;U.O. 1.4.1 - SUAP;0;;django_admin
+108;agibilita;agibilità;Settore 6;Servizio 6.1;U.O. 6.1.2 Sportello unico edilizia (SUEP) e vigilanza abusivismo;0;;django_admin
+54;alberature;Gestione del verde pubblico e privato;Settore 5;Servizio 5.2;U.O. 5.2.1 - Manutenzione strade, giardini, arredo e decoro urbano;0;;django_admin
+45;APE;Attestato di Prestazione Energetica;Settore 6;Servizio 6.1;U.O. 6.1.2 Sportello unico edilizia (SUEP) e vigilanza abusivismo;0;;django_admin
+114;articoli di stampa;raccolta di articoli di stampa relativi al settore 6;Settore 6;Servizio 6.1;U.O. 6.1.3 Servizi amministrativi e sicurezza sul lavoro;0;;ciccio
+38;ascensore;Attribuzione numero di matricola e verifiche;Settore 6;Servizio 6.1;U.O. 6.1.1 Pianificazione urbanistica;0;;ciccio
+83;attestazione_di_conformita;attestazione_di_conformita;Settore 6;Servizio 6.1;U.O. 6.1.2 Sportello unico edilizia (SUEP) e vigilanza abusivismo;0;;ciccio
+50;atto di aggiornamento;Deposito di atto di aggiornamento;Settore 6;Servizio 6.1;U.O. 6.1.1 Pianificazione urbanistica;0;;ciccio
+34;aua;Autorizzazione unica ambientale;Settore 1;;;0;;django_admin
+105;aut_259_03;aut_259_03;Settore 1;Servizio 1.4;U.O. 1.4.1 - SUAP;0;;ciccio
+90;autorizzazione vincolo idrogeologico;autorizzazione vincolo idrogeologico;Settore 5;Servizio 5.0;U.O. 5.0.1 Servizi amministrativi e gestione PNRR;0;;ciccio
+94;aut_paes;aut_paes;Settore 1;Servizio 1.4;U.O. 1.4.3 - Tutela del paesaggio;0;;ciccio
+23;bed & breakfast;bed & breakfast;Settore 3;Servizio 3.1;U.O. 3.1.1 - Attività economiche, commerciali e libero professionali;0;;ciccio
+102;bonus_facciata;bonus_facciata;Settore 6;Servizio 6.1;U.O. 6.1.2 Sportello unico edilizia (SUEP) e vigilanza abusivismo;0;;ciccio
+7;cdu;Certificato di Destinazione Urbanistica;Settore 6;Servizio 6.1;U.O. 6.1.1 Pianificazione urbanistica;0;;ciccio
+16;cil;Comunicazione di inzio lavori;Settore 6;Servizio 6.1;U.O. 6.1.2 Sportello unico edilizia (SUEP) e vigilanza abusivismo;0;;ciccio
+15;cila;Comunicazione di inizio lavori asseverata;Settore 6;Servizio 6.1;U.O. 6.1.2 Sportello unico edilizia (SUEP) e vigilanza abusivismo;0;;ciccio
+106;cila_suap;cila_suap;Settore 1;Servizio 1.4;U.O. 1.4.1 - SUAP;0;;ciccio
+40;colonnina;Installazione colonnine di ricarica elettrica;Settore 1;Servizio 1.4;U.O. 1.4.1 - SUAP;0;;ciccio
+85;comunicazione_di_fine_lavori;comunicazione_di_fine_lavori;Settore 6;Servizio 6.1;U.O. 6.1.2 Sportello unico edilizia (SUEP) e vigilanza abusivismo;0;;ciccio
+73;condono;condono;Settore 6;Servizio 6.1;U.O. 6.1.2 Sportello unico edilizia (SUEP) e vigilanza abusivismo;0;;ciccio
+117;contenzioso;ricorsi e sentenze;Settore 6;Servizio 6.1;U.O. 6.1.1 Pianificazione urbanistica;0;;django_admin
+113;contr_14;contributi PABE 14;Settore 6;Servizio 6.1;U.O. 6.1.1 Pianificazione urbanistica;0;;ciccio
+81;contr_15;contributi PABE 15;Settore 6;Servizio 6.1;U.O. 6.1.1 Pianificazione urbanistica;0;;ciccio
+82;contr_17;contributi PABE 17;Settore 6;Servizio 6.1;U.O. 6.1.1 Pianificazione urbanistica;0;;ciccio
+41;contratti vari;archiviazione contratto;Settore 6;Servizio 6.1;;0;;django_admin
+76;contr_poc;Contributi al POC da parte dei cittadini;Settore 6;Servizio 6.1;U.O. 6.1.1 Pianificazione urbanistica;0;;django_admin
+35;cooperativa;cooperative/ditte PEEP;Settore 6;Servizio 6.1;U.O. 6.1.1 Pianificazione urbanistica;0;;django_admin
+56;Decreto dirigenziale;Decreti emessi da Regione, Provincia e/o altri enti;;;;0;;django_admin
+53;decreto di vincolo;DECRETI MINISTERIALI RELATIVI AD IMMOBILI VINCOLATI INSISTENTI SUL TERRITORIO COMUNALE DI CARRARA;;;;0;;django_admin
+97;delibera_cc;;;;;0;;
+47;delibera di consiglio (settore 6);delibere di consiglio proposte dal settore;Settore 6;Servizio 6.1;U.O. 6.1.3 Servizi amministrativi e sicurezza sul lavoro;0;;django_admin
+18;delibera di giunta (settore 6);Delibera di Giunta Comunale;Settore 6;Servizio 6.1;U.O. 6.1.3 Servizi amministrativi e sicurezza sul lavoro;0;;django_admin
+29;determinazione;Determina dirigenziale;Settore 6;Servizio 6.1;U.O. 6.1.3 Servizi amministrativi e sicurezza sul lavoro;0;;django_admin
+49;DIA;Denuncia di Inizio Attività;Settore 6;Servizio 6.1;U.O. 6.1.2 Sportello unico edilizia (SUEP) e vigilanza abusivismo;0;;django_admin
+14;fotovoltaico;Impianti fotovoltaici;Settore 6;Servizio 6.1;U.O. 6.1.2 Sportello unico edilizia (SUEP) e vigilanza abusivismo;0;;django_admin
+26;idoneità alloggiativa;idoneità alloggiativa;Settore 6;Servizio 6.1;U.O. 6.1.2 Sportello unico edilizia (SUEP) e vigilanza abusivismo;0;;django_admin
+1;impianti sportivi;impianti sportivi comunali;Settore 5;Servizio 5.3;U.O. 5.3.2 Attività per lo sport e il tempo libero;0;;django_admin
+61;impianto_sportivo;impianto sportivo;Settore 5;Servizio 5.3;U.O. 5.3.2 Attività per lo sport e il tempo libero;0;;django_admin
+115;impianto_telecomunicazioni;Infrastrutture per telecomunicazioni;Settore 1;Servizio 1.4;U.O. 1.4.1 - SUAP;0;;django_admin
+52;informativa;informativa urbanistica generica;Settore 6;Servizio 6.1;U.O. 6.1.1 Pianificazione urbanistica;0;;django_admin
+12;insegna;insegne di esercizio permanenti;Settore 1;Servizio 1.4;U.O. 1.4.1 - SUAP;0;;django_admin
+51;Istanza generica;Istanza;Settore 6;Servizio 6.1;U.O. 6.1.3 Servizi amministrativi e sicurezza sul lavoro;0;;ciccio
+72;licenze edilizie;licenze edilizie... autorizzazioni  e quanto trovato qua e la;Settore 6;Servizio 6.1;U.O. 6.1.2 Sportello unico edilizia (SUEP) e vigilanza abusivismo;0;;django_admin
+66;nulla_osta_storico;nulla_osta_storico;Settore 6;Servizio 6.1;U.O. 6.1.2 Sportello unico edilizia (SUEP) e vigilanza abusivismo;0;;django_admin
+31;ordinanza;ordinanze;Settore 6;;;0;;django_admin
+44;osservatorio PABE (2025);Osservatorio permanente ai PABE, attivo da maggio 2025;Settore 6;;;0;;django_admin
+30;osservatorio permanente poc 2022;Osservatorio permanente al POC 2022;Settore 6;Servizio 6.1;U.O. 6.1.1 Pianificazione urbanistica;1;U.O. 6.1.1 Pianificazione urbanistica;django_admin
+116;osservazioni adozione RU 1998;osservazioni al Regolamento Urbanistico adottato con D.C.C. 106 del 1/08/1997;Settore 6;Servizio 6.1;U.O. 6.1.1 Pianificazione urbanistica;0;;django_admin
+86;oss_pabe_14;osservazioni all'adozione dei PABE 14;Settore 6;Servizio 6.1;U.O. 6.1.1 Pianificazione urbanistica;0;;django_admin
+71;oss_pabe_15;;;;;0;;
+75;oss_pabe_17;;;;;0;;
+78;oss_perm;;;;;0;;
+109;oss_poc_ado_2020;;;;;0;;
+93;oss_ps_ado_2020;;;;;0;;
+62;oss_vas_17;;;;;0;;
+60;oss_vas_poc_ado_2020;;;;;0;;
+13;paesaggistica;Pratiche soggette a Vincolo Paesaggistico;Settore 6;Servizio 6.1;U.O. 6.1.1 Pianificazione urbanistica;0;U.O. 6.1.1 Pianificazione urbanistica;django_admin
+84;PAPMAA;;;;;0;;
+27;parere;Richiesta parere di conformità urbanistica;Settore 6;;;0;;django_admin
+21;passo carraio;passo carraio;Settore 1;;;0;;django_admin
+37;patrimonio;Beni ascrivibili al patrimonio comunale;Settore 6;;;0;;django_admin
+11;pau;SUAP Provvedimento Autorizzativo Unico;Settore 1;;;0;;django_admin
+17;pdc;Permesso di costruire;Settore 6;;;0;;django_admin
+33;pdc in sanatoria;Permesso di costruire in sanatoria;Settore 6;;;0;;django_admin
+112;permesso_di_costruire;;;;;0;;
+74;permesso_di_costruire_in_sanatoria;;;;;0;;
+107;permesso_di_costruire_in_sanatoria_suap;;;;;0;;
+65;permesso_di_costruire_suap;;;;;0;;
+43;pianificazione;Documentazione relativa alla pianificazione ;Settore 6;;;0;;django_admin
+89;piano_attuativo;;;;;0;;
+58;piano_sviluppo;;;;;0;;
+42;prevenzione incendi;comunicazione dei VVFF circa impianti di stoccaggio infiammabili;Settore 6;;;0;;django_admin
+59;prov_tut;;;;;0;;
+24;pubblico esercizio;pubblico esercizio;Settore 3;;;0;;django_admin
+63;richiesta;;;;;0;;
+91;richiesta_integrazione;;;;;0;;
+69;richieste_interne;;;;;0;;
+96;ricorso;ricorsi vari;Settore 6;;;0;;django_admin
+98;scavo;;;;;0;;
+28;scia;Segnalazione certificata di inizio attività;Settore 6;;;0;;django_admin
+103;scia_87bis;;;;;0;;
+32;scia in sanatoria;Segnalazione certificata di inzio attività in sanatoria;Settore 6;;;0;;django_admin
+87;scia_suap;;;;;0;;
+111;scuola;;;;;0;;
+39;segnalazione;segnalazioni varie;Settore 6;;;0;;django_admin
+79;segnalazione_poc_app;;;;;0;;
+25;servizi alla persona;servizi alla persona;Settore 3;;;0;;django_admin
+95;sin_sir;;;;;0;;
+48;Studi medici;Studi medici;Settore 3;;;0;;django_admin
+19;suolo pubblico;Occupazione temporanea di suolo pubblico;Settore 1;;;0;;django_admin
+36;svincolo;svincolo aree peep (diritto di superficie e proprietà);Settore 6;;;0;;django_admin
+46;ufficio;pratiche varie ufficio;Settore 6;;;0;;django_admin
+55;usi legittimi;Decreti di restituzione agli usi legittimi;Settore 6;;;0;;ciccio
+92;variante_pc;;;;;0;;
+77;zfu;;;;;0;;

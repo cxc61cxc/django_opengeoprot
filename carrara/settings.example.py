@@ -168,6 +168,7 @@ INSTALLED_APPS = [
     'osm_note',
     'highway.apps.HighwayConfig',
     'struttura_ente',
+    'dati_iniziali',
     # 'django_messages',
     #'import-export',
 

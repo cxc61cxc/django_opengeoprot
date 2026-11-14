@@ -369,23 +369,10 @@
                           {% endif %}
                       {% endfor %}
                       
-                      // Verifica se il civico è definito (contiene almeno un numero)
-                      var civico = "{{ pratica.housenumber|default:'' }}";
-                      var hasNumericCivico = /\d/.test(civico);
-                      
-                      if (!hasNumericCivico && particleLayer.getLayers().length > 0) {
-                          var center = particleLayer.getBounds().getCenter();
-                          lat = center.lat;
-                          lng = center.lng;
-                          map.setView([lat, lng], 17);
-                      }
-                      
-                      var isDefaultPos = (lat == 44.07721 && lng == 10.09636);
-                      var streetName = "{{ pratica.street|default:'' }}";
-                      var isStreetUndefined = (streetName == "" || streetName == "----" || streetName == "0" || streetName == "None");
-
-                      if ((isDefaultPos || isStreetUndefined || !hasNumericCivico) && particleLayer.getLayers().length > 0) {
-                          map.fitBounds(particleLayer.getBounds());
+                      // Centra la mappa sulla geometria delle particelle (mpoly)
+                      // con un margine del 20% rispetto al bounding box.
+                      if (particleLayer.getLayers().length > 0) {
+                          map.fitBounds(particleLayer.getBounds().pad(0.2), { maxZoom: 19 });
                       }
                   {% endif %}
 
